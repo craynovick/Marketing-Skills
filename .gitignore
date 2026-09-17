@@ -1,5 +1,7 @@
 node_modules/
+.pnpm-store/
 .next/
+out/
 .vercel/
 *.tsbuildinfo
 .DS_Store
