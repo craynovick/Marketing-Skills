@@ -1,0 +1,31 @@
+.docs-layout{display:grid;grid-template-columns:190px minmax(0,850px);gap:70px;padding-top:100px;padding-bottom:120px}
+.docs-prose{padding:0}
+.docs-nav{position:sticky;top:28px;align-self:start;display:grid;gap:6px;padding-top:6px}
+.docs-nav a{padding:10px 12px;font-size:14px;color:var(--muted)}
+.docs-nav a.active,.docs-nav a:hover{background:var(--ink);color:var(--paper)}
+.text-link{font-size:13px;text-decoration:underline;text-underline-offset:3px}
+
+.cookbook-page{max-width:1000px}
+.cookbook-workspace{margin-top:55px;border:1px solid var(--ink);background:#f8f5ed}.cookbook-intro{padding:34px;border-bottom:1px solid var(--ink)}.cookbook-intro h2{margin:0;font-size:32px;letter-spacing:-.04em}
+.cookbook-intro p{max-width:650px;font-size:16px}
+.cookbook-analyze{padding:38px 34px 34px}.cookbook-analyze label{display:block;font:11px ui-monospace,monospace;text-transform:uppercase;letter-spacing:.06em}.analyze-row{display:flex;gap:10px;margin-top:10px}.analyze-row input{flex:1;min-width:0;padding:15px 14px;border:1px solid var(--ink);background:transparent;font-size:18px}.analyze-row button{border:1px solid var(--ink);padding:12px 16px;background:var(--acid);cursor:pointer;font-weight:700}.analyze-row button:disabled{opacity:.55;cursor:wait}.cookbook-analyze small{display:block;margin-top:10px;color:var(--muted);line-height:1.4}.cookbook-analyze p{margin:10px 0 0;color:#9d2f1a;font-size:12px;line-height:1.4}.cookbook-review{border-top:1px solid var(--ink);padding:24px 34px 4px}.cookbook-review p{max-width:650px}
+.cookbook-fields{padding:28px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.cookbook-fields label{font-size:12px;font-weight:700}
+.cookbook-fields input{display:block;width:100%;margin-top:7px;padding:12px;border:1px solid var(--ink);background:transparent}
+.analysis-action{align-self:end}.analysis-action button{border:1px solid var(--ink);padding:12px 14px;background:var(--acid);cursor:pointer}.analysis-action button:disabled{opacity:.55;cursor:wait}.analysis-action small{display:block;margin-top:8px;color:var(--muted);line-height:1.35}.analysis-action p{margin:8px 0 0;color:#9d2f1a;font-size:12px;line-height:1.4}
+.full{grid-column:1/-1}
+.cookbook-actions{border-top:1px solid var(--ink);padding:20px 28px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cookbook-actions button{border:1px solid var(--ink);padding:10px 14px;background:var(--acid);cursor:pointer}
+.cookbook-actions .secondary{background:transparent}
+.cookbook-actions span{font:12px ui-monospace,monospace}
+.cookbook-actions a{margin-left:auto;font-size:14px;text-decoration:underline;text-underline-offset:3px}
+
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--acid);outline-offset:3px}
+
+@media(max-width:700px){
+  .docs-layout{display:block;padding-top:55px}
+  .docs-nav{position:static;display:flex;overflow:auto;margin:0 -24px 25px;padding:0 24px}
+  .docs-nav a{white-space:nowrap}
+  .cookbook-fields{grid-template-columns:1fr}.cookbook-intro,.cookbook-analyze,.cookbook-review{padding-left:20px;padding-right:20px}.analyze-row{display:block}.analyze-row button{width:100%;margin-top:10px}
+  .cookbook-actions a{margin-left:0}
+}

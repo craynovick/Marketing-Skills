@@ -1,0 +1,13 @@
+.hero-agents{margin-top:38px;color:#aaa;font:12px ui-monospace,monospace;letter-spacing:.04em}
+.hero-agents p{margin:0 0 14px}
+.agent-marquee{position:relative;overflow:hidden;width:100%;border-top:1px solid #303030;border-bottom:1px solid #303030}
+.agent-marquee:before,.agent-marquee:after{content:"";position:absolute;z-index:1;top:0;bottom:0;width:54px;pointer-events:none}
+.agent-marquee:before{left:0;background:linear-gradient(90deg,#050505,transparent)}
+.agent-marquee:after{right:0;background:linear-gradient(270deg,#050505,transparent)}
+.agent-track{display:flex;width:max-content;animation:agent-scroll 22s linear infinite}
+.agent-mark{width:72px;height:62px;display:grid;place-items:center;flex:0 0 72px;border-right:1px solid #242424}
+.agent-mark img{width:34px;height:34px;object-fit:contain;opacity:.9}
+.agent-marquee:hover .agent-track{animation-play-state:paused}
+@keyframes agent-scroll{to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.agent-track{animation:none}}
+@media(max-width:700px){.agent-mark{width:62px;flex-basis:62px;height:54px}.agent-mark img{width:30px;height:30px}}

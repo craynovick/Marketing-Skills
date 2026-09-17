@@ -1,0 +1,79 @@
+---
+name: Content Format Planner
+description: Choose platform-native formats and create production briefs that apply audience, positioning, voice, pillars, and proof.
+category: Content
+complexity: Medium
+inputs:
+  - Content objective
+  - Source material or evidence
+  - Channels and available visual assets
+  - Brand context and constraints
+output: content format playbook
+version: 1.1.0
+writes_profile:
+  - formats
+requires_profile:
+  - audience
+  - positioning
+  - voice
+  - pillars
+  - proof
+upstream:
+  - content-pillar-planner
+  - brand-positioning-workshop
+  - brand-voice-guide
+downstream:
+  - content-repurposing-engine
+  - campaign-launch-kit
+---
+# Content Format Planner
+## Quick run
+Choose the simplest effective format for {{company}}’s buyer question using optional Cookbook context: audience `{{audience}}`, positioning `{{positioning}}`, voice `{{voice}}`, pillars `{{pillars}}`, approved proof `{{proof}}`, existing formats `{{formats}}`, and constraints `{{constraints}}`. Create a platform-native production brief for formats such as static posts, carousels, short-form video, Reel/TikTok scripts, LinkedIn posts, email, or articles. Include message, structure, visuals, channel behavior, permissions, and approval checks.
+## Guided run
+Ask for the buyer question, objective, audience stage, platform, available source/proof, desired action, production resources, and constraints when missing. Start with the audience and approved proof, not a trend. Select the format that makes the point clearest, then adapt it deliberately for each channel. Never assume that a format performs well without evidence.
+## Workflow
+1. Clarify the buyer question, objective, audience stage, desired action, platform, production resources, and constraints.
+2. Select the strategic pillar and approved source/proof. Explain why the chosen format is appropriate for the message and audience behavior; do not select it only because it is trendy.
+3. Choose the platform-native expression. Account for platform norms without assuming current algorithmic preferences. Examples include static post, carousel, Reel/TikTok script, short-form video storyboard, LinkedIn post, email, article, webinar, or sales asset.
+4. Write the message, structure, hook, body, proof placement, CTA, and visual/audio direction. For video, include beat-by-beat timing, on-screen text, spoken script, shot guidance, captions, and a no-audio fallback.
+5. Specify asset dimensions or technical requirements only when supplied or verified. Include accessibility, captions, alt text, reading order, and safe-area considerations where relevant.
+6. Define permissions, sourcing, attribution, customer privacy, and approval requirements.
+7. Add deliberate channel adaptations and repurposing notes. Preserve the central claim and evidence; do not simply shorten the same copy.
+8. End with a QA checklist and a proposed Cookbook update. Do not overwrite existing formats automatically.
+## Required output
+Include:
+
+- Objective, audience stage, pillar, buyer question, and desired action.
+- Format decision and rationale, including why other formats were not chosen.
+- Platform-native brief for the selected format.
+- Static post brief: visual concept, caption, hook, proof, CTA, alt text, and design notes where relevant.
+- Carousel brief: slide-by-slide story, progression, on-slide copy, caption, and CTA.
+- Reel/short-form video brief: hook, timed script, shots, on-screen text, captions, audio guidance, CTA, and no-audio version.
+- Platform/channel adaptations with meaningful changes in behavior, length, pacing, and CTA.
+- Source/proof table with `Confirmed`, `Customer quote`, `Estimated`, or `[needs source]` labels.
+- Permissions, accessibility, privacy, brand, and approval checklist.
+- Repurposing opportunities and production sequence.
+
+### Foundation application summary
+| Foundation | Applied in |
+|---|---|
+| Audience | |
+| Positioning | |
+| Voice | |
+| Pillars | |
+| Proof and constraints | |
+
+### Cookbook save block
+```text
+Formats: [platform + format + use case]
+Priority: [which format/channel to test first and why]
+Production rules: [length, pacing, visual, audio, accessibility guidance]
+Evidence status: [Confirmed / Draft / Estimated]
+Avoid: [formats, claims, or platform behaviors out of scope]
+Open loops: [permissions, source, or validation items]
+```
+## Safety
+Use only approved visuals, quotes, customer details, and claims. Do not invent platform performance benchmarks or imply that a format guarantees reach. Respect platform policies, consent, copyright, privacy, accessibility, and human approval requirements.
+
+## Handoffs
+Use `content-pillar-planner` when the strategic topic is unclear, `brand-voice-guide` when expression is undefined, and `brand-claims-confidentiality-guide` when proof or permissions are unclear. After approval, use `content-repurposing-engine` for source-led adaptation or `campaign-launch-kit` for coordinated activation. Do not auto-run downstream skills.
