@@ -1,0 +1,5 @@
+create table if not exists public.cookbooks (user_id uuid primary key references auth.users(id) on delete cascade, company text not null default '', website text not null default '', audience text not null default '', positioning text not null default '', offer text not null default '', voice text not null default '', pillars text not null default '', formats text not null default '', proof text not null default '', constraints text not null default '', analysis_used_at timestamptz, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+alter table public.cookbooks enable row level security;
+create policy "Users manage their own Cookbook" on public.cookbooks for all using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+create or replace function public.set_cookbook_updated_at() returns trigger language plpgsql as $$ begin new.updated_at = now(); return new; end; $$;
+create trigger cookbooks_updated_at before update on public.cookbooks for each row execute function public.set_cookbook_updated_at();

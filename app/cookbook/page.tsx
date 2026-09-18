@@ -1,3 +1,3 @@
-import { CookbookWorkspace } from "@/components/cookbook-workspace";
+import { AuthenticatedCookbookWorkspace } from "@/components/authenticated-cookbook-workspace";
 
-export default function CookbookPage(){return <main className="wrap prose cookbook-page"><p className="eyebrow">SETUP</p><h1>Cook your book.</h1><p className="lede">Give your marketing a consistent point of view—so every workflow sounds like you and understands your business.</p><CookbookWorkspace /></main>}
+export default function CookbookPage(){return <main className="wrap prose cookbook-page"><p className="eyebrow">SETUP YOUR PANTRY</p><h1>Write your brand’s master recipe.</h1><p className="lede">Teach your AI how you think, who you serve, and how you talk—so every campaign comes out tasting like you, not ChatGPT.</p><AuthenticatedCookbookWorkspace /></main>}

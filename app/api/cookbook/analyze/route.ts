@@ -1,4 +1,5 @@
 import { lookup } from "node:dns/promises";
+import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 20;
@@ -54,6 +55,18 @@ export async function POST(request: Request) {
   if (!allowRequest(request)) return Response.json({ error: "Please wait before analyzing another site." }, { status: 429 });
   if (!process.env.AI_GATEWAY_API_KEY) return Response.json({ error: "Website analysis is not configured yet. Add AI_GATEWAY_API_KEY on the server to enable it." }, { status: 503 });
   try {
+    let userId: string | null = null;
+    let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+      supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id || null;
+      if (userId) {
+        const { data, error } = await supabase.from("cookbooks").select("analysis_used_at").eq("user_id", userId).maybeSingle();
+        if (error) throw error;
+        if (data?.analysis_used_at) return Response.json({ error: "Your account’s free website analysis has already been used. You can still edit and save your Cookbook manually." }, { status: 429 });
+      }
+    }
     const { website } = await request.json() as { website?: string };
     if (!website || typeof website !== "string") throw new Error("Enter a website URL first.");
     const pages = await crawlSite(await isSafeUrl(website));
@@ -66,6 +79,10 @@ export async function POST(request: Request) {
     const completion = await response.json() as { choices?: { message?: { content?: string } }[] };
     const result = JSON.parse(completion.choices?.[0]?.message?.content || "{}") as Partial<Profile>;
     const profile = Object.fromEntries(fields.map(field => [field, field === "website" ? pages[0]?.url || website : typeof result[field] === "string" ? result[field] : ""])) as Profile;
+    if (userId && supabase) {
+      const { error } = await supabase.from("cookbooks").upsert({ user_id: userId, analysis_used_at: new Date().toISOString() }, { onConflict: "user_id" });
+      if (error) throw new Error("Could not record analysis usage. Please try again.");
+    }
     return Response.json({ profile });
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Could not analyze that website." }, { status: 400 }); }
 }
