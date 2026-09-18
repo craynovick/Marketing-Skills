@@ -34,7 +34,8 @@ const readHtml = async (initial: URL) => {
 
 const extractLinks = (html: string, origin: URL) => Array.from(html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>/gi))
   .map(match => { try { return new URL(match[1], origin); } catch { return null; } })
-  .filter((url): url is URL => Boolean(url) && url.origin === origin.origin && /^https?:$/.test(url.protocol))
+  .filter((url): url is URL => url !== null)
+  .filter(url => url.origin === origin.origin && /^https?:$/.test(url.protocol))
   .filter(url => !url.hash && !/[.](pdf|jpg|jpeg|png|gif|zip|docx?|xlsx?)$/i.test(url.pathname));
 
 const crawlSite = async (initial: URL) => {
