@@ -6,6 +6,7 @@ import "./cookbook.css";
 import "./agent-strip.css";
 import "./auth.css";
 import "./skill-list.css";
+import "./billing.css";
 import { Header, Footer } from "@/components/chrome";
 
 export const metadata: Metadata = { title: { default: "Marketing Skills", template: "%s · Marketing Skills" }, description: "Practical, deployable marketing workflows for lean teams.", metadataBase: new URL("https://marketing-skills.example.com") };

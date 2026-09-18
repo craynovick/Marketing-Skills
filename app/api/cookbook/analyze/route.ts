@@ -1,6 +1,7 @@
 import { lookup } from "node:dns/promises";
 import { createClient } from "@/lib/supabase/server";
 import { fieldQuestions } from "@/lib/cookbook-session";
+import { hasActiveSubscription, isPaidPlan, type Plan, type SubscriptionStatus } from "@/lib/billing";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -21,7 +22,9 @@ export async function POST(request: Request) {
     const supabase = await createClient(); const { data: { user } } = await supabase.auth.getUser();
     if (!user) return Response.json({ error: "Sign in to scan a website and keep its evidence available for the conversation." }, { status: 401 });
     const { data: cookbook, error: cookbookError } = await supabase.from("cookbooks").select("analysis_used_at").eq("user_id", user.id).maybeSingle(); if (cookbookError) throw cookbookError;
-    if (cookbook?.analysis_used_at) return Response.json({ error: "Your account’s free website analysis has already been used. You can still refine and save your Cookbook manually." }, { status: 429 });
+    const { data: subscription } = await supabase.from("subscriptions").select("plan, status").eq("user_id", user.id).maybeSingle();
+    const plan = (subscription?.plan || "free") as Plan; const status = (subscription?.status || "none") as SubscriptionStatus; const paid = isPaidPlan(plan) && hasActiveSubscription(status);
+    if (cookbook?.analysis_used_at && !paid) return Response.json({ error: "Your account’s free website analysis has already been used. Upgrade for unlimited analyses." }, { status: 429 });
     const { website } = await request.json() as { website?: string }; if (!website || typeof website !== "string") throw new Error("Enter a website URL first.");
     const pages = await crawlSite(await isSafeUrl(website)); if (pages.map(page => page.text).join(" ").length < 120) throw new Error("There was not enough public website content to analyze.");
     const canonicalWebsite = pages[0]?.url || website;

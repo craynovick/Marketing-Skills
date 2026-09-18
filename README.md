@@ -22,7 +22,13 @@ Create the `cookbooks` table and row-level-security policy by applying [supabase
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_PRO=
+STRIPE_PRICE_TEAM=
+SUPABASE_SERVICE_ROLE_KEY=
 AI_GATEWAY_API_KEY= # optional; enables website analysis
 ```
 
-In Supabase Auth, enable the Email provider, add `http://localhost:3000/auth/callback` and your production `/auth/callback` URL as redirect URLs, and set the production URL as the Site URL. The first website analysis remains optional. For signed-in users its usage is recorded against the account; anonymous drafts retain the original browser-only limit. Model execution and publishing integrations are still out of scope.
+In Supabase Auth, enable the Email provider, add `http://localhost:3000/auth/callback`, `http://localhost:3000/auth/update-password`, and the corresponding production URLs as redirect URLs, and set the production URL as the Site URL. Apply the billing migration, create matching Stripe recurring prices, and configure the Stripe customer portal. Register `/api/webhooks/stripe` as a Stripe webhook for checkout completion and subscription lifecycle events. The first website analysis remains optional for free users; Pro and Team users can analyze unlimited public websites. Model execution and publishing integrations are still out of scope.
