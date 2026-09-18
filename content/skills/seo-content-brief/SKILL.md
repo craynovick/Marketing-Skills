@@ -34,7 +34,7 @@ If the query, audience, pillar, search evidence, business goal, or approved proo
 ## Workflow
 1. Define the business decision, audience, buying situation, content pillar, audience stage, desired action, and constraints.
 2. Establish the searcher’s task and intent: informational, navigational, commercial investigation, transactional, or mixed. Explain the evidence for the classification.
-3. Map the primary query and supporting language to real audience questions. Treat search volume, rankings, or keyword tools as directional demand signals—not proof of customer importance.
+3. Map the primary query and supporting language to real audience questions. Treat search volume, rankings, or keyword tools as directional demand signals, not proof of customer importance.
 4. Identify the editorial opportunity: what the reader needs that existing results, internal knowledge, or generic summaries do not provide. Anchor it to the approved positioning and pillar.
 5. Build an evidence-led outline with a logical information gain sequence, original examples, expert input, internal links, external sources, and proof requirements.
 6. Define the conversion role and CTA. Match it to audience readiness; do not force a sales CTA onto an early-stage information need.

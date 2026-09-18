@@ -65,10 +65,10 @@ Open loops: [needs source items]
 ```
 
 ## Evidence rules
-Label every finding Measured (own analytics), Customer quote (pasted note), or Estimated (your inference — say so). Never invent metrics, quotes, or win rates. Preserve buyer wording for top objections.
+Label every finding Measured (own analytics), Customer quote (pasted note), or Estimated (your inference, say so). Never invent metrics, quotes, or win rates. Preserve buyer wording for top objections.
 
 ## Handoffs
-Upstream: ideal-customer-profile-builder, customer-interview-synthesizer. Primary next: brand-positioning-workshop — turn segments + forces into positioning statement and message house. Then content-pillar-planner — turn situations into 3-5 pillars. Do not auto-run downstream; present the save block first.
+Upstream: ideal-customer-profile-builder, customer-interview-synthesizer. Primary next: brand-positioning-workshop, turn segments + forces into positioning statement and message house. Then content-pillar-planner, turn situations into 3-5 pillars. Do not auto-run downstream; present the save block first.
 
 ## Safety
-Do not infer sensitive traits or unsupported claims. Flag unsupported superiority or category claims. Respect customer privacy — anonymize names unless approval is explicit. Get human approval before external publication.
+Do not infer sensitive traits or unsupported claims. Flag unsupported superiority or category claims. Respect customer privacy, anonymize names unless approval is explicit. Get human approval before external publication.

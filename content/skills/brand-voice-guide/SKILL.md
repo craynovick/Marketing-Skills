@@ -24,9 +24,9 @@ downstream:
 ---
 # Brand Voice Guide
 ## Quick run
-Create a practical voice guide for {{company}} using optional Cookbook context: audience `{{audience}}`, positioning `{{positioning}}`, existing voice `{{voice}}`, and constraints `{{constraints}}`. Use writing samples as evidence. If samples are absent, create a provisional hypothesis labeled `Draft — confirm`; never pretend to know how the brand sounds.
+Create a practical voice guide for {{company}} using optional Cookbook context: audience `{{audience}}`, positioning `{{positioning}}`, existing voice `{{voice}}`, and constraints `{{constraints}}`. Use writing samples as evidence. If samples are absent, create a provisional hypothesis labeled `Draft, confirm`; never pretend to know how the brand sounds.
 ## Guided run
-Ask for 2–5 representative writing samples, the audience response desired, words to use/avoid, and important channel or legal constraints. If the user proceeds without samples, label recommendations `Draft — confirm`.
+Ask for 2–5 representative writing samples, the audience response desired, words to use/avoid, and important channel or legal constraints. If the user proceeds without samples, label recommendations `Draft, confirm`.
 ## Workflow
 1. State the communication job, audience, positioning, and evidence available.
 2. Extract patterns in directness, warmth, certainty, technicality, rhythm, point of view, and evidence use. Do not overfit one sample.
@@ -36,11 +36,11 @@ Ask for 2–5 representative writing samples, the audience response desired, wor
 6. Add anti-patterns, generic-AI phrase checks, and an editorial rewrite test.
 7. End with a proposed Cookbook update; preserve existing voice unless replacement is explicitly approved.
 ## Required output
-Voice status (`Confirmed`, `Draft`, or `Draft — confirm`); voice statement; brand stance; three to five attributes with do/don’t rules; grounded examples; vocabulary and accessibility guidance; channel adaptations; anti-patterns; editorial checklist; evidence gaps; approval questions.
+Voice status (`Confirmed`, `Draft`, or `Draft, confirm`); voice statement; brand stance; three to five attributes with do/don’t rules; grounded examples; vocabulary and accessibility guidance; channel adaptations; anti-patterns; editorial checklist; evidence gaps; approval questions.
 
 ### Cookbook save block
 ```text
-Voice status: [Confirmed / Draft — confirm]
+Voice status: [Confirmed / Draft, confirm]
 Voice: [2-4 sentence operating description]
 Attributes: [3-5 attributes with concise rules]
 Use: [preferred words, rhythm, stance, evidence style]

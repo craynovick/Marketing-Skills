@@ -46,7 +46,7 @@ Include:
 - Headline and summary with claim-safe alternatives.
 - Customer context, trigger, challenge, constraints, and desired progress.
 - Approach/mechanism with accurate implementation detail.
-- Results with baseline, timeframe, definitions, comparison, attribution caveats, and approval status—or explicit `[needs source]` placeholders.
+- Results with baseline, timeframe, definitions, comparison, attribution caveats, and approval status, or explicit `[needs source]` placeholders.
 - Approved quote or faithful paraphrase with consent status.
 - CTA appropriate to the audience and evidence strength.
 - Modular excerpts for downstream reuse, each mapped to source evidence.

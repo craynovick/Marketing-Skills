@@ -11,7 +11,7 @@ export const fieldQuestions: Record<SessionField, string> = {
   audience: "Your website supports multiple audiences. Which audience is commercially primary this year?",
   positioning: "What is the one outcome you want that primary audience to associate with you?",
   offer: "Which offer should lead the conversation with that audience?",
-  voice: "What should the voice feel like—and are there words or tones to avoid?",
+  voice: "What should the voice feel like, and are there words or tones to avoid?",
   pillars: "What three to five buyer questions do you most want your content to answer?",
   formats: "Which formats or channels are most valuable for reaching this audience?",
   proof: "Which specific proof are you comfortable reusing in marketing?",

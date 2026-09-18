@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       async start(controller) {
         const primaryEvidence = evidence[0];
         if (primaryEvidence) controller.enqueue(event("evidence", primaryEvidence));
-        controller.enqueue(event("proposal", { field, label: fieldLabels[field], value: message, note: "Drafted from your answer — review before keeping." }));
+        controller.enqueue(event("proposal", { field, label: fieldLabels[field], value: message, note: "Drafted from your answer, review before keeping." }));
         controller.enqueue(event("field_update", { field, value: message, status: "draft" }));
         try {
           for await (const delta of result.textStream) controller.enqueue(event("text", { text: delta }));
