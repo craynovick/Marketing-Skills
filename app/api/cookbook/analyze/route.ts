@@ -14,6 +14,11 @@ const textFromHtml = (html: string) => html.replace(/<script[\s\S]*?<\/script>|<
 const pageTitle = (html: string) => html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 200) || null;
 const extractLinks = (html: string, origin: URL) => Array.from(html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>/gi)).map(match => { try { return new URL(match[1], origin); } catch { return null; } }).filter((url): url is URL => url !== null).filter(url => url.origin === origin.origin && /^https?:$/.test(url.protocol)).filter(url => !url.hash && !/[.](pdf|jpg|jpeg|png|gif|zip|docx?|xlsx?)$/i.test(url.pathname));
 const crawlSite = async (initial: URL) => { const first = await readHtml(initial); const priority = /(about|solution|service|product|industry|case|resource|blog|faq|contact)/i; const candidates = extractLinks(first.html, new URL(first.url)); const pages = [first, ...candidates.filter(url => priority.test(url.pathname)).slice(0, 5).map(url => readHtml(url).catch(() => null))]; const results = (await Promise.all(pages)).filter((page): page is { url: string; html: string } => Boolean(page)); return results.map(page => ({ url: page.url, title: pageTitle(page.html), text: textFromHtml(page.html) })); };
+export async function scrapeWebsite(url: string) {
+  const pages = await crawlSite(await isSafeUrl(url));
+  if (pages.map(page => page.text).join(" ").length < 120) throw new Error("There was not enough public website content to analyze.");
+  return { website: pages[0]?.url || url, pageCount: pages.length, pages };
+}
 const allowRequest = (request: Request) => { const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous"; const cutoff = Date.now() - 60 * 60 * 1000; const recent = (requests.get(ip) || []).filter(time => time > cutoff); if (recent.length >= 5) return false; requests.set(ip, [...recent, Date.now()]); return true; };
 
 export async function POST(request: Request) {
@@ -26,8 +31,7 @@ export async function POST(request: Request) {
     const plan = (subscription?.plan || "free") as Plan; const status = (subscription?.status || "none") as SubscriptionStatus; const paid = isPaidPlan(plan) && hasActiveSubscription(status);
     if (cookbook?.analysis_used_at && !paid) return Response.json({ error: "Your account’s free website analysis has already been used. Upgrade for unlimited analyses." }, { status: 429 });
     const { website } = await request.json() as { website?: string }; if (!website || typeof website !== "string") throw new Error("Enter a website URL first.");
-    const pages = await crawlSite(await isSafeUrl(website)); if (pages.map(page => page.text).join(" ").length < 120) throw new Error("There was not enough public website content to analyze.");
-    const canonicalWebsite = pages[0]?.url || website;
+    const scraped = await scrapeWebsite(website); const pages = scraped.pages; const canonicalWebsite = scraped.website;
     const { data: session, error: sessionError } = await supabase.from("cookbook_sessions").insert({ user_id: user.id, website: canonicalWebsite, draft: { website: canonicalWebsite }, next_field: "audience" }).select("id").single(); if (sessionError || !session) throw sessionError || new Error("Could not start a Cookbook session.");
     const evidence = pages.map((page, position) => ({ session_id: session.id, user_id: user.id, url: page.url, title: page.title, excerpt: page.text.slice(0, 8_000), position })); const { error: evidenceError } = await supabase.from("cookbook_evidence").insert(evidence); if (evidenceError) throw evidenceError;
     const { error: usageError } = await supabase.from("cookbooks").upsert({ user_id: user.id, analysis_used_at: new Date().toISOString() }, { onConflict: "user_id" }); if (usageError) throw usageError;
