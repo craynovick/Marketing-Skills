@@ -14,11 +14,17 @@ const readHtml = async (initial: URL) => { let url = initial; for (let attempt =
 const textFromHtml = (html: string) => html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<noscript[\s\S]*?<\/noscript>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim().slice(0, 24_000);
 const pageTitle = (html: string) => html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 200) || null;
 const extractLinks = (html: string, origin: URL) => Array.from(html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>/gi)).map(match => { try { return new URL(match[1], origin); } catch { return null; } }).filter((url): url is URL => url !== null).filter(url => url.origin === origin.origin && /^https?:$/.test(url.protocol)).filter(url => !url.hash && !/[.](pdf|jpg|jpeg|png|gif|zip|docx?|xlsx?)$/i.test(url.pathname));
-const crawlSite = async (initial: URL) => { const first = await readHtml(initial); const priority = /(about|solution|service|product|industry|case|resource|blog|faq|contact)/i; const candidates = extractLinks(first.html, new URL(first.url)); const pages = [first, ...candidates.filter(url => priority.test(url.pathname)).slice(0, 5).map(url => readHtml(url).catch(() => null))]; const results = (await Promise.all(pages)).filter((page): page is { url: string; html: string } => Boolean(page)); return results.map(page => ({ url: page.url, title: pageTitle(page.html), text: textFromHtml(page.html) })); };
+const crawlSite = async (initial: URL) => {
+  const first = await readHtml(initial);
+  const candidates = [...new Map(extractLinks(first.html, new URL(first.url)).filter(url => /(about|solution|service|product|industry|case|resource|blog|faq|contact)/i.test(url.pathname)).map(url => [url.toString(), url])).values()].filter(url=>url.toString()!==first.url).slice(0,5);
+  const results = await Promise.all(candidates.map(async url => { try { return { page: await readHtml(await isSafeUrl(url.toString())), failed: null }; } catch { return { page: null, failed: url.toString() }; } }));
+  const pages = [first, ...results.flatMap(result => result.page ? [result.page] : [])].map(page => ({ url:page.url,title:pageTitle(page.html),text:textFromHtml(page.html) }));
+  return { pages, failedPages: results.flatMap(result => result.failed ? [result.failed] : []) };
+};
 export async function scrapeWebsite(url: string) {
-  const pages = await crawlSite(await isSafeUrl(url));
-  if (pages.map(page => page.text).join(" ").length < 120) throw new Error("There was not enough public website content to analyze.");
-  return { website: pages[0]?.url || url, pageCount: pages.length, pages };
+  const { pages, failedPages } = await crawlSite(await isSafeUrl(url));
+  if (pages.map(page => page.text).join(' ').length < 120) throw new Error('There was not enough public website content to analyze.');
+  return { website:pages[0]?.url || url,pageCount:pages.length,pages,failedPages };
 }
 const allowRequest = (request: Request) => { const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous"; const cutoff = Date.now() - 60 * 60 * 1000; const recent = (requests.get(ip) || []).filter(time => time > cutoff); if (recent.length >= 5) return false; requests.set(ip, [...recent, Date.now()]); return true; };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { safeReturnPath } from "@/lib/safe-return-path";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
@@ -23,7 +24,8 @@ export function SignInForm() {
   const [resetting, setResetting] = useState(false); const [status, setStatus] = useState(""); const [sending, setSending] = useState(false); const [canResend, setCanResend] = useState(false);
   const [emailError, setEmailError] = useState(""); const [passwordError, setPasswordError] = useState("");
   const isSignUp = mode === "sign-up";
-  const redirectUrl = () => `${window.location.origin}/auth/callback?next=/cookbook`;
+  const next = safeReturnPath(params.get("next"));
+  const redirectUrl = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
   // Recovery links establish the session in the browser. Keeping the reset
   // destination direct avoids losing the recovery session in the server
   // callback before the update form can use it.
@@ -54,9 +56,9 @@ export function SignInForm() {
     event.preventDefault(); if (!validateEmail() || !validatePassword()) return; setSending(true); setStatus("");
     try {
       const supabase = createClient();
-      if (!isSignUp) { const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) { if (error.message.toLowerCase().includes("email not confirmed")) setCanResend(true); throw error; } await syncLocalCookbook(); window.location.assign("/create"); return; }
+      if (!isSignUp) { const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) { if (error.message.toLowerCase().includes("email not confirmed")) setCanResend(true); throw error; } await syncLocalCookbook(); window.location.assign(next); return; }
       const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectUrl() } }); if (error) throw error;
-      if (data.session) { await syncLocalCookbook(); window.location.assign("/create"); return; }
+      if (data.session) { await syncLocalCookbook(); window.location.assign(next); return; }
       setCanResend(true); setStatus("Check your email to confirm the account, then sign in with this password.");
     } catch (error) { setStatus(error instanceof Error ? error.message : "Could not complete sign-in."); } finally { setSending(false); }
   };

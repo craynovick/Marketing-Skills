@@ -1,11 +1,37 @@
-import { createClient } from "@/lib/supabase/server";
+import { account, apiError, uuid } from "@/lib/cookbook-server";
 export async function POST(request: Request) {
   try {
-    const { skillId, version } = await request.json() as { skillId?: string; version?: number }; if (!skillId || !Number.isInteger(version)) return Response.json({ error: "Choose a version to restore." }, { status: 400 });
-    const supabase = await createClient(); const { data: { user } } = await supabase.auth.getUser(); if (!user) return Response.json({ error: "Sign in to restore a draft." }, { status: 401 });
-    const { data: target } = await supabase.from("cookbook_documents").select("content").eq("skill_id", skillId).eq("user_id", user.id).eq("version", version).maybeSingle(); if (!target) return Response.json({ error: "Version not found." }, { status: 404 });
-    const { data: latest } = await supabase.from("cookbook_documents").select("version").eq("skill_id", skillId).eq("user_id", user.id).order("version", { ascending: false }).limit(1).maybeSingle();
-    const { data: document, error } = await supabase.from("cookbook_documents").insert({ user_id: user.id, skill_id: skillId, content: target.content, version: (latest?.version || 0) + 1, source: "revert" }).select("id,skill_id,content,version,source,created_at").single(); if (error) throw error;
-    await supabase.from("cookbook_skills").update({ lifecycle: "draft" }).eq("id", skillId).eq("user_id", user.id); return Response.json({ document });
-  } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Could not restore version." }, { status: 400 }); }
+    const { skillId, version, expectedVersion, requestId } =
+      await request.json();
+    if (
+      !uuid(skillId) ||
+      !uuid(requestId) ||
+      !Number.isInteger(version) ||
+      !Number.isInteger(expectedVersion)
+    )
+      return Response.json(
+        { error: "Choose a version and provide the current version." },
+        { status: 400 },
+      );
+    const { db, user } = await account();
+    const { data: target, error: readError } = await db
+      .from("cookbook_documents")
+      .select("content")
+      .eq("skill_id", skillId)
+      .eq("user_id", user.id)
+      .eq("version", version)
+      .single();
+    if (readError) throw readError;
+    const { data, error } = await db.rpc("cookbook_save_document", {
+      p_task: skillId,
+      p_content: target.content,
+      p_expected: expectedVersion,
+      p_source: "revert",
+      p_operation: requestId,
+    });
+    if (error) throw error;
+    return Response.json({ document: data });
+  } catch (error) {
+    return apiError(error);
+  }
 }

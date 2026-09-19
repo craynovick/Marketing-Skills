@@ -1,24 +1,31 @@
-import { createClient } from "@/lib/supabase/server";
 import { skills } from "@/lib/generated-skills";
-
-function fileName(slug: string) { return `${slug}-${crypto.randomUUID().slice(0, 8)}.md`; }
-
+import { account, apiError, uuid } from "@/lib/cookbook-server";
 export async function POST(request: Request) {
   try {
-    const { slug } = await request.json() as { slug?: string };
-    const publishedSkill = skills.find(skill => skill.slug === slug);
-    if (!publishedSkill) return Response.json({ error: "Choose a published skill." }, { status: 400 });
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return Response.json({ error: "Sign in to create a task." }, { status: 401 });
-    const { data: project, error: projectError } = await supabase.from("cookbook_projects").select("id").eq("user_id", user.id).order("created_at").limit(1).maybeSingle();
-    if (projectError || !project) return Response.json({ error: "Open your workspace before creating a task." }, { status: 409 });
-    const { data: skill, error: skillError } = await supabase.from("cookbook_skills").insert({ user_id: user.id, project_id: project.id, file_name: fileName(publishedSkill.slug), title: publishedSkill.name }).select("id,file_name,title,lifecycle,accepted_version_id,updated_at").single();
-    if (skillError || !skill) throw skillError || new Error("Could not create task.");
-    const { data: document, error: documentError } = await supabase.from("cookbook_documents").insert({ user_id: user.id, skill_id: skill.id, content: `# ${publishedSkill.name}\n\n` }).select("id,content,version,source,created_at").single();
-    if (documentError) throw documentError;
-    const { error: threadError } = await supabase.from("cookbook_threads").insert({ user_id: user.id, skill_id: skill.id });
-    if (threadError) throw threadError;
-    return Response.json({ skill: { ...skill, document }, publishedSkill: { slug: publishedSkill.slug, name: publishedSkill.name, description: publishedSkill.description } }, { status: 201 });
-  } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Could not create task." }, { status: 400 }); }
+    const { slug, requestId } = await request.json();
+    const skill = skills.find((item) => item.slug === slug);
+    if (!skill || !uuid(requestId))
+      return Response.json(
+        { error: "Choose a published skill and a valid request ID." },
+        { status: 400 },
+      );
+    const { db, user } = await account();
+    const { data: id, error } = await db.rpc("cookbook_create_task", {
+      p_slug: skill.slug,
+      p_version: skill.version,
+      p_title: skill.name,
+      p_key: requestId,
+    });
+    if (error) throw error;
+    const { data: task, error: readError } = await db
+      .from("cookbook_skills")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single();
+    if (readError) throw readError;
+    return Response.json({ skill: task }, { status: 201 });
+  } catch (error) {
+    return apiError(error);
+  }
 }

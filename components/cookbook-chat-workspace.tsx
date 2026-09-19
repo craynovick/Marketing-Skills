@@ -1,79 +1,1042 @@
 "use client";
-
-import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
-import { skills as publishedSkills } from "@/lib/generated-skills";
+import { skills as catalog } from "@/lib/generated-skills";
+import type { CookbookMessage } from "@/lib/cookbook-agent";
+import { Composer } from "./cookbook/composer";
+import { Sidebar } from "./cookbook/sidebar";
+import { Artifact } from "./cookbook/artifact";
+import { Markdown, safeLink } from "./cookbook/markdown";
+import {
+  json,
+  messageOf,
+  requestJSON,
+  type Attachment,
+  type Draft,
+  type Run,
+  type Task,
+} from "./cookbook/types";
 
-type Lifecycle = "queue" | "researching" | "draft" | "accepted";
-type Document = { id: string; content: string; version: number; source: string; created_at: string; status?: string; unanswered_questions?: string[]; assumptions?: string[]; evidence_references?: string[] };
-type Skill = { id: string; file_name: string; title: string; lifecycle: Lifecycle; accepted_version_id: string | null; document?: Document; research?: { canonical_url: string; page_count: number; status: string; confidence: number | null; failed_pages: string[] } };
-type ToolPart = { type: string; output?: unknown };
-type Attachment = { id: string; file_name: string; mime_type: string; byte_size: number; extraction_status: "ready" | "failed"; created_at: string };
-type Question = { prompt: string; options: string[] };
-const agentVersion = "2026-09-18";
-
-function plain(text: string) { return text.replace(/\*\*(.*?)\*\*/g, "$1").replace(/^#{1,6}\s*/gm, "").replace(/^[-*]\s+/gm, "• "); }
-function draft(value: unknown): value is { fileName: string; content: string; document?: Document } { return Boolean(value && typeof value === "object" && "fileName" in value && "content" in value); }
-function question(value: unknown): value is Question { return Boolean(value && typeof value === "object" && "prompt" in value && "options" in value && Array.isArray((value as Question).options)); }
-function label(lifecycle: Lifecycle) { return lifecycle === "accepted" ? "Accepted" : lifecycle === "draft" ? "Draft" : lifecycle === "researching" ? "Researching" : "Queue"; }
-function workingLabel(status: string) { return status === "submitted" ? "Reviewing your request…" : "Drafting the next best step…"; }
-function Icon({ name, size = 16 }: { name: "plus" | "clock" | "spark" | "folder" | "settings" | "panel" | "download" | "send" | "more" | "file" | "paperclip" | "x"; size?: number }) {
-  const paths = {
-    plus: <><path d="M12 5v14M5 12h14" /></>, clock: <><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></>, spark: <path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" />, folder: <><path d="M3.5 7.5h6l1.7 2H20.5v8.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7.5Z" /><path d="M3.5 9.5h17" /></>, settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.2 2.2-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-3.1v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1L6.3 17l.1-.1A1.7 1.7 0 0 0 6.7 15a1.7 1.7 0 0 0-1.5-1H5v-3.1h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 2.2-2.2.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V4h3.1v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 2.2 2.2-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2V14h-.2a1.7 1.7 0 0 0-1.6 1Z" /></>, panel: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16" /></>, download: <><path d="M12 3v12M8 11l4 4 4-4M5 20h14" /></>, send: <><path d="m21 3-7.3 18-3.4-7.3L3 10.3 21 3Z" /><path d="m10.3 13.7 4-4" /></>, more: <><circle cx="5" cy="12" r="1" fill="currentColor" /><circle cx="12" cy="12" r="1" fill="currentColor" /><circle cx="19" cy="12" r="1" fill="currentColor" /></>, file: <><path d="M6 3.5h8l4 4v13H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z" /><path d="M14 3.5v4h4M8 12h8M8 16h6" /></>, paperclip: <><path d="m20.5 11.5-8.9 8.9a5 5 0 0 1-7.1-7.1l9.2-9.2a3.5 3.5 0 1 1 5 5l-9.3 9.3a2 2 0 1 1-2.8-2.8l8.6-8.6" /></>, x: <><path d="m6 6 12 12M18 6 6 18" /></>,
-  };
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
-}
-
-// Markdown is rendered from text only: raw HTML (including hidden evidence comments) never enters the preview DOM.
-function inline(value: string): ReactNode { return value.replace(/<!--([\s\S]*?)-->/g, "").replace(/`([^`]+)`/g, "$1").replace(/\*\*([^*]+)\*\*/g, "$1"); }
-function MarkdownPreview({ value }: { value: string }) {
-  const lines = value.replace(/<!--([\s\S]*?)-->/g, "").replace(/\r\n?/g, "\n").split("\n"); const blocks: ReactNode[] = [];
-  for (let i = 0; i < lines.length;) { const line = lines[i]; const heading = line.match(/^(#{1,3})\s+(.+)$/); if (heading) { const Tag = `h${heading[1].length}` as "h1" | "h2" | "h3"; blocks.push(<Tag key={i}>{inline(heading[2])}</Tag>); i += 1; continue; }
-    if (/^```/.test(line)) { const code: string[] = []; i += 1; while (i < lines.length && !/^```/.test(lines[i])) code.push(lines[i++]); i += 1; blocks.push(<pre key={i}><code>{code.join("\n")}</code></pre>); continue; }
-    if (/^>\s?/.test(line)) { const quote: string[] = []; while (i < lines.length && /^>\s?/.test(lines[i])) quote.push(lines[i++].replace(/^>\s?/, "")); blocks.push(<blockquote key={i}>{inline(quote.join(" "))}</blockquote>); continue; }
-    if (/^[-*]\s+/.test(line)) { const items: string[] = []; while (i < lines.length && /^[-*]\s+/.test(lines[i])) items.push(lines[i++].replace(/^[-*]\s+/, "")); blocks.push(<ul key={i}>{items.map((item, index) => <li key={index}>{inline(item)}</li>)}</ul>); continue; }
-    if (/^\|/.test(line) && /^\|[- :|]+\|$/.test(lines[i + 1] || "")) { const cells = (row: string) => row.split("|").slice(1, -1).map(cell => cell.trim()); const head = cells(line); i += 2; const rows: string[][] = []; while (/^\|/.test(lines[i] || "")) rows.push(cells(lines[i++])); blocks.push(<table key={i}><thead><tr>{head.map((cell, index) => <th key={index}>{inline(cell)}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={index}>{row.map((cell, cellIndex) => <td key={cellIndex}>{inline(cell)}</td>)}</tr>)}</tbody></table>); continue; }
-    if (!line.trim()) { i += 1; continue; } const paragraph: string[] = []; while (i < lines.length && lines[i].trim() && !/^(#{1,3}\s|```|>\s?|[-*]\s+|\|)/.test(lines[i])) paragraph.push(lines[i++]); blocks.push(<p key={i}>{inline(paragraph.join(" "))}</p>);
-  } return <>{blocks}</>;
-}
-
-export function CookbookChatWorkspace({ initialSkillSlug }: { initialSkillSlug?: string }) {
-  const [skills, setSkills] = useState<Skill[]>([]); const [activeId, setActiveId] = useState(""); const [input, setInput] = useState("");
-  const [notice, setNotice] = useState("Loading your synced workspace…"); const [mode, setMode] = useState<"chat" | "document">("chat"); const [versions, setVersions] = useState<Document[]>([]);
-  const [editing, setEditing] = useState(false); const [content, setContent] = useState(""); const [saving, setSaving] = useState(false); const [copied, setCopied] = useState(false);
-  const [workspaceView, setWorkspaceView] = useState<"chat" | "skills">("chat"); const [skillQuery, setSkillQuery] = useState(""); const [skillsExpanded, setSkillsExpanded] = useState(false); const [tasksExpanded, setTasksExpanded] = useState(true); const [attachments, setAttachments] = useState<Attachment[]>([]); const [uploading, setUploading] = useState(false); const [loaded, setLoaded] = useState(false);
-  const composerRef = useRef<HTMLTextAreaElement>(null); const fileInputRef = useRef<HTMLInputElement>(null); const requestedSkillHandled = useRef(false); const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
-  const { messages, sendMessage, status, error, clearError } = useChat({ transport }); const active = skills.find(skill => skill.id === activeId);
-  const foundations = useMemo(() => publishedSkills.filter(skill => skill.foundational && `${skill.name} ${skill.description}`.toLowerCase().includes(skillQuery.toLowerCase())), [skillQuery]);
-
-  const requestedSkill = useMemo(() => publishedSkills.some(skill => skill.slug === initialSkillSlug) ? initialSkillSlug : undefined, [initialSkillSlug]);
-  const load = async () => { const response = await fetch("/api/cookbook/workspace"); const data = await response.json(); if (!response.ok) { setNotice(data.error || "Could not load workspace."); return; } setSkills(data.skills); setActiveId(current => current || data.skills[0]?.id || ""); setNotice("All drafts sync to your account. Acceptance is explicit."); setLoaded(true); };
-  useEffect(() => { void load(); }, []);
-  useEffect(() => { if (!active) return; setContent(active.document?.content || `# ${active.title}\n\n`); setEditing(false); void fetch(`/api/cookbook/workspace/document?skillId=${active.id}`).then(response => response.json()).then(data => setVersions(data.versions || [])).catch(() => undefined); void fetch(`/api/cookbook/workspace/attachments?skillId=${active.id}`).then(response => response.json()).then(data => setAttachments(data.attachments || [])).catch(() => setAttachments([])); }, [activeId]);
-  useEffect(() => { for (const message of messages) for (const part of message.parts) { const item = part as ToolPart; const proposed = item.output; if (!item.type.startsWith("tool-") || !draft(proposed) || !proposed.document) continue; const target = skills.find(skill => skill.file_name === proposed.fileName) || active; if (!target || target.document?.id === proposed.document.id) continue; setSkills(current => current.map(skill => skill.id === target.id ? { ...skill, lifecycle: "draft", document: proposed.document! } : skill)); setContent(proposed.document.content); setVersions(current => current.some(version => version.id === proposed.document?.id) ? current : [proposed.document!, ...current]); setNotice("A server-owned draft is ready for review and explicit acceptance."); } }, [messages, skills, active]);
-
-  async function saveDocument(skillId = active?.id, value = content, expectedVersion = active?.document?.version, source: "user" | "agent" | "revert" = "user") {
-    if (!skillId) return; setSaving(true); const response = await fetch("/api/cookbook/workspace/document", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ skillId, content: value, expectedVersion, source, agentVersion }) }); const data = await response.json(); setSaving(false);
-    if (!response.ok) { setNotice(data.error || "Could not save draft."); return; }
-    setSkills(current => current.map(skill => skill.id === skillId ? { ...skill, lifecycle: "draft", document: data.document } : skill)); setContent(data.document.content); setEditing(false); setVersions(current => [data.document, ...current]); setNotice(source === "agent" ? "Cookbook updated the draft with the latest response." : "Draft autosaved to your account.");
+type ThreadData = {
+  task: Task;
+  messages: CookbookMessage[];
+  versions: Draft[];
+  attachments: Attachment[];
+  run?: Run;
+};
+type Initial = { text: string; files: File[] };
+function store(key: string, value: string) {
+  try {
+    sessionStorage.setItem(key, value);
+  } catch {
+    /* Private browsing may disable storage. */
   }
-  async function accept() { if (!active?.document) return; const response = await fetch("/api/cookbook/workspace/accept", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ skillId: active.id, version: active.document.version }) }); const data = await response.json(); if (!response.ok) return setNotice(data.error || "Could not accept draft."); setSkills(current => current.map(skill => skill.id === active.id ? { ...skill, lifecycle: "accepted", accepted_version_id: data.acceptedVersionId } : skill)); setNotice("Accepted version is ready to copy or download."); }
-  async function restore(version: number) { if (!active) return; const response = await fetch("/api/cookbook/workspace/revert", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ skillId: active.id, version }) }); const data = await response.json(); if (!response.ok) return setNotice(data.error || "Could not restore version."); setSkills(current => current.map(skill => skill.id === active.id ? { ...skill, lifecycle: "draft", document: data.document } : skill)); setContent(data.document.content); setVersions(current => [data.document, ...current]); setNotice(`Restored version ${version} as a new draft.`); }
-  async function copy() { if (!active?.document || active.lifecycle !== "accepted") return setNotice("Accept the current draft before copying it."); await navigator.clipboard?.writeText(active.document.content); setCopied(true); setNotice("Accepted Markdown copied."); window.setTimeout(() => setCopied(false), 1800); }
-  function download() { if (!active?.document) return setNotice("Create or save a draft before downloading it."); const url = URL.createObjectURL(new Blob([active.document.content], { type: "text/markdown" })); const link = document.createElement("a"); link.href = url; link.download = active.file_name; link.click(); URL.revokeObjectURL(url); }
-  async function createTask(slug: string) { setNotice("Creating task…"); const response = await fetch("/api/cookbook/workspace/skill", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug }) }); const data = await response.json(); if (!response.ok) return setNotice(data.error || "Could not create task."); setSkills(current => [...current, data.skill]); setActiveId(data.skill.id); setWorkspaceView("chat"); setSkillQuery(""); setNotice(`${data.skill.title} is ready for context.`); window.setTimeout(() => composerRef.current?.focus(), 0); }
-  useEffect(() => { if (!loaded || !requestedSkill || requestedSkillHandled.current) return; requestedSkillHandled.current = true; void createTask(requestedSkill).finally(() => window.history.replaceState(null, "", "/create")); }, [loaded, requestedSkill]);
-  async function uploadFiles(files: FileList | null) { if (!active || !files?.length) return; if (files.length > 5 || attachments.length + files.length > 5) return setNotice("Each task can retain up to 5 context files."); setUploading(true); const form = new FormData(); form.set("skillId", active.id); Array.from(files).forEach(file => form.append("files", file)); const response = await fetch("/api/cookbook/workspace/attachments", { method: "POST", body: form }); const data = await response.json(); setUploading(false); if (!response.ok) return setNotice(data.error || "Could not attach files."); setAttachments(current => [...current, ...(data.attachments || [])]); setNotice(`${data.attachments.length} context file${data.attachments.length === 1 ? "" : "s"} attached.`); }
-  async function removeAttachment(id: string) { const response = await fetch(`/api/cookbook/workspace/attachments?id=${id}`, { method: "DELETE" }); const data = await response.json(); if (!response.ok) return setNotice(data.error || "Could not remove file."); setAttachments(current => current.filter(attachment => attachment.id !== id)); }
-  function submit(event?: FormEvent, value = input) { event?.preventDefault(); if (!active || !value.trim() || status !== "ready") return; setInput(""); void sendMessage({ text: value.trim() }, { body: { activeSkill: active.file_name, activeSkillId: active.id, activeSkillContent: content, attachmentIds: attachments.map(attachment => attachment.id) } }); }
-  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); } }
+}
+function read(key: string) {
+  try {
+    return sessionStorage.getItem(key) || "";
+  } catch {
+    return "";
+  }
+}
+function validateFiles(files: File[], existing = 0) {
+  if (files.length + existing > 5)
+    throw new Error("A task can hold up to five files.");
+  if (files.some((f) => !f.size || !/\.(pdf|docx|txt|md)$/i.test(f.name)))
+    throw new Error("Choose nonempty PDF, DOCX, TXT or Markdown files.");
+  if (files.reduce((sum, f) => sum + f.size, 0) > 4 * 1024 * 1024)
+    throw new Error("Choose files totaling 4 MB or less per upload.");
+}
 
-  return <section className="cookbook-chat-shell" aria-label="Cookbook agent workspace">
-      <aside className="cookbook-sidebar"><div className="cookbook-sidebar__top"><a className="cookbook-logo-link" href="/" aria-label="CookBook home"><img src="/cookbook-logo.svg" width={320} height={260} alt="CookBook" /></a></div><section className="sidebar-section" aria-labelledby="skills-section-label"><button id="skills-section-label" className="sidebar-section-toggle" aria-expanded={skillsExpanded} aria-controls="skills-section" onClick={() => setSkillsExpanded(expanded => !expanded)}><span><Icon name="spark" /> Skills</span><span className="sidebar-chevron" aria-hidden="true">⌄</span></button>{skillsExpanded && <nav id="skills-section" className="sidebar-skill-list" aria-label="Foundational skills">{foundations.map(foundation => <button key={foundation.slug} onClick={() => void createTask(foundation.slug)} title={foundation.description}><span>{foundation.name}</span><small>{foundation.category}</small></button>)}{foundations.length === 0 && <p>No skills available.</p>}</nav>}</section><section className="sidebar-section sidebar-tasks-section" aria-labelledby="tasks-section-label"><div className="skill-nav-label"><button id="tasks-section-label" className="sidebar-section-toggle" aria-expanded={tasksExpanded} aria-controls="tasks-section" onClick={() => setTasksExpanded(expanded => !expanded)}><span>TASKS</span><span className="sidebar-chevron" aria-hidden="true">⌄</span></button><button aria-label="Create task from a foundational skill" onClick={() => { setSkillsExpanded(true); setTasksExpanded(false); }}><Icon name="plus" size={15} /></button></div>{tasksExpanded && <nav id="tasks-section" className="skill-nav" aria-label="Agent tasks">{skills.map(skill => <button className={skill.id === activeId ? "active" : ""} onClick={() => { setActiveId(skill.id); setWorkspaceView("chat"); }} key={skill.id}><Icon name={skill.lifecycle === "accepted" ? "file" : "folder"} size={15}/><span className="skill-nav__name"><b>{skill.title}</b><small>{skill.file_name.replace(/\.md$/, "")} · {label(skill.lifecycle)}</small></span></button>)}</nav>}</section><div className="sidebar-footer"><button onClick={() => setNotice("Workspace preferences will be available here soon.")}><Icon name="settings" /> Settings</button></div></aside>
-    <main className="cookbook-thread"><header className="thread-header"><div className="thread-title"><span className="thread-kicker">Marketing Skill Agent</span><h1>{active?.title || "New task"}</h1></div><div className="mobile-skill-switcher"><select aria-label="Task" value={activeId} onChange={event => setActiveId(event.target.value)}>{skills.map(skill => <option key={skill.id} value={skill.id}>{skill.title}</option>)}</select><button onClick={() => setMode(mode === "chat" ? "document" : "chat")}><Icon name="panel" /></button></div><div className="thread-actions"><span className={`saved-pill ${active?.lifecycle === "accepted" ? "accepted" : "draft"}`}><i /> {saving ? "Saving" : active ? label(active.lifecycle) : "Loading"}</span><button onClick={download} disabled={!active?.document} aria-label="Download draft"><Icon name="download" /></button><button className="icon-button" onClick={() => setMode(mode === "chat" ? "document" : "chat")} aria-label="Toggle workspace"><Icon name="panel" /></button></div></header>
-      {workspaceView === "skills" ? <div className="thread-scroll skill-browser"><div className="thread-inner"><p className="thread-kicker">FOUNDATIONAL SKILLS</p><h2>Start a focused marketing task</h2><p className="skill-browser__intro">Pick a foundation to create a task with its own draft, chat, and context files.</p><input aria-label="Search foundational skills" autoFocus placeholder="Search foundational skills…" value={skillQuery} onChange={event => setSkillQuery(event.target.value)} /> <div className="foundation-list">{foundations.map(foundation => <button key={foundation.slug} onClick={() => void createTask(foundation.slug)}><span><b>{foundation.name}</b><small>{foundation.category} · {foundation.complexity}</small><p>{foundation.description}</p></span><span>+</span></button>)}{foundations.length === 0 && <p>No skills available.</p>}</div></div></div> : <div className={`thread-scroll ${mode === "document" ? "mobile-hidden" : ""}`}><div className="thread-inner">{messages.length === 0 && <article className="chat-message assistant welcome-message"><span className="assistant-avatar">C</span><div><p>Give Cookbook a public website, attach context, or ask for a direct revision. I’ll keep the conversation concise and put each draft in the workspace.</p><div className="prompt-suggestions"><button onClick={() => composerRef.current?.focus()}>Analyze a website</button><button onClick={() => submit(undefined, "Help me start from scratch")}>Start from scratch</button></div></div></article>}{messages.map(message => { const textParts = message.parts.filter(part => part.type === "text"); const questionParts = message.parts.filter(part => { const toolPart = part as ToolPart; return toolPart.type.startsWith("tool-") && question(toolPart.output); }); return <article className={`chat-message ${message.role === "user" ? "user" : "assistant"}`} key={message.id}>{message.role !== "user" && <span className="assistant-avatar">C</span>}<div className="message-body">{textParts.map((part, index) => <p key={index}>{plain((part as { text: string }).text)}</p>)}{questionParts.map((part, index) => { const toolPart = part as ToolPart; if (!question(toolPart.output)) return null; return <div className="answer-bricks" key={index}><p>{toolPart.output.prompt}</p><div>{toolPart.output.options.map(option => <button key={option} disabled={status !== "ready"} onClick={() => submit(undefined, option)}>{option}</button>)}</div></div>; })}</div></article>; })}{status !== "ready" && <article className="assistant-thinking" aria-live="polite"><span className="assistant-avatar">C</span><span className="thinking-status">{workingLabel(status)}</span><span className="thinking-dots" aria-hidden="true"><i /><i /><i /></span></article>}{error && <p className="chat-error" role="alert">{error.message} <button onClick={clearError}>Dismiss</button></p>}<p className="thread-hint" role="status">{notice}</p></div></div>}
-      {workspaceView === "chat" && <aside className={`skill-document ${mode === "chat" ? "mobile-hidden" : ""}`} aria-label="Draft workspace"><div className="document-header"><div><span>WORKSPACE · V{active?.document?.version || 1}</span><b>{active?.file_name || "No task selected"}</b></div><span className={`document-state ${active?.lifecycle === "accepted" ? "accepted" : ""}`}>{active ? label(active.lifecycle) : "Loading"}</span></div><div className="document-toolbar"><button onClick={() => setEditing(true)} disabled={!active}>Edit</button><button className="accept" onClick={accept} disabled={!active?.document || active.lifecycle === "accepted"}>Accept draft</button>{active?.research && <span>{active.research.page_count} sources · {Math.round((active.research.confidence || 0) * 100)}% confidence</span>}</div><div className="document-body">{editing ? <textarea className="markdown-editor" value={content} onChange={event => setContent(event.target.value)} aria-label="Edit Markdown draft" /> : <MarkdownPreview value={content} />}</div>{editing && <div className="document-footer"><button onClick={() => saveDocument()}>Save changes</button><button onClick={() => { setContent(active?.document?.content || ""); setEditing(false); }}>Cancel</button></div>}<div className="version-history"><b>Version history</b>{versions.slice(0, 6).map(version => <button key={version.id} onClick={() => restore(version.version)}>Restore v{version.version} · {version.source}</button>)}</div></aside>}
-      {workspaceView === "chat" && <form className="thread-composer" onSubmit={submit}><input ref={fileInputRef} className="file-input" type="file" multiple accept=".pdf,.docx,.txt,.md,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={event => { void uploadFiles(event.target.files); event.currentTarget.value = ""; }} />{attachments.length > 0 && <div className="attachment-row">{attachments.map(attachment => <span key={attachment.id}><Icon name="file" size={12} /> {attachment.file_name}<button type="button" aria-label={`Remove ${attachment.file_name}`} onClick={() => void removeAttachment(attachment.id)}><Icon name="x" size={12} /></button></span>)}</div>}<textarea ref={composerRef} value={input} onChange={event => { setInput(event.target.value); if (event.target.value.startsWith("/")) { setSkillQuery(event.target.value.slice(1)); setWorkspaceView("skills"); } }} onKeyDown={onKeyDown} placeholder={active ? `Ask for a change to ${active.title}` : "Choose a task to start"} rows={1} disabled={!active || status !== "ready"}/><div className="composer-bottom"><button type="button" className="composer-attach" aria-label="Attach context files" onClick={() => fileInputRef.current?.click()} disabled={!active || uploading || attachments.length >= 5}><Icon name="paperclip" size={15} /></button><button type="button" className="composer-model" onClick={() => { setWorkspaceView("skills"); setSkillQuery(""); }}><Icon name="spark" size={14} /> {active?.title || "Choose skill"} <span>⌄</span></button><span className="composer-hint">/ skills · 5 files max · Enter to send</span><button className="composer-send" type="submit" aria-label="Send message" disabled={!input.trim() || status !== "ready"}><Icon name="send" /></button></div></form>}
-    </main></section>;
+export function CookbookChatWorkspace({
+  initialSkillSlug,
+  initialTaskId,
+}: {
+  initialSkillSlug?: string;
+  initialTaskId?: string;
+}) {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [activeId, setActiveId] = useState(initialTaskId || "");
+  const [account, setAccount] = useState<
+    "loading" | "ready" | "signed-out" | "error"
+  >("loading");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [archived, setArchived] = useState(false);
+  const [input, setInput] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [slug, setSlug] = useState(initialSkillSlug || "");
+  const [query, setQuery] = useState("");
+  const [question, setQuestion] = useState("");
+  const [choices, setChoices] = useState<string[]>([]);
+  const [initial, setInitial] = useState<Initial | null>(null);
+  const [enterSends, setEnterSends] = useState(true);
+  const [rename, setRename] = useState("");
+  const drawer = useRef<HTMLDialogElement>(null);
+  const picker = useRef<HTMLDialogElement>(null);
+  const settings = useRef<HTMLDialogElement>(null);
+  const taskMenu = useRef<HTMLDialogElement>(null);
+  const creationKey = useRef(crypto.randomUUID());
+  const pendingPrompt = useRef<Initial | null>(null);
+  const active = tasks.find((task) => task.id === activeId);
+  const load = useCallback(async () => {
+    setNotice("");
+    try {
+      const data = await requestJSON<{ skills: Task[] }>(
+        "/api/cookbook/workspace",
+      );
+      setTasks(data.skills);
+      setAccount("ready");
+    } catch (error) {
+      setAccount(
+        (error as { status?: number }).status === 401 ? "signed-out" : "error",
+      );
+      setNotice(messageOf(error));
+    }
+  }, []);
+  useEffect(() => {
+    void load();
+    setInput(read("cookbook:new:input"));
+    try {
+      setCollapsed(localStorage.getItem("cookbook:collapsed") === "true");
+      setEnterSends(localStorage.getItem("cookbook:enterSends") !== "false");
+    } catch {}
+  }, [load]);
+  useEffect(() => {
+    function pop() {
+      setActiveId(new URL(location.href).searchParams.get("task") || "");
+    }
+    window.addEventListener("popstate", pop);
+    return () => window.removeEventListener("popstate", pop);
+  }, []);
+  function changeInput(value: string) {
+    setInput(value);
+    store("cookbook:new:input", value);
+  }
+  function select(id: string) {
+    if (busy || pending) return;
+    setInitial(null);
+    setActiveId(id);
+    setNotice("");
+    history.pushState(null, "", id ? `/create?task=${id}` : "/create");
+    drawer.current?.close();
+  }
+  function updateTask(task: Task) {
+    setTasks((current) =>
+      current.some((t) => t.id === task.id)
+        ? current.map((t) => (t.id === task.id ? task : t))
+        : [task, ...current],
+    );
+  }
+  function navigation() {
+    if (matchMedia("(max-width: 1199px)").matches) drawer.current?.showModal();
+    else {
+      setCollapsed((value) => {
+        try {
+          localStorage.setItem("cookbook:collapsed", String(!value));
+        } catch {}
+        return !value;
+      });
+    }
+  }
+  function signIn() {
+    store("cookbook:new:input", input);
+    location.assign(
+      `/sign-in?next=${encodeURIComponent(activeId ? `/create?task=${activeId}` : slug ? `/create?skill=${slug}` : "/create")}`,
+    );
+  }
+  async function createTask(selected: string, prompt: Initial | null) {
+    if (account !== "ready") {
+      setSlug(selected);
+      picker.current?.close();
+      setNotice(
+        "Sign in to create your task. Your prompt is kept in this browser.",
+      );
+      return;
+    }
+    setPending(true);
+    setNotice("");
+    try {
+      const data = await requestJSON<{ skill: Task }>(
+        "/api/cookbook/workspace/skill",
+        json({ slug: selected, requestId: creationKey.current }),
+      );
+      creationKey.current = crypto.randomUUID();
+      updateTask(data.skill);
+      setActiveId(data.skill.id);
+      setInitial(prompt);
+      setFiles([]);
+      changeInput("");
+      pendingPrompt.current = null;
+      history.pushState(null, "", `/create?task=${data.skill.id}`);
+      picker.current?.close();
+      drawer.current?.close();
+    } catch (error) {
+      setNotice(messageOf(error));
+    } finally {
+      setPending(false);
+    }
+  }
+  async function submit() {
+    if (pending || !input.trim()) return;
+    if (account !== "ready") {
+      signIn();
+      return;
+    }
+    setPending(true);
+    setNotice("");
+    const prompt = { text: input.trim(), files };
+    try {
+      if (slug) {
+        await createTask(slug, prompt);
+        return;
+      }
+      const route = await requestJSON<{
+        slug: string;
+        question: string;
+        choices: string[];
+      }>("/api/cookbook/workspace/route-task", json({ prompt: input.trim() }));
+      if (route.slug) await createTask(route.slug, prompt);
+      else {
+        pendingPrompt.current = prompt;
+        setQuestion(route.question);
+        setChoices(route.choices);
+        setQuery("");
+        picker.current?.showModal();
+      }
+    } catch (error) {
+      setNotice(messageOf(error));
+    } finally {
+      setPending(false);
+    }
+  }
+  async function taskAction(changes: Record<string, unknown>) {
+    if (!active) return;
+    setPending(true);
+    try {
+      const data = await requestJSON<{ skill: Task }>(
+        "/api/cookbook/workspace/task",
+        json({ taskId: active.id, ...changes }, "PATCH"),
+      );
+      updateTask({ ...active, ...data.skill });
+      taskMenu.current?.close();
+      if (changes.archived) selectAfterArchive();
+    } catch (error) {
+      setNotice(messageOf(error));
+    } finally {
+      setPending(false);
+    }
+  }
+  function selectAfterArchive() {
+    setActiveId("");
+    history.pushState(null, "", "/create");
+  }
+  const sidebar = (
+    <Sidebar
+      tasks={tasks}
+      activeId={activeId}
+      busy={busy || pending}
+      archived={archived}
+      onArchiveView={() => setArchived((v) => !v)}
+      onSelect={select}
+      onNew={() => select("")}
+      onSettings={() => settings.current?.showModal()}
+      onClose={() => {
+        drawer.current?.close();
+        setCollapsed(true);
+      }}
+    />
+  );
+  return (
+    <section
+      className={`cw-shell ${collapsed ? "cw-collapsed" : ""}`}
+      aria-label="Cookbook agent workspace"
+    >
+      <div className="cw-desktop-nav">{sidebar}</div>
+      <dialog
+        ref={drawer}
+        className="cw-drawer"
+        onClick={(event) => {
+          if (event.target === drawer.current) drawer.current.close();
+        }}
+      >
+        {sidebar}
+      </dialog>
+      <main className="cw-main">
+        <header className="cw-header">
+          <button
+            className="cw-icon"
+            onClick={navigation}
+            aria-label="Toggle navigation"
+            aria-expanded={!collapsed}
+          >
+            ☰
+          </button>
+          <button
+            className="cw-task-title"
+            disabled={!active || busy || pending}
+            onClick={() => {
+              setRename(active?.title || "");
+              taskMenu.current?.showModal();
+            }}
+          >
+            {active?.title || "New task"}
+            {active && <span aria-hidden="true">⌄</span>}
+          </button>
+          <span className="cw-header-status" role="status">
+            {busy
+              ? "Working…"
+              : account === "loading"
+                ? "Connecting…"
+                : account === "signed-out"
+                  ? "Sign in to save"
+                  : active?.lifecycle === "accepted"
+                    ? "Accepted"
+                    : active
+                      ? "Draft"
+                      : "Ready to create"}
+          </span>
+          {account === "signed-out" && (
+            <button className="cw-primary" onClick={signIn}>
+              Sign in
+            </button>
+          )}
+        </header>
+        {activeId ? (
+          <TaskLoader
+            key={activeId}
+            taskId={activeId}
+            initial={initial}
+            onUpdate={updateTask}
+            onBusy={setBusy}
+            onConsumed={() => setInitial(null)}
+            enterSends={enterSends}
+            onNew={() => select("")}
+          />
+        ) : (
+          <div className="cw-new-task">
+            <div className="cw-welcome">
+              <span className="cw-avatar">C</span>
+              <p className="cw-eyebrow">YOUR CONTEXT. YOUR CRAFT.</p>
+              <h1>What are we making?</h1>
+              <p>
+                Bring a goal, a website, or a rough idea. I’ll choose the right
+                recipe and turn it into a draft you can use.
+              </p>
+              <div className="cw-suggestions">
+                <button
+                  onClick={() => {
+                    changeInput(
+                      "Analyze this website and develop brand positioning: https://",
+                    );
+                    document.getElementById("cookbook-message")?.focus();
+                  }}
+                >
+                  Analyze a website ↗
+                </button>
+                <button
+                  onClick={() => {
+                    changeInput("Help me create ");
+                    document.getElementById("cookbook-message")?.focus();
+                  }}
+                >
+                  Start from scratch ＋
+                </button>
+                <button
+                  onClick={() => {
+                    setQuestion("Choose a recipe");
+                    setChoices([]);
+                    setQuery("");
+                    picker.current?.showModal();
+                  }}
+                >
+                  Explore 15 skills ⌄
+                </button>
+              </div>
+            </div>
+            {notice && (
+              <div className="cw-notice" role="status">
+                {notice}
+                {account === "error" && (
+                  <button onClick={() => void load()}>Retry connection</button>
+                )}
+              </div>
+            )}
+            <Composer
+              value={input}
+              onChange={changeInput}
+              onSubmit={() => void submit()}
+              files={files}
+              onRemoveFile={(index) =>
+                setFiles((current) => current.filter((_, i) => i !== index))
+              }
+              onFiles={(incoming) => {
+                if (account !== "ready") {
+                  signIn();
+                  return;
+                }
+                try {
+                  validateFiles([...files, ...incoming]);
+                  setFiles((current) => [...current, ...incoming]);
+                } catch (error) {
+                  setNotice(messageOf(error));
+                }
+              }}
+              skill={
+                catalog.find((s) => s.slug === slug)?.name ||
+                "Auto · choose a skill"
+              }
+              onSkill={() => {
+                pendingPrompt.current = null;
+                setChoices([]);
+                setQuestion("Choose a recipe");
+                picker.current?.showModal();
+              }}
+              busy={false}
+              disabled={pending || account === "loading"}
+              enterSends={enterSends}
+            />
+            {pending && (
+              <p className="cw-notice" role="status">
+                Choosing the right recipe…
+              </p>
+            )}
+          </div>
+        )}
+      </main>
+      <dialog ref={picker} className="cw-modal">
+        <div className="cw-modal-heading">
+          <h2>{question || "Choose a recipe"}</h2>
+          <button
+            className="cw-icon"
+            aria-label="Close skill picker"
+            onClick={() => picker.current?.close()}
+          >
+            ×
+          </button>
+        </div>
+        <p>Each task has its own conversation, files and draft.</p>
+        <input
+          aria-label="Search skills"
+          placeholder="Search all 15 skills…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {notice && (
+          <p className="cw-error" role="alert">
+            {notice}
+          </p>
+        )}
+        <div className="cw-catalog">
+          {catalog
+            .filter(
+              (s) =>
+                (!choices.length || choices.includes(s.slug)) &&
+                `${s.name} ${s.description}`
+                  .toLowerCase()
+                  .includes(query.toLowerCase()),
+            )
+            .map((s) => (
+              <button
+                disabled={pending}
+                key={s.slug}
+                onClick={() => {
+                  if (pendingPrompt.current)
+                    void createTask(s.slug, pendingPrompt.current);
+                  else {
+                    setSlug(s.slug);
+                    picker.current?.close();
+                    document.getElementById("cookbook-message")?.focus();
+                  }
+                }}
+              >
+                <strong>{s.name}</strong>
+                <small>{s.category}</small>
+                <span>{s.description}</span>
+              </button>
+            ))}
+        </div>
+        <button
+          onClick={() => {
+            setSlug("");
+            setChoices([]);
+            picker.current?.close();
+          }}
+        >
+          Let Cookbook choose
+        </button>
+      </dialog>
+      <dialog ref={settings} className="cw-modal">
+        <div className="cw-modal-heading">
+          <h2>Workspace settings</h2>
+          <button
+            className="cw-icon"
+            aria-label="Close settings"
+            onClick={() => settings.current?.close()}
+          >
+            ×
+          </button>
+        </div>
+        <label className="cw-setting">
+          <input
+            type="checkbox"
+            checked={enterSends}
+            onChange={(event) => {
+              setEnterSends(event.target.checked);
+              try {
+                localStorage.setItem(
+                  "cookbook:enterSends",
+                  String(event.target.checked),
+                );
+              } catch {}
+            }}
+          />
+          Enter sends a message
+        </label>
+        <p>Shift+Enter always adds a new line.</p>
+        <a href="/account">Manage account & billing →</a>
+        <p>
+          <a href="/cookbook">Manage reusable brand context →</a>
+        </p>
+      </dialog>
+      <dialog ref={taskMenu} className="cw-modal">
+        <div className="cw-modal-heading">
+          <h2>Task settings</h2>
+          <button
+            className="cw-icon"
+            aria-label="Close task settings"
+            onClick={() => taskMenu.current?.close()}
+          >
+            ×
+          </button>
+        </div>
+        <label>
+          Task name
+          <input
+            value={rename}
+            onChange={(e) => setRename(e.target.value)}
+            maxLength={100}
+          />
+        </label>
+        <button
+          disabled={pending || !rename.trim()}
+          onClick={() => void taskAction({ title: rename })}
+        >
+          Save name
+        </button>
+        <button
+          disabled={pending}
+          onClick={() => void taskAction({ archived: !active?.archived_at })}
+        >
+          {active?.archived_at ? "Restore task" : "Archive task"}
+        </button>
+        {notice && <p role="alert">{notice}</p>}
+      </dialog>
+    </section>
+  );
+}
+
+function TaskLoader({
+  taskId,
+  initial,
+  onUpdate,
+  onBusy,
+  onConsumed,
+  enterSends,
+  onNew,
+}: {
+  taskId: string;
+  initial: Initial | null;
+  onUpdate: (task: Task) => void;
+  onBusy: (busy: boolean) => void;
+  onConsumed: () => void;
+  enterSends: boolean;
+  onNew: () => void;
+}) {
+  const [data, setData] = useState<ThreadData | null>(null);
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    requestJSON<ThreadData>(`/api/cookbook/workspace/thread?taskId=${taskId}`, {
+      signal: controller.signal,
+    })
+      .then(setData)
+      .catch((error) => {
+        if (!controller.signal.aborted) setError(messageOf(error));
+      });
+    return () => controller.abort();
+  }, [taskId, attempt]);
+  if (error)
+    return (
+      <div className="cw-empty">
+        <p role="alert">{error}</p>
+        <button
+          onClick={() => {
+            setError("");
+            setAttempt((v) => v + 1);
+          }}
+        >
+          Retry
+        </button>
+        <a
+          href={`/sign-in?next=${encodeURIComponent(`/create?task=${taskId}`)}`}
+        >
+          Sign in
+        </a>
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="cw-empty" role="status">
+        Opening your task…
+      </div>
+    );
+  return (
+    <TaskThread
+      initialData={data}
+      initial={initial}
+      onUpdate={onUpdate}
+      onBusy={onBusy}
+      onConsumed={onConsumed}
+      enterSends={enterSends}
+      onNew={onNew}
+    />
+  );
+}
+function TaskThread({
+  initialData,
+  initial,
+  onUpdate,
+  onBusy,
+  onConsumed,
+  enterSends,
+  onNew,
+}: {
+  initialData: ThreadData;
+  initial: Initial | null;
+  onUpdate: (task: Task) => void;
+  onBusy: (busy: boolean) => void;
+  onConsumed: () => void;
+  enterSends: boolean;
+  onNew: () => void;
+}) {
+  const [data, setData] = useState(initialData);
+  const [input, setInput] = useState("");
+  const [notice, setNotice] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [panel, setPanel] = useState(false);
+  const [draftFiles, setDraftFiles] = useState<File[]>([]);
+  const runId = useRef("");
+  const started = useRef(false);
+  const lastInput = useRef("");
+  const lock = useRef(false);
+  const feed = useRef<HTMLDivElement>(null);
+  const nearBottom = useRef(true);
+  const task = data.task;
+  const key = `cookbook:${task.id}:input`;
+  const transport = useMemo(
+    () => new DefaultChatTransport<CookbookMessage>({ api: "/api/chat" }),
+    [],
+  );
+  const refresh = useCallback(async () => {
+    const next = await requestJSON<ThreadData>(
+      `/api/cookbook/workspace/thread?taskId=${initialData.task.id}`,
+    );
+    setData(next);
+    onUpdate(next.task);
+  }, [initialData.task.id, onUpdate]);
+  const { messages, sendMessage, status, error, clearError, stop } =
+    useChat<CookbookMessage>({
+      id: task.id,
+      messages: initialData.messages,
+      transport,
+      onFinish: () => {
+        lock.current = false;
+        void refresh().catch((error) => setNotice(messageOf(error)));
+      },
+      onError: () => {
+        lock.current = false;
+        setInput(lastInput.current);
+        store(key, lastInput.current);
+        void refresh().catch(() => {});
+      },
+    });
+  const streaming = status === "submitted" || status === "streaming";
+  const busy = streaming || uploading;
+  useEffect(() => {
+    onBusy(busy);
+    return () => onBusy(false);
+  }, [busy, onBusy]);
+  useEffect(() => {
+    setInput(read(key));
+  }, [key]);
+  useEffect(() => {
+    if (nearBottom.current && feed.current)
+      feed.current.scrollTop = feed.current.scrollHeight;
+  }, [messages]);
+  useEffect(() => {
+    if (!busy) return;
+    const handler = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [busy]);
+  useEffect(() => {
+    if (data.run?.status !== "running" || streaming) return;
+    const timer = setInterval(() => {
+      void refresh().catch(() => {});
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [data.run?.status, streaming, refresh]);
+  function changeInput(value: string) {
+    setInput(value);
+    store(key, value);
+  }
+  async function upload(files: File[]) {
+    validateFiles(files, data.attachments.length);
+    const form = new FormData();
+    form.set("skillId", task.id);
+    files.forEach((f) => form.append("files", f));
+    const result = await requestJSON<{ attachments: Attachment[] }>(
+      "/api/cookbook/workspace/attachments",
+      { method: "POST", body: form },
+    );
+    setData((current) => ({
+      ...current,
+      attachments: [...current.attachments, ...result.attachments],
+    }));
+    return result.attachments;
+  }
+  async function submit(value = input, files = draftFiles) {
+    if (lock.current || busy || !value.trim() || task.archived_at) return;
+    lock.current = true;
+    setNotice("");
+    clearError();
+    lastInput.current = value;
+    try {
+      setUploading(true);
+      const uploaded = files.length ? await upload(files) : [];
+      setDraftFiles([]);
+      const id = crypto.randomUUID();
+      runId.current = id;
+      setData((current) => ({ ...current, run: undefined }));
+      changeInput("");
+      setUploading(false);
+      await sendMessage(
+        { text: value },
+        {
+          body: {
+            taskId: task.id,
+            requestId: id,
+            attachmentIds: [...data.attachments, ...uploaded].map((a) => a.id),
+          },
+        },
+      );
+    } catch (error) {
+      changeInput(value);
+      setNotice(messageOf(error));
+    } finally {
+      lock.current = false;
+      setUploading(false);
+    }
+  }
+  useEffect(() => {
+    if (initial && !started.current) {
+      started.current = true;
+      setDraftFiles(initial.files);
+      void submit(initial.text, initial.files);
+      onConsumed();
+    }
+  }, [initial]);
+  async function cancel() {
+    const id = runId.current || data.run?.id;
+    if (!id) return;
+    try {
+      await requestJSON(
+        "/api/cookbook/workspace/run",
+        json({ runId: id }, "PATCH"),
+      );
+      await stop();
+      lock.current = false;
+      await refresh();
+      setNotice("Stopped. Saved drafts remain available.");
+    } catch (error) {
+      setNotice(messageOf(error));
+    }
+  }
+  const skill =
+    catalog.find((s) => s.slug === task.skill_slug) ||
+    catalog.find((s) => s.name === task.title);
+  return (
+    <div className={`cw-task-body ${panel ? "cw-panel-open" : ""}`}>
+      <div className="cw-chat-pane">
+        <div className="cw-conversation-heading">
+          <span>{skill?.name || "Choose a skill for this legacy task"}</span>
+          <button onClick={() => setPanel(true)}>
+            Open {task.document ? "draft" : "workspace"} ▤
+          </button>
+        </div>
+        <div
+          className="cw-feed"
+          ref={feed}
+          onScroll={() => {
+            const e = feed.current;
+            if (e)
+              nearBottom.current =
+                e.scrollHeight - e.scrollTop - e.clientHeight < 100;
+          }}
+        >
+          {!messages.length && (
+            <div className="cw-task-welcome">
+              <span className="cw-avatar">C</span>
+              <h2>Let’s make {task.title.toLowerCase()}.</h2>
+              <p>
+                {skill?.description ||
+                  "Select the right recipe below to continue this existing task."}
+              </p>
+              <p>
+                Share the outcome you want and any useful context. I’ll put the
+                work in your draft workspace.
+              </p>
+            </div>
+          )}
+          {!skill && (
+            <label>
+              Recipe for this task
+              <select
+                defaultValue=""
+                onChange={async (e) => {
+                  try {
+                    await requestJSON(
+                      "/api/cookbook/workspace/task",
+                      json({ taskId: task.id, slug: e.target.value }, "PATCH"),
+                    );
+                    await refresh();
+                  } catch (error) {
+                    setNotice(messageOf(error));
+                  }
+                }}
+              >
+                <option value="" disabled>
+                  Choose a skill
+                </option>
+                {catalog.map((s) => (
+                  <option key={s.slug} value={s.slug}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {messages.map((message) => (
+            <article
+              className={`cw-message cw-${message.role}`}
+              key={message.id}
+            >
+              <span className="cw-message-label">
+                {message.role === "user" ? "You" : "Cookbook"}
+              </span>
+              {message.parts.map((part, index) => {
+                if (part.type === "text")
+                  return <Markdown key={index} value={part.text} />;
+                if (
+                  part.type === "tool-askQuestion" &&
+                  part.state === "output-available"
+                )
+                  return (
+                    <div className="cw-question" key={index}>
+                      <p>{part.output.prompt}</p>
+                      <div>
+                        {part.output.options.map((option) => (
+                          <button
+                            disabled={busy}
+                            onClick={() => void submit(option)}
+                            key={option}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                      <small>Or type your own answer below.</small>
+                    </div>
+                  );
+                if (part.type === "tool-scrapeWebsite")
+                  return (
+                    <details
+                      className="cw-tool"
+                      key={index}
+                      open={part.state === "output-error"}
+                    >
+                      <summary>
+                        {part.state === "output-available"
+                          ? `Research complete · ${part.output.pageCount} pages`
+                          : part.state === "output-error"
+                            ? "Research failed"
+                            : "Reading website…"}
+                      </summary>
+                      {part.state === "output-available" && (
+                        <>
+                          {part.output.pages.map(
+                            (page) =>
+                              safeLink(page.url) && (
+                                <a
+                                  className="cw-source"
+                                  key={page.url}
+                                  href={safeLink(page.url)!}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  {page.title || page.url}
+                                </a>
+                              ),
+                          )}
+                          {!!part.output.failedPages.length && (
+                            <p>
+                              {part.output.failedPages.length} pages could not
+                              be read.
+                            </p>
+                          )}
+                        </>
+                      )}
+                      {part.state === "output-error" && (
+                        <p>
+                          Try another URL or continue with your own evidence.
+                        </p>
+                      )}
+                    </details>
+                  );
+                if (part.type === "tool-saveSkillMarkdown")
+                  return (
+                    <div className="cw-tool" key={index}>
+                      {part.state === "output-available" ? (
+                        <button onClick={() => setPanel(true)}>
+                          Draft v{part.output.version} saved · Review →
+                        </button>
+                      ) : part.state === "output-error" ? (
+                        "Draft could not be saved. Retry or check for newer edits."
+                      ) : (
+                        "Updating draft…"
+                      )}
+                    </div>
+                  );
+                return null;
+              })}
+            </article>
+          ))}
+          {streaming && (
+            <p className="cw-running" role="status">
+              {status === "submitted"
+                ? "Reviewing your request…"
+                : "Cookbook is working…"}{" "}
+              Keep this page open.
+            </p>
+          )}
+          {(error || notice) && (
+            <div className="cw-error" role="alert">
+              {notice ||
+                "This run did not finish. Your prompt and saved work are retained."}
+              {error && (
+                <button
+                  disabled={busy}
+                  onClick={() => void submit(lastInput.current || input)}
+                >
+                  Retry request
+                </button>
+              )}
+            </div>
+          )}
+          {data.run &&
+            ["failed", "interrupted", "cancelled"].includes(data.run.status) &&
+            !streaming && (
+              <div className="cw-notice">
+                <p>
+                  Run {data.run.status}.{" "}
+                  {data.run.error ||
+                    "Saved work is available in the workspace."}
+                </p>
+                <button
+                  disabled={busy}
+                  onClick={() => changeInput(data.run!.input)}
+                >
+                  Review request and retry
+                </button>
+              </div>
+            )}
+          {data.run?.status === "running" && !streaming && (
+            <div className="cw-notice">
+              This task has an active run.{" "}
+              <button onClick={() => void cancel()}>Stop run</button>
+            </div>
+          )}
+          {task.archived_at && (
+            <p className="cw-notice">
+              This task is archived. Restore it in Task settings to continue.
+            </p>
+          )}
+        </div>
+        <div className="cw-compose-area">
+          <Composer
+            value={input}
+            onChange={changeInput}
+            onSubmit={() => void submit()}
+            skill={skill?.name || "Choose a skill"}
+            onSkill={onNew}
+            busy={streaming}
+            disabled={
+              uploading ||
+              !skill ||
+              Boolean(task.archived_at) ||
+              (!streaming && data.run?.status === "running")
+            }
+            onStop={() => void cancel()}
+            attachments={data.attachments}
+            files={draftFiles}
+            onRemoveFile={(index) =>
+              setDraftFiles((current) => current.filter((_, i) => i !== index))
+            }
+            onFiles={(files) => {
+              try {
+                validateFiles(
+                  [...draftFiles, ...files],
+                  data.attachments.length,
+                );
+                setDraftFiles((current) => [...current, ...files]);
+              } catch (error) {
+                setNotice(messageOf(error));
+              }
+            }}
+            onRemove={async (id) => {
+              setUploading(true);
+              try {
+                await requestJSON(
+                  `/api/cookbook/workspace/attachments?id=${id}`,
+                  { method: "DELETE" },
+                );
+                await refresh();
+              } catch (error) {
+                setNotice(messageOf(error));
+              } finally {
+                setUploading(false);
+              }
+            }}
+            enterSends={enterSends}
+          />
+        </div>
+      </div>
+      {panel && (
+        <Artifact
+          task={task}
+          versions={data.versions}
+          busy={busy}
+          onRefresh={refresh}
+          onClose={() => setPanel(false)}
+        />
+      )}
+    </div>
+  );
 }
