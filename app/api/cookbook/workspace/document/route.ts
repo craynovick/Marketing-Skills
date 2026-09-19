@@ -1,3 +1,4 @@
+import { requireTaskAccess } from "@/lib/cookbook-access";
 import {
   account,
   apiError,
@@ -42,7 +43,8 @@ export async function PATCH(request: Request) {
         },
         { status: 400 },
       );
-    const { db } = await account();
+    const { db, user } = await account();
+    await requireTaskAccess(user.id,skillId);
     const { data, error } = await db.rpc("cookbook_save_document", {
       p_task: skillId,
       p_content: content,

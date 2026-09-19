@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function About(){return <main className="wrap prose about-page">
   <p className="eyebrow">THE COOKBOOK MANIFESTO • VOL. 1</p>
   <h1>Banish the bland.<br/>Add your flavor.</h1>
@@ -24,15 +26,16 @@ export default function About(){return <main className="wrap prose about-page">
   <section className="about-section">
     <p className="eyebrow">WHAT WE’RE COOKING</p>
     <h2>A public kitchen for thoughtful marketers.</h2>
-    <p>Cookbook is an open, original, continuously tested library of B2B marketing recipes. Each workflow is built to produce concrete, high-leverage deliverables, from customer interview syntheses and ICP maps to landing page teardowns and launch briefs.</p>
+    <p>Cookbook is an original, continuously tested library of B2B marketing recipes. Each workflow is built to produce concrete, high-leverage deliverables, from customer interview syntheses and ICP maps to landing page teardowns and launch briefs.</p>
+    <p>The recipes, Cookbook agent, and integration source are available on <a href="https://github.com/craynovick/Marketing-Skills">GitHub</a>. Look inside the kitchen, or explore the <Link href="/docs/self-host">self-hosting guide and licensing status</Link>.</p>
     <p>No prompt hacks. No gatekeeping. Just rigorous, reusable systems for moving at AI speed without sacrificing your brand soul.</p>
   </section>
 
   <section className="about-section">
     <p className="eyebrow">WHAT’S SIMMERING</p>
     <h2>On the menu.</h2>
-    <ul className="roadmap"><li><b>In testing</b> Pantry Sync, live bi-directional sync between your brand Cookbook and agent IDEs.</li><li><b>Simmering</b> Guest Chef Drops, contributed, peer-reviewed recipes from B2B operators and product marketers.</li><li><b>On deck</b> Flavor Profiler, automated brand voice and tone consistency checks for new drafts.</li></ul>
+    <ul className="roadmap"><li><b>Simmering</b> Guest Chef Drops, contributed, peer-reviewed recipes from B2B operators and product marketers.</li><li><b>On deck</b> Flavor Profiler, automated brand voice and tone consistency checks for new drafts.</li></ul>
   </section>
 
-  <section className="about-cta"><p className="eyebrow">ON-BRAND MARKETING CONTENT</p><h2>Stop serving bland AI output.</h2><p>Season your marketing with your brand’s actual voice.</p><div><a href="/create">Write your recipe →</a><a href="/#catalog">Grab a recipe</a></div></section>
+  <section className="about-cta"><p className="eyebrow">ON-BRAND MARKETING CONTENT</p><h2>Stop serving bland AI output.</h2><p>Season your marketing with your brand’s actual voice.</p><div><Link href="/create">Write your recipe →</Link><Link href="/#catalog">Grab a recipe</Link></div></section>
 </main>}

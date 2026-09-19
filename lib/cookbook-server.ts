@@ -24,6 +24,7 @@ export function apiError(error: unknown) {
         ? String(error.message)
         : "Request failed";
   const codes: Record<string, [number, string]> = {
+    PLAN_REQUIRED: [403, "This workflow requires a paid hosted plan. Brand foundations remain free."],
     AUTH_REQUIRED: [401, "Sign in to continue with your Cookbook."],
     STALE_VERSION: [
       409,
@@ -38,7 +39,7 @@ export function apiError(error: unknown) {
       409,
       "This request was already received. Reload the conversation to see its result.",
     ],
-    RUN_STOPPED: [409, "Generation stopped. Saved work is still available."],
+    RUN_STOPPED: [409, "Generation stopped. Review this conversation for any completed work."],
     RATE_LIMITED: [
       429,
       "You have reached the hourly limit. Please try again later.",

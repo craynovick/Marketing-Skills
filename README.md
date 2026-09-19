@@ -4,12 +4,12 @@ Open, model-agnostic marketing workflows for turning evidence into usable strate
 
 ## What is included
 
-- 15 reviewed marketing skills, from interview synthesis and ICP definition through campaigns and growth readouts.
+- 18 marketing skills, from interview synthesis and ICP definition through campaigns and growth readouts, including GTM strategy, offer/pricing, and sales enablement.
 - A Next.js catalog for browsing and running the skill specifications.
-- Evaluation fixtures and an automated metadata validator.
+- Five evaluation fixtures per skill, chat scenarios, an automated metadata validator, and source/export consistency tests.
 - A Dockerized catalog deployment for self-hosting.
 
-The Community edition is free and open source. You run it yourself and bring your own model provider credentials. A Managed Cloud plan is specified in [docs/pricing.md](docs/pricing.md): $6/month for hosting, updates, and team workspaces, plus transparent model usage.
+The repository includes the self-hosted application, but no source license is currently declared. Do not infer modification, redistribution, or commercial reuse permissions from source availability. Server-side generation currently uses AI Gateway; provider-specific BYOK routing remains future work. A Managed Cloud plan is specified in [docs/pricing.md](docs/pricing.md): $6/month for hosting, updates, and team workspaces, plus transparent model usage.
 
 ## Use a skill locally
 
@@ -31,6 +31,7 @@ Open `http://localhost:3000`. Rebuild catalog metadata after editing a skill:
 ```bash
 pnpm build:skills
 pnpm eval:skills
+pnpm test:skills
 ```
 
 ## Self-host with Docker
@@ -72,3 +73,7 @@ supabase/migrations/  Optional managed/self-hosted persistence schema
 ```
 
 See [docs/audit.md](docs/audit.md) for the current skill inventory and architecture findings.
+
+## Connect your AI app
+
+The API and MCP integration exposes recipes, approved brand context, reviewable foundation proposals, and paid hosted deliverable storage. See [connection and API instructions](docs/cookbook-integration.md) and [self-hosting](docs/self-hosting.md). Enable integrations only after migrations and configured-preview checks.
