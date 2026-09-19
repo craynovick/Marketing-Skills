@@ -4,6 +4,9 @@ import {
   documentColumns,
   uuid,
 } from "@/lib/cookbook-server";
+
+const RUN_STALE_AFTER_MS = 10 * 60 * 1000;
+
 export async function GET(request: Request) {
   try {
     const taskId = new URL(request.url).searchParams.get("taskId");
@@ -57,14 +60,17 @@ export async function GET(request: Request) {
     const run = runs.data?.[0];
     if (
       run?.status === "running" &&
-      Date.now() - Date.parse(run.updated_at) > 90_000
+      Date.now() - Date.parse(run.updated_at) > RUN_STALE_AFTER_MS
     ) {
       const { data } = await db
         .from("cookbook_agent_runs")
         .update({ status: "interrupted" })
         .eq("id", run.id)
         .eq("status", "running")
-        .lt("updated_at", new Date(Date.now() - 90_000).toISOString())
+        .lt(
+          "updated_at",
+          new Date(Date.now() - RUN_STALE_AFTER_MS).toISOString(),
+        )
         .select("*")
         .maybeSingle();
       if (data) Object.assign(run, data);

@@ -11,6 +11,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 export async function POST(request: Request) {
   let finish: ((status: string, error?: string) => Promise<void>) | undefined;
+  let stopHeartbeat: (() => void) | undefined;
   try {
     const body = await request.json();
     const { taskId, requestId, attachmentIds = [] } = body;
@@ -231,6 +232,17 @@ export async function POST(request: Request) {
       signal: request.signal,
     });
     const finishRun = finish;
+    // A run may include several tool calls and approach the route timeout. Keep its
+    // liveness timestamp current so a concurrent workspace refresh never cancels it.
+    const heartbeat = setInterval(() => {
+      void db
+        .from("cookbook_agent_runs")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", requestId)
+        .eq("user_id", user.id)
+        .eq("status", "running");
+    }, 20_000);
+    stopHeartbeat = () => clearInterval(heartbeat);
     return await createAgentUIStreamResponse({
       agent,
       uiMessages: messages,
@@ -240,6 +252,7 @@ export async function POST(request: Request) {
         "Cookbook could not finish this run. Saved work is retained. Retry from the conversation.",
       onEnd: async ({ responseMessage, isAborted, outcome }) => {
         try {
+          stopHeartbeat?.();
           const content = responseMessage.parts
             .filter((p) => p.type === "text")
             .map((p) => p.text)
@@ -275,6 +288,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    stopHeartbeat?.();
     await finish?.("failed", "Generation failed. Retry from the conversation.");
     return apiError(error);
   }
