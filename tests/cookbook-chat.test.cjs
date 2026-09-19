@@ -2,35 +2,45 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const ts = require('typescript');
 const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
 const root = path.resolve(__dirname, '..');
 
 // Compile the real TS modules in memory; no test framework or production test route.
-function loader(overrides = {}) {
-  const cache = new Map();
-  function load(name) {
-    if (Object.hasOwn(overrides, name)) return overrides[name];
-    if (!name.startsWith('@/')) return require(name);
-    const base = path.join(root, name.slice(2));
-    const file = ['.ts', '.tsx'].map(ext => base + ext).find(fs.existsSync);
-    if (!file) throw new Error(`Missing module: ${name}`);
-    if (cache.has(file)) return cache.get(file).exports;
-    const loadedModule = { exports: {} };
-    cache.set(file, loadedModule);
-    const { outputText } = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
-    });
-    new Function('require', 'module', 'exports', outputText)(load, loadedModule, loadedModule.exports);
-    return loadedModule.exports;
-  }
-  return load;
-}
+const { loader } = require('./ts-loader.cjs');
 const load = loader({ '@/lib/supabase/server': { createClient() { throw new Error('No database in unit tests'); } } });
 const { marketingChat, isRelevantFoundation } = load('@/lib/cookbook-chat');
 const { resolveSkill } = load('@/lib/cookbook-server');
 const { skills } = load('@/lib/generated-skills');
+
+test('brand proposals are bounded and reject ambiguous or unsafe input', () => {
+  const { validateBrandUpdates } = load('@/lib/cookbook-foundations');
+  const draft = { key: 'brand', content: '# Brand\nPaper Harbor', expectedVersion: 0, sources: ['https://example.com'] };
+  assert.doesNotThrow(() => validateBrandUpdates([draft]));
+  for (const invalid of [[], [draft, draft], [{ ...draft, expectedVersion: -1 }],
+    [{ ...draft, content: '# Brand\n# Another title' }], [{ ...draft, sources: ['javascript:alert(1)'] }],
+    [{ ...draft, key: 'secret' }], [{ ...draft, content: '# Brand\n' + 'x'.repeat(20000) }]]) {
+    assert.throws(() => validateBrandUpdates(invalid));
+  }
+});
+
+test('empty and terminal tasks never claim a draft is being saved', () => {
+  const { taskStatus } = load('@/lib/cookbook-foundations');
+  assert.equal(taskStatus({ lifecycle: 'draft' }), 'Ready to start');
+  assert.equal(taskStatus({ lifecycle: 'draft', has_document: true }), 'Draft');
+  assert.equal(taskStatus({ lifecycle: 'draft', run_status: 'failed' }), 'Needs attention');
+  assert.equal(taskStatus({ lifecycle: 'draft', run_status: 'cancelled' }), 'Needs attention');
+  assert.equal(taskStatus({ lifecycle: 'draft', run_status: 'awaiting_input' }), 'Your input needed');
+});
+
+test('explicit fictional and unrelated briefs exclude account memory', () => {
+  const { requestsTaskOnlyContext } = load('@/lib/cookbook-context');
+  for (const text of ['Three posts for a fictional stationery brand, Paper Harbor.',
+    'Use a different company for this example.', 'Ignore my brand context.']) {
+    assert.equal(requestsTaskOnlyContext(text), true);
+  }
+  assert.equal(requestsTaskOnlyContext('Help me describe my brand voice.'), false);
+});
 
 test('chat identity survives renaming and does not become a strategy skill', () => {
   assert.equal(resolveSkill({ skill_slug: marketingChat.slug, title: skills[0].name, file_name: 'draft.md' }).slug, marketingChat.slug);
@@ -99,6 +109,15 @@ test('agent loads only catalog skills and refuses tools after cancellation', asy
   const loaded = await agent.tools.loadSkill.execute({ slug: skills[0].slug });
   assert.equal(loaded.instructions, skills[0].skill);
   assert.equal(events.length, 1);
+  for (const slug of ['go-to-market-strategy', 'offer-pricing-strategy', 'sales-enablement-playbook']) {
+    const skill = skills.find(item => item.slug === slug);
+    assert.ok(agent.instructions.includes(`${slug}: ${skill.description}`));
+    const loaded = await agent.tools.loadSkill.execute({ slug });
+    const source = fs.readFileSync(path.join(root, 'content/skills', slug, 'SKILL.md'), 'utf8');
+    assert.equal(loaded.instructions, source);
+    const selected = await createCookbookAgent({ db: { from() { return query; } }, userId: 'owner', taskId: 'task', runId: 'run', skill, version: 0, content: '', context: '{}', signal: new AbortController().signal });
+    assert.ok(selected.instructions.includes(`SELECTED SKILL (${slug}, ${skill.version}):\n${source}`));
+  }
   await assert.rejects(agent.tools.loadSkill.execute({ slug: '../../private' }), /Unknown skill/);
   status = 'cancelled';
   await assert.rejects(agent.tools.loadSkill.execute({ slug: skills[0].slug }), /RUN_STOPPED/);

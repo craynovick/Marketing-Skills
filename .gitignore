@@ -8,3 +8,10 @@ out/
 .env
 .env.local
 .env.*.local
+/.swc
+
+# Built connector and release archives
+packages/cookbook-mcp/dist/
+packages/cookbook-mcp/README.md
+cookbook-mcp-connector-*.tgz
+SHA256SUMS

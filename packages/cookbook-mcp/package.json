@@ -1,0 +1,9 @@
+{
+  "name": "cookbook-mcp-connector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {"cookbook": "dist/cli.mjs"},
+  "files": ["dist", "README.md"],
+  "engines": {"node": ">=22"}
+}

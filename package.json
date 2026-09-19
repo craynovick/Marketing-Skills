@@ -7,27 +7,45 @@
     "build": "pnpm build:skills && next build",
     "build:skills": "node scripts/build-skills.mjs",
     "eval:skills": "node scripts/validate-skill-evals.mjs",
+    "test:skills": "node --test tests/cookbook-skills.test.cjs",
     "start": "next start",
     "lint": "eslint .",
-    "test:chat": "node --test tests/cookbook-chat.test.cjs"
+    "test:chat": "node --test tests/cookbook-chat.test.cjs",
+    "test:database": "node --test tests/cookbook-database.test.mjs",
+    "test:stream": "node --test tests/cookbook-stream.test.mjs",
+    "build:mcp": "node scripts/build-cookbook-mcp.mjs",
+    "test:integrations": "node --test tests/cookbook-integrations.test.mjs tests/cookbook-api.test.cjs",
+    "test:mcp": "node --test tests/cookbook-mcp.test.mjs"
   },
   "dependencies": {
-    "@ai-sdk/react": "^4.0.108",
+    "@ai-sdk/react": "^4.0.109",
+    "@ai-sdk/workflow": "^2.0.37",
+    "@modelcontextprotocol/server": "2.0.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
-    "ai": "^7.0.105",
+    "ai": "^7.0.106",
     "mammoth": "^1.12.3",
+    "mcp-handler": "2.2.0",
     "next": "16.1.1",
     "pdf-parse": "^2.4.5",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "workflow": "5.0.0-beta.53",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@modelcontextprotocol/sdk": "1.30.0",
     "@types/node": "22.10.2",
     "@types/react": "19.0.2",
     "@types/react-dom": "19.0.2",
+    "esbuild": "0.25.12",
     "eslint": "9.17.0",
     "eslint-config-next": "16.1.1",
     "typescript": "5.7.2"
-  }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.19.0"
 }
