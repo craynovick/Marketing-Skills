@@ -4,6 +4,7 @@ const config = [
   ...nextVitals,
   { ignores: [".next/**", "node_modules/**"] },
   {
+    files: ["**/*.{jsx,tsx}"],
     rules: {
       // Existing client components predate these stricter rules. Keep them visible
       // in CI without blocking this release; migrate each surface incrementally.

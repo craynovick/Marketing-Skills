@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
+import { marketingChat } from "@/lib/cookbook-chat";
 import { skills as catalog } from "@/lib/generated-skills";
 import type { CookbookMessage } from "@/lib/cookbook-agent";
 import { Composer } from "./cookbook/composer";
@@ -70,8 +71,6 @@ export function CookbookChatWorkspace({
   const [files, setFiles] = useState<File[]>([]);
   const [slug, setSlug] = useState(initialSkillSlug || "");
   const [query, setQuery] = useState("");
-  const [question, setQuestion] = useState("");
-  const [choices, setChoices] = useState<string[]>([]);
   const [initial, setInitial] = useState<Initial | null>(null);
   const [enterSends, setEnterSends] = useState(true);
   const [rename, setRename] = useState("");
@@ -80,8 +79,11 @@ export function CookbookChatWorkspace({
   const settings = useRef<HTMLDialogElement>(null);
   const taskMenu = useRef<HTMLDialogElement>(null);
   const creationKey = useRef(crypto.randomUUID());
-  const pendingPrompt = useRef<Initial | null>(null);
+  const creating = useRef(false);
   const active = tasks.find((task) => task.id === activeId);
+  const filteredSkills = catalog.filter((skill) =>
+    `${skill.name} ${skill.description}`.toLowerCase().includes(query.toLowerCase()),
+  );
   const load = useCallback(async () => {
     setNotice("");
     try {
@@ -149,6 +151,7 @@ export function CookbookChatWorkspace({
     );
   }
   async function createTask(selected: string, prompt: Initial | null) {
+    if (creating.current || account === "loading" || account === "error") return;
     if (account !== "ready") {
       setSlug(selected);
       picker.current?.close();
@@ -157,12 +160,17 @@ export function CookbookChatWorkspace({
       );
       return;
     }
+    creating.current = true;
     setPending(true);
     setNotice("");
     try {
       const data = await requestJSON<{ skill: Task }>(
         "/api/cookbook/workspace/skill",
-        json({ slug: selected, requestId: creationKey.current }),
+        json({
+          slug: selected,
+          requestId: creationKey.current,
+          title: prompt?.text,
+        }),
       );
       creationKey.current = crypto.randomUUID();
       updateTask(data.skill);
@@ -170,49 +178,26 @@ export function CookbookChatWorkspace({
       setInitial(prompt);
       setFiles([]);
       changeInput("");
-      pendingPrompt.current = null;
       history.pushState(null, "", `/create?task=${data.skill.id}`);
       picker.current?.close();
       drawer.current?.close();
     } catch (error) {
       setNotice(messageOf(error));
     } finally {
+      creating.current = false;
       setPending(false);
     }
   }
   async function submit() {
     if (pending || !input.trim()) return;
+    if (account === "error") return;
     if (account !== "ready") {
       signIn();
       return;
     }
-    setPending(true);
-    setNotice("");
-    const prompt = { text: input.trim(), files };
-    try {
-      if (slug) {
-        await createTask(slug, prompt);
-        return;
-      }
-      const route = await requestJSON<{
-        slug: string;
-        question: string;
-        choices: string[];
-      }>("/api/cookbook/workspace/route-task", json({ prompt: input.trim() }));
-      if (route.slug) await createTask(route.slug, prompt);
-      else {
-        pendingPrompt.current = prompt;
-        setQuestion(route.question);
-        setChoices(route.choices);
-        setQuery("");
-        picker.current?.showModal();
-      }
-    } catch (error) {
-      setNotice(messageOf(error));
-    } finally {
-      setPending(false);
-    }
+    await createTask(slug || marketingChat.slug, { text: input.trim(), files });
   }
+
   async function taskAction(changes: Record<string, unknown>) {
     if (!active) return;
     setPending(true);
@@ -242,7 +227,14 @@ export function CookbookChatWorkspace({
       archived={archived}
       onArchiveView={() => setArchived((v) => !v)}
       onSelect={select}
-      onNew={() => select("")}
+      onNew={() => {
+        setSlug("");
+        select("");
+      }}
+      onSkills={() => {
+        setQuery("");
+        picker.current?.showModal();
+      }}
       onSettings={() => settings.current?.showModal()}
       onClose={() => {
         drawer.current?.close();
@@ -271,7 +263,6 @@ export function CookbookChatWorkspace({
             className="cw-icon"
             onClick={navigation}
             aria-label="Toggle navigation"
-            aria-expanded={!collapsed}
           >
             ☰
           </button>
@@ -283,7 +274,7 @@ export function CookbookChatWorkspace({
               taskMenu.current?.showModal();
             }}
           >
-            {active?.title || "New task"}
+            {active?.title || "New chat"}
             {active && <span aria-hidden="true">⌄</span>}
           </button>
           <span className="cw-header-status" role="status">
@@ -291,6 +282,8 @@ export function CookbookChatWorkspace({
               ? "Working…"
               : account === "loading"
                 ? "Connecting…"
+                : account === "error"
+                  ? "Connection unavailable"
                 : account === "signed-out"
                   ? "Sign in to save"
                   : active?.lifecycle === "accepted"
@@ -314,7 +307,6 @@ export function CookbookChatWorkspace({
             onBusy={setBusy}
             onConsumed={() => setInitial(null)}
             enterSends={enterSends}
-            onNew={() => select("")}
           />
         ) : (
           <div className="cw-new-task">
@@ -323,8 +315,8 @@ export function CookbookChatWorkspace({
               <p className="cw-eyebrow">YOUR CONTEXT. YOUR CRAFT.</p>
               <h1>What are we making?</h1>
               <p>
-                Bring a goal, a website, or a rough idea. I’ll choose the right
-                recipe and turn it into a draft you can use.
+                Draft a post, shape a campaign, or sharpen your message.
+                Bring your goal and I’ll help turn it into content you can use.
               </p>
               <div className="cw-suggestions">
                 <button
@@ -339,27 +331,25 @@ export function CookbookChatWorkspace({
                 </button>
                 <button
                   onClick={() => {
-                    changeInput("Help me create ");
+                    changeInput("Draft three social posts about ");
                     document.getElementById("cookbook-message")?.focus();
                   }}
                 >
-                  Start from scratch ＋
+                  Draft social posts ＋
                 </button>
                 <button
                   onClick={() => {
-                    setQuestion("Choose a recipe");
-                    setChoices([]);
                     setQuery("");
                     picker.current?.showModal();
                   }}
                 >
-                  Explore 15 skills ⌄
+                  Explore skills ⌄
                 </button>
               </div>
             </div>
-            {notice && (
+            {(notice || account === "error") && (
               <div className="cw-notice" role="status">
-                {notice}
+                {notice || "Connection unavailable. Retry to reopen your workspace."}
                 {account === "error" && (
                   <button onClick={() => void load()}>Retry connection</button>
                 )}
@@ -387,21 +377,19 @@ export function CookbookChatWorkspace({
               }}
               skill={
                 catalog.find((s) => s.slug === slug)?.name ||
-                "Auto · choose a skill"
+                "Marketing chat"
               }
               onSkill={() => {
-                pendingPrompt.current = null;
-                setChoices([]);
-                setQuestion("Choose a recipe");
+                setQuery("");
                 picker.current?.showModal();
               }}
               busy={false}
-              disabled={pending || account === "loading"}
+              disabled={pending || account === "loading" || account === "error"}
               enterSends={enterSends}
             />
             {pending && (
               <p className="cw-notice" role="status">
-                Choosing the right recipe…
+                Opening your conversation…
               </p>
             )}
           </div>
@@ -409,7 +397,7 @@ export function CookbookChatWorkspace({
       </main>
       <dialog ref={picker} className="cw-modal">
         <div className="cw-modal-heading">
-          <h2>{question || "Choose a recipe"}</h2>
+          <h2>Choose a skill</h2>
           <button
             className="cw-icon"
             aria-label="Close skill picker"
@@ -418,10 +406,10 @@ export function CookbookChatWorkspace({
             ×
           </button>
         </div>
-        <p>Each task has its own conversation, files and draft.</p>
+        <p>Skills build reusable marketing foundations. Chats turn your context into content.</p>
         <input
           aria-label="Search skills"
-          placeholder="Search all 15 skills…"
+          placeholder={`Search ${catalog.length} skills…`}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -431,26 +419,13 @@ export function CookbookChatWorkspace({
           </p>
         )}
         <div className="cw-catalog">
-          {catalog
-            .filter(
-              (s) =>
-                (!choices.length || choices.includes(s.slug)) &&
-                `${s.name} ${s.description}`
-                  .toLowerCase()
-                  .includes(query.toLowerCase()),
-            )
-            .map((s) => (
+          {!filteredSkills.length && <p role="status">No matching skills. Try another search or use marketing chat.</p>}
+          {filteredSkills.map((s) => (
               <button
-                disabled={pending}
+                disabled={pending || account === "loading" || account === "error"}
                 key={s.slug}
                 onClick={() => {
-                  if (pendingPrompt.current)
-                    void createTask(s.slug, pendingPrompt.current);
-                  else {
-                    setSlug(s.slug);
-                    picker.current?.close();
-                    document.getElementById("cookbook-message")?.focus();
-                  }
+                  void createTask(s.slug, input.trim() ? { text: input.trim(), files } : null);
                 }}
               >
                 <strong>{s.name}</strong>
@@ -462,11 +437,11 @@ export function CookbookChatWorkspace({
         <button
           onClick={() => {
             setSlug("");
-            setChoices([]);
             picker.current?.close();
+            select("");
           }}
         >
-          Let Cookbook choose
+          Use marketing chat
         </button>
       </dialog>
       <dialog ref={settings} className="cw-modal">
@@ -546,7 +521,6 @@ function TaskLoader({
   onBusy,
   onConsumed,
   enterSends,
-  onNew,
 }: {
   taskId: string;
   initial: Initial | null;
@@ -554,7 +528,6 @@ function TaskLoader({
   onBusy: (busy: boolean) => void;
   onConsumed: () => void;
   enterSends: boolean;
-  onNew: () => void;
 }) {
   const [data, setData] = useState<ThreadData | null>(null);
   const [error, setError] = useState("");
@@ -603,7 +576,6 @@ function TaskLoader({
       onBusy={onBusy}
       onConsumed={onConsumed}
       enterSends={enterSends}
-      onNew={onNew}
     />
   );
 }
@@ -614,7 +586,6 @@ function TaskThread({
   onBusy,
   onConsumed,
   enterSends,
-  onNew,
 }: {
   initialData: ThreadData;
   initial: Initial | null;
@@ -622,7 +593,6 @@ function TaskThread({
   onBusy: (busy: boolean) => void;
   onConsumed: () => void;
   enterSends: boolean;
-  onNew: () => void;
 }) {
   const [data, setData] = useState(initialData);
   const [input, setInput] = useState("");
@@ -770,6 +740,7 @@ function TaskThread({
     }
   }
   const skill =
+    (task.skill_slug === marketingChat.slug ? marketingChat : undefined) ||
     catalog.find((s) => s.slug === task.skill_slug) ||
     catalog.find((s) => s.name === task.title);
   return (
@@ -865,6 +836,10 @@ function TaskThread({
                       <small>Or type your own answer below.</small>
                     </div>
                   );
+                if (part.type === "tool-loadSkill")
+                  return <div className="cw-tool" key={index}>
+                    {part.state === "output-available" ? `Using ${part.output.name}` : part.state === "output-error" ? "Skill could not be loaded." : "Loading relevant skill…"}
+                  </div>;
                 if (part.type === "tool-scrapeWebsite")
                   return (
                     <details
@@ -985,7 +960,6 @@ function TaskThread({
             onChange={changeInput}
             onSubmit={() => void submit()}
             skill={skill?.name || "Choose a skill"}
-            onSkill={onNew}
             busy={streaming}
             disabled={
               uploading ||

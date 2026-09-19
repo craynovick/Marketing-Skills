@@ -84,6 +84,8 @@ body:has(.cw-shell) > footer {
 }
 .cw-sidebar {
   display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
   flex-direction: column;
   height: 100%;
   padding: 16px 12px;
@@ -134,10 +136,13 @@ body:has(.cw-shell) > footer {
   background: transparent;
   padding: 6px;
 }
+.cw-navigation-sections {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
 .cw-task-list {
   min-height: 0;
-  overflow: auto;
-  flex: 1;
 }
 .cw-task-list button {
   display: block;
@@ -196,6 +201,8 @@ body:has(.cw-shell) > footer {
   flex-direction: column;
 }
 .cw-header {
+  background: #fff;
+  color: var(--ink);
   height: 66px;
   min-height: 66px;
   display: flex;

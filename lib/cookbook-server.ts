@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { marketingChat } from "@/lib/cookbook-chat";
 import { skills } from "@/lib/generated-skills";
 
 export const model = process.env.COOKBOOK_MODEL || "openai/gpt-5.6-sol";
@@ -63,6 +64,7 @@ export function resolveSkill(task: {
   title: string;
   file_name: string;
 }) {
+  if (task.skill_slug === marketingChat.slug) return marketingChat;
   // Only migrate exact known identities. Legacy ambiguous tasks require a user choice.
   return (
     skills.find((skill) => skill.slug === task.skill_slug) ||

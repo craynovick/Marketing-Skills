@@ -8,7 +8,8 @@
     "build:skills": "node scripts/build-skills.mjs",
     "eval:skills": "node scripts/validate-skill-evals.mjs",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:chat": "node --test tests/cookbook-chat.test.cjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.108",

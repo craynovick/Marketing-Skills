@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { marketingChat } from "@/lib/cookbook-chat";
 import type { Task } from "./types";
 export function Sidebar({
   tasks,
@@ -7,6 +9,7 @@ export function Sidebar({
   onArchiveView,
   onSelect,
   onNew,
+  onSkills,
   onSettings,
   onClose,
 }: {
@@ -17,15 +20,16 @@ export function Sidebar({
   onArchiveView: () => void;
   onSelect: (id: string) => void;
   onNew: () => void;
+  onSkills: () => void;
   onSettings: () => void;
   onClose: () => void;
 }) {
   return (
     <nav className="cw-sidebar" aria-label="Cookbook navigation">
       <div className="cw-brand">
-        <a href="/" aria-label="Cookbook home">
+        <Link href="/" aria-label="Cookbook home">
           Cookbook<span>YOUR MARKETING AGENT</span>
-        </a>
+        </Link>
         <button
           className="cw-icon"
           onClick={onClose}
@@ -35,39 +39,37 @@ export function Sidebar({
         </button>
       </div>
       <button className="cw-new" onClick={onNew} disabled={busy}>
-        ＋ New task
+        ＋ New chat
       </button>
-      <div className="cw-nav-heading">
-        <h2>{archived ? "Archived" : "Your tasks"}</h2>
-        <button disabled={busy} onClick={onArchiveView}>
-          {archived ? "Active" : "Archived"}
-        </button>
-      </div>
-      <div className="cw-task-list">
-        {tasks
-          .filter((t) => Boolean(t.archived_at) === archived)
-          .map((task) => (
-            <button
-              key={task.id}
-              onClick={() => onSelect(task.id)}
-              disabled={busy}
-              aria-current={task.id === activeId ? "page" : undefined}
-            >
-              <span>{task.title}</span>
-              <small>
-                {task.lifecycle === "accepted"
-                  ? "Accepted"
-                  : task.document
-                    ? "Draft"
-                    : "Ready to start"}
-              </small>
-            </button>
-          ))}
-        {!tasks.some((t) => Boolean(t.archived_at) === archived) && (
-          <p>
-            {archived ? "No archived tasks." : "Your work will appear here."}
-          </p>
-        )}
+      <div className="cw-navigation-sections">
+        {["Chats", "Skills"].map((section) => {
+          const isChat = section === "Chats";
+          const entries = tasks.filter((task) =>
+            Boolean(task.archived_at) === archived &&
+            (task.skill_slug === marketingChat.slug) === isChat,
+          );
+          return (
+            <section key={section} aria-label={section}>
+              <div className="cw-nav-heading">
+                <h2>{archived ? `Archived ${section.toLowerCase()}` : section}</h2>
+                <button disabled={busy} onClick={isChat ? onArchiveView : onSkills}>
+                  {isChat ? (archived ? "Active" : "Archived") : "Browse"}
+                </button>
+              </div>
+              <div className="cw-task-list">
+                {entries.map((task) => (
+                  <button key={task.id} onClick={() => onSelect(task.id)}
+                    disabled={busy} title={task.title}
+                    aria-current={task.id === activeId ? "page" : undefined}>
+                    <span>{task.title}</span>
+                    <small>{task.lifecycle === "accepted" ? "Accepted" : task.document ? "Draft" : "Ready to start"}</small>
+                  </button>
+                ))}
+                {!entries.length && <p>{archived ? "Nothing archived here." : isChat ? "Draft posts, emails, and campaigns in a new chat." : "Build reusable brand foundations with a skill."}</p>}
+              </div>
+            </section>
+          );
+        })}
       </div>
       <div className="cw-sidebar-bottom">
         <a href="/cookbook">Brand context</a>

@@ -26,7 +26,7 @@ export function Composer({
   files?: File[];
   onRemoveFile?: (index: number) => void;
   skill: string;
-  onSkill: () => void;
+  onSkill?: () => void;
   busy: boolean;
   disabled?: boolean;
   onStop?: () => void;
@@ -125,7 +125,7 @@ export function Composer({
         >
           ＋
         </button>
-        <button
+        {onSkill ? <button
           type="button"
           className="cw-skill-button"
           disabled={busy || disabled}
@@ -134,7 +134,7 @@ export function Composer({
         >
           {skill}
           <span aria-hidden="true">⌄</span>
-        </button>
+        </button> : <span className="cw-skill-button" title={skill}>{skill}</span>}
         <span className="cw-composer-hint">
           {enterSends ? "Enter to send" : "Use Send"} · {value.length}/4000
         </span>

@@ -6,6 +6,7 @@ import {
   model,
   uuid,
 } from "@/lib/cookbook-server";
+import { isRelevantFoundation } from "@/lib/cookbook-chat";
 import { createCookbookAgent } from "@/lib/cookbook-agent";
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -167,11 +168,7 @@ export async function POST(request: Request) {
       if (error) throw error;
     }
     const foundationIds = (foundationResult.data || [])
-      .filter(
-        (item) =>
-          skill.upstream.includes(item.skill_slug) ||
-          item.skill_slug === skill.slug,
-      )
+      .filter((item) => isRelevantFoundation(skill, item.skill_slug))
       .map((item) => item.accepted_version_id);
     const { data: foundations, error: foundationError } = await db
       .from("cookbook_documents")
