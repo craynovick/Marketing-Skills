@@ -1,5 +1,6 @@
 .docs-layout{display:grid;grid-template-columns:190px minmax(0,850px);gap:70px;padding-top:100px;padding-bottom:120px}
 .docs-prose{padding:0}
+.docs-prose code{overflow-wrap:anywhere}
 .docs-nav{position:sticky;top:28px;align-self:start;display:grid;gap:6px;padding-top:6px}
 .docs-nav a{padding:10px 12px;font-size:14px;color:var(--muted)}
 .docs-nav a.active,.docs-nav a:hover{background:var(--ink);color:var(--paper)}

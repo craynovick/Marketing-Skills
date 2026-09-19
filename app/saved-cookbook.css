@@ -1,0 +1,32 @@
+.saved-cookbook-page{padding-top:64px;padding-bottom:100px;min-height:65vh}
+.saved-cookbook-page h1{font-size:clamp(40px,6vw,64px);line-height:1;letter-spacing:-.06em;margin:0 0 20px;overflow-wrap:anywhere}
+.saved-cookbook-heading{display:flex;align-items:center;justify-content:space-between;gap:28px;margin-bottom:32px}
+.saved-cookbook-heading p:not(.eyebrow){max-width:620px;color:var(--muted);line-height:1.6;margin:0}
+.cookbook-action{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--ink);background:transparent;padding:10px 14px;font:13px ui-monospace,monospace;text-align:center;cursor:pointer;color:var(--ink)}
+.cookbook-action:hover{background:#e8e3d8}.cookbook-action:disabled{opacity:.45;cursor:not-allowed}
+.cookbook-action-primary{background:var(--acid)}
+.saved-cookbook-page :focus-visible,.settings-page :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.saved-cookbook-connect{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px;border:1px solid var(--line);margin-bottom:32px}
+.saved-cookbook-connect p{font-size:14px;line-height:1.6;color:var(--muted);max-width:650px;margin:0}
+.saved-cookbook-connect a,.saved-cookbook-heading>a{flex-shrink:0}
+.saved-skill-list{list-style:none;padding:0;margin:0;border-top:1px solid var(--ink)}
+.saved-skill-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:24px;padding:24px 0;border-bottom:1px solid var(--line)}
+.saved-skill-row h2{font-size:22px;letter-spacing:-.025em;margin:0 0 8px;overflow-wrap:anywhere}
+.saved-skill-row p{font:12px/1.6 ui-monospace,monospace;color:var(--muted);margin:0}
+.saved-skill-actions{display:flex;gap:8px;flex-wrap:wrap}
+.saved-load-more{margin-top:24px}
+.saved-cookbook-empty{padding:40px 24px;border:1px solid var(--line)}
+.saved-cookbook-empty h2{margin-top:0;letter-spacing:-.03em}
+.saved-cookbook-empty p,.saved-cookbook-error p{line-height:1.6}
+.settings-page .cookbook-connections{min-width:0}
+.settings-page .cookbook-connections input:not([type=checkbox]),.settings-page .cookbook-connections select{max-width:100%;min-width:0}
+.settings-page .cookbook-connections pre{max-width:100%;overflow-x:auto}
+.settings-page .cookbook-connections li{overflow-wrap:anywhere}
+.settings-page .cookbook-connections button,.settings-page .cookbook-connections select{min-height:44px}
+@media(max-width:799px){
+ .saved-cookbook-page{padding:40px 16px 64px}
+ .saved-cookbook-heading,.saved-cookbook-connect{flex-direction:column;align-items:flex-start;gap:20px}
+ .saved-skill-row{grid-template-columns:1fr;gap:16px}
+ .saved-skill-actions .cookbook-action{flex:1}
+ .settings-page{padding-top:40px}
+}
