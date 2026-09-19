@@ -3,6 +3,7 @@ import "./globals.css";
 import "./home.css";
 import "./paths.css";
 import "./cookbook.css";
+import "./codex-workspace.css";
 import "./agent-strip.css";
 import "./auth.css";
 import "./skill-list.css";
