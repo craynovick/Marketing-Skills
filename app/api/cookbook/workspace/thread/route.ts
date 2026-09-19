@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     const [history, versions, attachments, runs] = results;
     const run = runs.data?.[0];
     if (
-      run?.status === "running" &&
+      !run?.workflow_id && run?.status === "running" &&
       Date.now() - Date.parse(run.updated_at) > RUN_STALE_AFTER_MS
     ) {
       const { data } = await db
@@ -76,7 +76,7 @@ export async function GET(request: Request) {
       if (data) Object.assign(run, data);
     }
     return Response.json({
-      task: { ...task, document: versions.data?.[0] },
+      task: { ...task, document: versions.data?.[0], run_status: run?.status },
       messages: history.data
         ?.filter((row) => row.role !== "event")
         .map((row) => ({
