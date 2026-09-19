@@ -3,105 +3,46 @@
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
 
-type SkillStatus = "Queue" | "Drafting" | "Ready";
-type Skill = { id: string; file: string; title: string; status: SkillStatus; content: string; draftContent?: string };
-type ToolPart = { type: string; state?: string; input?: unknown; output?: unknown };
-const storageKey = "cookbook-create-v2";
+type Lifecycle = "queue" | "researching" | "draft" | "accepted";
+type Document = { id: string; content: string; version: number; source: string; created_at: string };
+type Skill = { id: string; file_name: string; title: string; lifecycle: Lifecycle; accepted_version_id: string | null; document?: Document; research?: { canonical_url: string; page_count: number; status: string; confidence: number | null; failed_pages: string[] } };
+type ToolPart = { type: string; output?: unknown };
+const agentVersion = "2026-09-18";
 
-const initialSkills: Skill[] = [
-  { id: "identity", file: "01_identity.md", title: "Brand identity", status: "Queue", content: "# Brand identity\n\nWaiting for research." },
-  { id: "audience", file: "02_audience.md", title: "Audience", status: "Queue", content: "# Primary audience\n\nWaiting for research." },
-  { id: "voice", file: "03_voice_tone.md", title: "Voice & tone", status: "Queue", content: "# Voice & tone\n\nWaiting for research." },
-  { id: "pillars", file: "04_pillars.md", title: "Content pillars", status: "Queue", content: "# Content pillars\n\nWaiting for research." },
-  { id: "guardrails", file: "05_guardrails.md", title: "Guardrails", status: "Queue", content: "# Guardrails\n\nWaiting for research." },
-];
-
-function iconFor(status: SkillStatus) { return status === "Ready" ? "✓" : status === "Drafting" ? "✦" : "○"; }
-function isSavedDraft(value: unknown): value is { fileName: string; content: string } { return value !== null && typeof value === "object" && "fileName" in value && "content" in value; }
-function toolLabel(part: ToolPart) { return part.type === "tool-scrapeWebsite" ? "Researching website" : part.type === "tool-saveSkillMarkdown" ? "Drafting skill" : "Working"; }
+function plain(text: string) { return text.replace(/\*\*(.*?)\*\*/g, "$1").replace(/^#{1,6}\s*/gm, "").replace(/^[-*]\s+/gm, "• "); }
+function draft(value: unknown): value is { fileName: string; content: string } { return Boolean(value && typeof value === "object" && "fileName" in value && "content" in value); }
+function label(lifecycle: Lifecycle) { return lifecycle === "accepted" ? "Accepted" : lifecycle === "draft" ? "Draft" : lifecycle === "researching" ? "Researching" : "Queue"; }
 
 export function CookbookChatWorkspace() {
-  const [skills, setSkills] = useState(initialSkills);
-  const [activeId, setActiveId] = useState("voice");
-  const [threads, setThreads] = useState<Record<string, UIMessage[]>>({});
-  const [input, setInput] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [notice, setNotice] = useState("Drafts stay in this browser until you explicitly accept them.");
-  const [hydrated, setHydrated] = useState(false);
-  const composerRef = useRef<HTMLTextAreaElement>(null);
-  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
-  const { messages, setMessages, sendMessage, status, error, clearError } = useChat({ transport });
-  const activeSkill = skills.find(skill => skill.id === activeId) ?? skills[0];
+  const [skills, setSkills] = useState<Skill[]>([]); const [activeId, setActiveId] = useState(""); const [input, setInput] = useState("");
+  const [notice, setNotice] = useState("Loading your synced workspace…"); const [mode, setMode] = useState<"chat" | "document">("chat"); const [versions, setVersions] = useState<Document[]>([]);
+  const [editing, setEditing] = useState(false); const [content, setContent] = useState(""); const [saving, setSaving] = useState(false); const [copied, setCopied] = useState(false);
+  const composerRef = useRef<HTMLTextAreaElement>(null); const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+  const { messages, sendMessage, status, error, clearError } = useChat({ transport }); const active = skills.find(skill => skill.id === activeId);
 
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved) as { skills?: Skill[]; threads?: Record<string, UIMessage[]>; activeId?: string };
-        if (parsed.skills?.length) setSkills(parsed.skills);
-        if (parsed.threads) { setThreads(parsed.threads); setMessages(parsed.threads[parsed.activeId || "voice"] || []); }
-        if (parsed.activeId && initialSkills.some(skill => skill.id === parsed.activeId)) setActiveId(parsed.activeId);
-      }
-    } catch { setNotice("Saved local drafts could not be restored. Start a new skill when ready."); }
-    setHydrated(true);
-  }, [setMessages]);
+  const load = async () => { const response = await fetch("/api/cookbook/workspace"); const data = await response.json(); if (!response.ok) { setNotice(data.error || "Could not load workspace."); return; } setSkills(data.skills); setActiveId(current => current || data.skills[0]?.id || ""); setNotice("All drafts sync to your account. Acceptance is explicit."); };
+  useEffect(() => { void load(); }, []);
+  useEffect(() => { if (!active) return; setContent(active.document?.content || `# ${active.title}\n\n`); setEditing(false); void fetch(`/api/cookbook/workspace/document?skillId=${active.id}`).then(response => response.json()).then(data => setVersions(data.versions || [])).catch(() => undefined); }, [activeId]);
+  useEffect(() => { for (const message of messages) for (const part of message.parts) { const item = part as ToolPart; const proposed = item.output; if (!item.type.startsWith("tool-") || !draft(proposed)) continue; const target = skills.find(skill => skill.file_name === proposed.fileName) || active; if (!target || target.document?.content === proposed.content) continue; void saveDocument(target.id, proposed.content, target.document?.version, "agent"); } }, [messages]);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    setThreads(current => ({ ...current, [activeId]: messages }));
-  }, [activeId, hydrated, messages]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ skills, threads, activeId })); }
-    catch { setNotice("This browser could not save your draft locally."); }
-  }, [activeId, hydrated, skills, threads]);
-
-  useEffect(() => {
-    for (const message of messages) for (const part of message.parts) {
-      if (!part.type.startsWith("tool-")) continue;
-      const tool = part as ToolPart;
-      const draft = tool.output;
-      if (!isSavedDraft(draft)) continue;
-      setSkills(current => current.map(skill => skill.file === draft.fileName ? { ...skill, draftContent: draft.content, status: "Drafting" } : skill));
-    }
-  }, [messages]);
-
-  function setActive(skillId: string) {
-    if (status === "submitted" || status === "streaming") { setNotice("Cookbook is finishing the current request. Switch skills once it is complete."); return; }
-    setThreads(current => ({ ...current, [activeId]: messages }));
-    setActiveId(skillId); setInput(""); clearError(); setMessages(threads[skillId] || []);
+  async function saveDocument(skillId = active?.id, value = content, expectedVersion = active?.document?.version, source: "user" | "agent" | "revert" = "user") {
+    if (!skillId) return; setSaving(true); const response = await fetch("/api/cookbook/workspace/document", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ skillId, content: value, expectedVersion, source, agentVersion }) }); const data = await response.json(); setSaving(false);
+    if (!response.ok) { setNotice(data.error || "Could not save draft."); return; }
+    setSkills(current => current.map(skill => skill.id === skillId ? { ...skill, lifecycle: "draft", document: data.document } : skill)); setContent(data.document.content); setEditing(false); setVersions(current => [data.document, ...current]); setNotice(source === "agent" ? "Cookbook updated the draft with the latest response." : "Draft autosaved to your account.");
   }
-  async function copySkill() {
-    if (activeSkill.status !== "Ready") { setNotice("Accept the current draft before copying final Markdown."); return; }
-    await navigator.clipboard?.writeText(activeSkill.content); setCopied(true); setNotice("Accepted Markdown copied."); window.setTimeout(() => setCopied(false), 1800);
-  }
-  function exportSkills() {
-    const accepted = skills.filter(skill => skill.status === "Ready");
-    if (!accepted.length) { setNotice("Accept at least one skill before exporting."); return; }
-    const archive = accepted.map(skill => `--- ${skill.file} ---\n${skill.content}`).join("\n\n"); const url = URL.createObjectURL(new Blob([archive], { type: "text/markdown" })); const link = document.createElement("a"); link.href = url; link.download = "cookbook-accepted-skills.md"; link.click(); URL.revokeObjectURL(url); setNotice(`Exported ${accepted.length} accepted skill${accepted.length === 1 ? "" : "s"} as Markdown.`);
-  }
-  function acceptSkill(skillId: string, content: string) { setSkills(current => current.map(skill => skill.id === skillId ? { ...skill, content, draftContent: undefined, status: "Ready" } : skill)); setNotice("Accepted locally in this browser. Server sync is the next implementation step."); }
-  function submit(event?: FormEvent, value = input) { event?.preventDefault(); const text = value.trim(); if (!text || status === "submitted" || status === "streaming") return; setInput(""); void sendMessage({ text }, { body: { activeSkill: activeSkill.file, activeSkillContent: activeSkill.draftContent || activeSkill.content } }); }
+  async function accept() { if (!active?.document) return; const response = await fetch("/api/cookbook/workspace/accept", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ skillId: active.id, version: active.document.version }) }); const data = await response.json(); if (!response.ok) return setNotice(data.error || "Could not accept draft."); setSkills(current => current.map(skill => skill.id === active.id ? { ...skill, lifecycle: "accepted", accepted_version_id: data.acceptedVersionId } : skill)); setNotice("Accepted version is ready to copy or download."); }
+  async function restore(version: number) { if (!active) return; const response = await fetch("/api/cookbook/workspace/revert", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ skillId: active.id, version }) }); const data = await response.json(); if (!response.ok) return setNotice(data.error || "Could not restore version."); setSkills(current => current.map(skill => skill.id === active.id ? { ...skill, lifecycle: "draft", document: data.document } : skill)); setContent(data.document.content); setVersions(current => [data.document, ...current]); setNotice(`Restored version ${version} as a new draft.`); }
+  async function copy() { if (!active?.document || active.lifecycle !== "accepted") return setNotice("Accept the current draft before copying it."); await navigator.clipboard?.writeText(active.document.content); setCopied(true); setNotice("Accepted Markdown copied."); window.setTimeout(() => setCopied(false), 1800); }
+  function download() { if (!active?.document || active.lifecycle !== "accepted") return setNotice("Accept the current draft before downloading it."); const url = URL.createObjectURL(new Blob([active.document.content], { type: "text/markdown" })); const link = document.createElement("a"); link.href = url; link.download = active.file_name; link.click(); URL.revokeObjectURL(url); }
+  function submit(event?: FormEvent, value = input) { event?.preventDefault(); if (!active || !value.trim() || status !== "ready") return; setInput(""); void sendMessage({ text: value.trim() }, { body: { activeSkill: active.file_name, activeSkillId: active.id, activeSkillContent: content } }); }
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); } }
 
   return <section className="cookbook-chat-shell" aria-label="Cookbook skill builder">
-    <aside className="cookbook-sidebar"><div className="cookbook-sidebar__top"><a className="cookbook-wordmark" href="/" aria-label="Cookbook home"><span>COOK</span><i>BOOK</i></a><button className="new-skill" onClick={() => setActive(skills.find(skill => skill.status === "Queue")?.id ?? activeId)}><span>+</span> New Skill</button></div><div className="skill-nav-label">YOUR BRAND SKILLS</div><nav className="skill-nav" aria-label="Brand skills">{skills.map(skill => <button className={skill.id === activeId ? "active" : ""} onClick={() => setActive(skill.id)} key={skill.id}><span className={`skill-state ${skill.status.toLowerCase()}`}>{iconFor(skill.status)}</span><span className="skill-nav__name"><b>{skill.file}</b><small>{skill.title}</small></span><span className={`skill-status ${skill.status.toLowerCase()}`}>{skill.status === "Ready" ? "✓ Accepted" : skill.status === "Drafting" ? "Draft" : "Queue"}</span></button>)}</nav><button className="export-skills" onClick={exportSkills}><span>↓</span> Export accepted Markdown</button></aside>
-    <main className="cookbook-thread"><header className="thread-header"><div><span className="thread-kicker">ACTIVE SKILL</span><h1>{activeSkill.file}</h1></div><div className="mobile-skill-switcher"><label htmlFor="mobile-skill">Skill</label><select id="mobile-skill" value={activeId} onChange={event => setActive(event.target.value)}>{skills.map(skill => <option value={skill.id} key={skill.id}>{skill.file}</option>)}</select></div><div className="thread-actions"><span className={`saved-pill ${activeSkill.status === "Ready" ? "accepted" : "draft"}`}><i /> {activeSkill.status === "Ready" ? "Accepted locally" : "Draft not accepted"}</span><button onClick={copySkill} disabled={activeSkill.status !== "Ready"}>{copied ? "Copied ✓" : "Copy accepted .md"}</button></div></header><div className="thread-scroll"><div className="thread-inner">
-      {messages.length === 0 && <article className="chat-message assistant welcome-message"><span className="assistant-avatar">C</span><div><p>I’m Cookbook, your brand strategist. Paste a public website and I’ll research it, create a first outline for <b>{activeSkill.file}</b>, then ask the one question needed to improve it.</p><div className="prompt-suggestions"><button onClick={() => composerRef.current?.focus()}>Analyze a website</button><button onClick={() => submit(undefined, "Help me start from scratch")}>Start from scratch</button></div></div></article>}
-      {messages.map(message => <article className={`chat-message ${message.role === "user" ? "user" : "assistant"}`} key={message.id}>{message.role !== "user" && <span className="assistant-avatar">C</span>}<div className="message-body">{message.parts.map((part, index) => {
-        if (part.type === "text") return <p key={`${message.id}-${index}`}>{part.text}</p>;
-        if (!part.type.startsWith("tool-")) return null;
-        const tool = part as ToolPart;
-        const draft = tool.output;
-        if (isSavedDraft(draft)) { const skillId = skills.find(skill => skill.file === draft.fileName)?.id ?? activeId; const accepted = skills.find(skill => skill.id === skillId)?.content === draft.content && skills.find(skill => skill.id === skillId)?.status === "Ready"; return <article className="skill-artifact" key={`${message.id}-${index}`}><div className="artifact-top"><span>{accepted ? "ACCEPTED VERSION" : "WORKING OUTLINE"}</span><span>{accepted ? "Saved in this browser" : "Review before accepting"}</span></div><div className="markdown-card"><div className="markdown-file"><span>⌘</span> {draft.fileName}</div><pre>{draft.content}</pre></div><div className="artifact-actions">{!accepted && <button className="accept" onClick={() => acceptSkill(skillId, draft.content)}>Accept <span>✓</span></button>}<button onClick={() => setInput("Make this more specific and more ownable.")}>Tweak in chat</button></div></article>; }
-        return <article className={`agent-run ${tool.state === "output-available" ? "complete" : ""}`} key={`${message.id}-${index}`}><div className="agent-run__heading"><span className="assistant-avatar">C</span><div><b>{toolLabel(tool)}</b><p>{tool.state === "output-available" ? "Complete" : "Cookbook agent is working"}</p></div><span className="agent-run__state">{tool.state === "output-available" ? "Done" : "Working"}</span></div></article>;
-      })}</div></article>)}
-      {(status === "submitted" || status === "streaming") && <article className="assistant-thinking"><span className="assistant-avatar">C</span><span /><span /><span /></article>}
-      {error && <p className="chat-error" role="alert">{error.message} <button onClick={clearError}>Dismiss</button></p>}
-      <p className="thread-hint" role="status">{notice}</p>
-    </div></div><form className="thread-composer" onSubmit={submit}><textarea ref={composerRef} value={input} onChange={event => setInput(event.target.value)} onKeyDown={onKeyDown} placeholder={`Paste a public website or message Cookbook about ${activeSkill.file}…`} rows={1} disabled={status === "submitted" || status === "streaming"}/><button type="submit" aria-label="Send message" disabled={!input.trim() || status === "submitted" || status === "streaming"}>↑</button><span className="composer-hint">Enter to send · Shift + Enter for a new line</span></form></main>
-  </section>;
+    <aside className="cookbook-sidebar"><div className="cookbook-sidebar__top"><a className="cookbook-wordmark" href="/" aria-label="Cookbook home"><span>COOK</span><i>BOOK</i></a></div><div className="skill-nav-label">YOUR BRAND SKILLS</div><nav className="skill-nav" aria-label="Brand skills">{skills.map(skill => <button className={skill.id === activeId ? "active" : ""} onClick={() => setActiveId(skill.id)} key={skill.id}><span className={`skill-state ${skill.lifecycle}`}>{skill.lifecycle === "accepted" ? "✓" : skill.lifecycle === "draft" ? "✦" : "○"}</span><span className="skill-nav__name"><b>{skill.file_name}</b><small>{skill.title}</small></span><span className={`skill-status ${skill.lifecycle}`}>{label(skill.lifecycle)}</span></button>)}</nav></aside>
+    <main className="cookbook-thread"><header className="thread-header"><div><span className="thread-kicker">ACTIVE SKILL</span><h1>{active?.file_name || "Workspace"}</h1></div><div className="mobile-skill-switcher"><select aria-label="Skill" value={activeId} onChange={event => setActiveId(event.target.value)}>{skills.map(skill => <option key={skill.id} value={skill.id}>{skill.file_name}</option>)}</select><button onClick={() => setMode(mode === "chat" ? "document" : "chat")}>{mode === "chat" ? "Document" : "Chat"}</button></div><div className="thread-actions"><span className={`saved-pill ${active?.lifecycle === "accepted" ? "accepted" : "draft"}`}><i /> {saving ? "Saving draft" : active ? label(active.lifecycle) : "Loading"}</span><button onClick={copy} disabled={active?.lifecycle !== "accepted"}>{copied ? "Copied ✓" : "Copy accepted .md"}</button><button onClick={download} disabled={active?.lifecycle !== "accepted"}>Download</button></div></header>
+      <div className={`thread-scroll ${mode === "document" ? "mobile-hidden" : ""}`}><div className="thread-inner">{messages.length === 0 && <article className="chat-message assistant welcome-message"><span className="assistant-avatar">C</span><div><p>Give Cookbook a public website or a direct revision. I’ll keep the conversation concise and put each draft in the workspace.</p><div className="prompt-suggestions"><button onClick={() => composerRef.current?.focus()}>Analyze a website</button><button onClick={() => submit(undefined, "Help me start from scratch")}>Start from scratch</button></div></div></article>}{messages.map(message => <article className={`chat-message ${message.role === "user" ? "user" : "assistant"}`} key={message.id}>{message.role !== "user" && <span className="assistant-avatar">C</span>}<div className="message-body">{message.parts.map((part, index) => part.type === "text" ? <p key={index}>{plain(part.text)}</p> : null)}</div></article>)}{status !== "ready" && <article className="assistant-thinking"><span className="assistant-avatar">C</span><span /><span /><span /></article>}{error && <p className="chat-error" role="alert">{error.message} <button onClick={clearError}>Dismiss</button></p>}<p className="thread-hint" role="status">{notice}</p></div></div>
+      <aside className={`skill-document ${mode === "chat" ? "mobile-hidden" : ""}`} aria-label="Workspace document"><div className="document-header"><div><span>SKILL WORKSPACE · V{active?.document?.version || 1}</span><b>{active?.file_name}</b></div><span className={`document-state ${active?.lifecycle === "accepted" ? "accepted" : ""}`}>{active ? label(active.lifecycle) : "Loading"}</span></div><div className="document-toolbar"><button onClick={() => setEditing(true)} disabled={!active}>Edit Markdown</button><button className="accept" onClick={accept} disabled={!active?.document || active.lifecycle === "accepted"}>Accept version</button>{active?.research && <span>Evidence: {active.research.page_count} pages · {Math.round((active.research.confidence || 0) * 100)}%</span>}</div><div className="document-body">{editing ? <textarea className="markdown-editor" value={content} onChange={event => setContent(event.target.value)} aria-label="Edit Markdown draft" /> : <pre>{content}</pre>}</div>{editing && <div className="document-footer"><button onClick={() => saveDocument()}>Save draft</button><button onClick={() => { setContent(active?.document?.content || ""); setEditing(false); }}>Cancel</button></div>}<div className="version-history"><b>Version history</b>{versions.slice(0, 6).map(version => <button key={version.id} onClick={() => restore(version.version)}>Restore v{version.version} · {version.source}</button>)}</div></aside>
+      <form className="thread-composer" onSubmit={submit}><textarea ref={composerRef} value={input} onChange={event => setInput(event.target.value)} onKeyDown={onKeyDown} placeholder={`Message Cookbook about ${active?.file_name || "this skill"}…`} rows={1} disabled={!active || status !== "ready"}/><button type="submit" aria-label="Send message" disabled={!input.trim() || status !== "ready"}>↑</button><span className="composer-hint">Enter to send · Shift + Enter for a new line</span></form>
+    </main></section>;
 }
