@@ -1,5 +1,6 @@
 ---
 name: SEO Content Brief
+title: SEO Content Brief
 description: Translate an approved content pillar and positioning into a useful, search-aware editorial brief.
 category: Content
 complexity: Medium
@@ -9,6 +10,16 @@ inputs:
   - Search intent
   - Brand context and constraints
 output: SEO content brief
+parameters:
+  - company
+  - audience
+  - positioning
+  - voice
+  - pillars
+  - proof
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile: []
 requires_profile:

@@ -1,5 +1,6 @@
 ---
 name: Weekly Growth Readout
+title: Weekly Growth Readout
 description: Turn supplied or imported growth data into a decision-ready weekly readout with explicit data-quality caveats.
 category: Analytics
 complexity: Low
@@ -10,6 +11,15 @@ inputs:
   - Source metadata and metric definitions
   - Business objectives and experiments
 output: weekly growth readout
+parameters:
+  - company
+  - audience
+  - positioning
+  - pillars
+  - proof
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile: []
 requires_profile:

@@ -1,5 +1,6 @@
 ---
 name: Brand Claims & Confidentiality Guide
+title: Brand Claims & Confidentiality Guide
 description: Turn evidence, privacy rules, and approval requirements into a reusable claims and proof governance system.
 category: Governance
 complexity: Medium
@@ -9,6 +10,12 @@ inputs:
   - Approval owner and process
   - Brand context and downstream use cases
 output: claims and confidentiality guide
+parameters:
+  - company
+  - proof
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile:
   - proof

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./home.css";
+import "./hero.css";
 import "./paths.css";
 import "./cookbook.css";
 import "./codex-workspace.css";

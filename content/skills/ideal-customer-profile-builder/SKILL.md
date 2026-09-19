@@ -1,5 +1,6 @@
 ---
 name: Ideal Customer Profile Builder
+title: Ideal Customer Profile Builder
 description: Turn customer evidence into a focused, testable ideal customer profile and buying context.
 category: Research
 complexity: Medium
@@ -8,6 +9,14 @@ inputs:
   - Offer
   - Market constraints
 output: ideal customer profile
+parameters:
+  - company
+  - audience
+  - offer
+  - proof
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile:
   - audience

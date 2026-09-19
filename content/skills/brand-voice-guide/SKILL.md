@@ -1,5 +1,6 @@
 ---
 name: Brand Voice Guide
+title: Brand Voice Guide
 description: Turn approved positioning, audience context, and writing evidence into usable, brand-specific voice rules.
 category: Strategy
 complexity: Medium
@@ -8,6 +9,14 @@ inputs:
   - Existing writing samples
   - Audience and tone constraints
 output: brand voice guide
+parameters:
+  - company
+  - audience
+  - positioning
+  - voice
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile:
   - voice

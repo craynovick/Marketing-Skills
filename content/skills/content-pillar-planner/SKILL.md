@@ -1,5 +1,6 @@
 ---
 name: Content Pillar Planner
+title: Content Pillar Planner
 description: Turn approved audience, positioning, voice, and proof into a focused content pillar system.
 category: Content
 complexity: High
@@ -9,6 +10,16 @@ inputs:
   - Available proof and formats
   - Brand context and constraints
 output: content pillar plan
+parameters:
+  - company
+  - audience
+  - positioning
+  - voice
+  - proof
+  - pillars
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile:
   - pillars

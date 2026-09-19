@@ -1,5 +1,6 @@
 ---
 name: Case Study Creator
+title: Case Study Creator
 description: Turn approved customer evidence into a credible, permissioned case study without inventing outcomes or proof.
 category: Content
 complexity: Medium
@@ -9,6 +10,15 @@ inputs:
   - Approval status
   - Brand positioning, voice, and constraints
 output: case study outline
+parameters:
+  - company
+  - audience
+  - positioning
+  - voice
+  - proof
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile: []
 requires_profile:

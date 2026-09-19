@@ -1,5 +1,6 @@
 ---
 name: Content Repurposing Engine
+title: Content Repurposing Engine
 description: Transform one approved source into distinct, platform-native assets without losing meaning, proof, or attribution.
 category: Content
 complexity: Low
@@ -9,6 +10,17 @@ inputs:
   - Audience
   - Brand context and constraints
 output: repurposing plan
+parameters:
+  - company
+  - audience
+  - positioning
+  - voice
+  - pillars
+  - proof
+  - formats
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile: []
 requires_profile:

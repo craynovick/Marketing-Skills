@@ -1,5 +1,6 @@
 ---
 name: Brand Positioning Workshop
+title: Brand Positioning Workshop
 description: Develop a differentiated, evidence-backed positioning hypothesis for a defined audience and buying situation.
 category: Strategy
 complexity: High
@@ -9,6 +10,14 @@ inputs:
   - Competitive context
   - Proof and constraints
 output: positioning brief
+parameters:
+  - company
+  - audience
+  - offer
+  - proof
+  - constraints
+models:
+  - any-instruction-following-llm
 featured: true
 version: 1.1.0
 writes_profile:

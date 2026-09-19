@@ -1,5 +1,6 @@
 ---
 name: Content Format Planner
+title: Content Format Planner
 description: Choose platform-native formats and create production briefs that apply audience, positioning, voice, pillars, and proof.
 category: Content
 complexity: Medium
@@ -9,6 +10,17 @@ inputs:
   - Channels and available visual assets
   - Brand context and constraints
 output: content format playbook
+parameters:
+  - company
+  - audience
+  - positioning
+  - voice
+  - pillars
+  - proof
+  - formats
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile:
   - formats

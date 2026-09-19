@@ -1,3 +1,6 @@
 import { CookbookChatWorkspace } from "@/components/cookbook-chat-workspace";
 
-export default function CreatePage() { return <CookbookChatWorkspace />; }
+export default async function CreatePage({ searchParams }: { searchParams: Promise<{ skill?: string }> }) {
+  const { skill } = await searchParams;
+  return <CookbookChatWorkspace initialSkillSlug={skill} />;
+}

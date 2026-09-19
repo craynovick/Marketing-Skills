@@ -1,5 +1,6 @@
 ---
 name: Customer Interview Synthesizer
+title: Customer Interview Synthesizer
 description: Synthesize customer conversations into traceable themes, buying evidence, and validated open questions.
 category: Research
 complexity: Medium
@@ -9,6 +10,13 @@ inputs:
   - Customer segment
   - Research question and decision
 output: interview synthesis
+parameters:
+  - company
+  - audience
+  - proof
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile:
   - audience

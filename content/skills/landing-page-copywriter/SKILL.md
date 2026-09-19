@@ -1,5 +1,6 @@
 ---
 name: Landing Page Copywriter
+title: Landing Page Copywriter
 description: Apply approved positioning, audience, voice, and proof to a focused landing page that earns a clear next action.
 category: Conversion
 complexity: Medium
@@ -9,6 +10,16 @@ inputs:
   - Proof points
   - Brand context and constraints
 output: landing page copy deck
+parameters:
+  - company
+  - audience
+  - positioning
+  - offer
+  - voice
+  - proof
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile: []
 requires_profile:

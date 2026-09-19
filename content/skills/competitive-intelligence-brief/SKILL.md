@@ -1,5 +1,6 @@
 ---
 name: Competitive Intelligence Brief
+title: Competitive Intelligence Brief
 description: Build an evidence-led view of competitors and market moves.
 category: Research
 complexity: Medium
@@ -8,6 +9,14 @@ inputs:
   - Market
   - Research notes
 output: competitive intelligence brief
+parameters:
+  - company
+  - audience
+  - offer
+  - proof
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.0.0
 ---
 

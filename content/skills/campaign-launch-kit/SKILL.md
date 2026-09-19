@@ -1,5 +1,6 @@
 ---
 name: Campaign Launch Kit
+title: Campaign Launch Kit
 description: Turn an approved marketing objective into a coordinated, measurable, and reviewable campaign launch plan.
 category: Campaigns
 complexity: High
@@ -10,6 +11,15 @@ inputs:
   - Audience, positioning, and brand context
   - Proof, budget, and approval constraints
 output: campaign launch kit
+parameters:
+  - company
+  - audience
+  - positioning
+  - offer
+  - proof
+  - constraints
+models:
+  - any-instruction-following-llm
 version: 1.1.0
 writes_profile: []
 requires_profile:

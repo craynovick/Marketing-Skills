@@ -1,34 +1,74 @@
 # Marketing Skills
 
-A Next.js catalog of curated, reviewed marketing workflows with optional Supabase-backed Cookbook sync.
+Open, model-agnostic marketing workflows for turning evidence into usable strategy, content, campaigns, and reporting. Each skill is a portable `SKILL.md`: give it to an instruction-following LLM, supply the requested context, and receive a structured deliverable with evidence and safety guardrails.
 
-## Run locally
+## What is included
+
+- 15 reviewed marketing skills, from interview synthesis and ICP definition through campaigns and growth readouts.
+- A Next.js catalog for browsing and running the skill specifications.
+- Evaluation fixtures and an automated metadata validator.
+- A Dockerized catalog deployment for self-hosting.
+
+The Community edition is free and open source. You run it yourself and bring your own model provider credentials. A Managed Cloud plan is specified in [docs/pricing.md](docs/pricing.md): $6/month for hosting, updates, and team workspaces, plus transparent model usage.
+
+## Use a skill locally
+
+1. Pick a file under `content/skills/`.
+2. Paste its contents into your preferred agent or make it available as that agent's skill/instruction file.
+3. Supply the input listed in frontmatter; the Guided run will collect missing essentials.
+4. Review the structured result before using it externally. Skills never authorize publishing, outreach, spend, or unreviewed claims.
+
+For the catalog app:
 
 ```bash
+corepack enable
 pnpm install
 pnpm dev
 ```
 
-The catalog content lives in `content/skills/*/SKILL.md`. `scripts/build-skills.mjs` reads the Markdown sources and generates `lib/generated-skills.ts` for the site. Edit skills as normal Markdown, then run `pnpm build:skills` to update the catalog.
-
-The library follows a workflow order. Foundational skills establish evidence, audience, positioning, voice, pillars, and proof/constraints. Applied skills consume that context to create content, campaigns, formats, and readouts. Every skill also works standalone: its Guided run asks for missing context in the agent chat.
-
-## Cookbook accounts
-
-Visitors can draft a Cookbook in browser storage without an account. Signing in with an email and password saves one account-owned Cookbook and automatically applies it across skills. When an account has no saved profile, a local draft is migrated on sign-in. An existing account Cookbook always wins, so a device-local draft is never silently overwritten into the account.
-
-Create the `cookbooks` table and row-level-security policy by applying [supabase/migrations/20260917000000_cookbooks.sql](supabase/migrations/20260917000000_cookbooks.sql). Copy `.env.example` to `.env.local` and set:
+Open `http://localhost:3000`. Rebuild catalog metadata after editing a skill:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-STRIPE_PRICE_PRO=
-STRIPE_PRICE_TEAM=
-SUPABASE_SERVICE_ROLE_KEY=
-AI_GATEWAY_API_KEY= # optional; enables website analysis
+pnpm build:skills
+pnpm eval:skills
 ```
 
-In Supabase Auth, enable the Email provider, add `http://localhost:3000/auth/callback`, `http://localhost:3000/auth/update-password`, and the corresponding production URLs as redirect URLs, and set the production URL as the Site URL. Apply the billing migration, create matching Stripe recurring prices, and configure the Stripe customer portal. Register `/api/webhooks/stripe` as a Stripe webhook for checkout completion and subscription lifecycle events. The first website analysis remains optional for free users; Pro and Team users can analyze unlimited public websites. Model execution and publishing integrations are still out of scope.
+## Self-host with Docker
+
+Copy `.env.example` to `.env.local`, set only the integrations you use, then run:
+
+```bash
+docker compose up --build
+```
+
+The catalog is available at `http://localhost:3000`. The current app supports the optional `AI_GATEWAY_API_KEY` analysis integration; provider-specific BYOK routing (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and `GOOGLE_GENERATIVE_AI_API_KEY`) is documented as the next runner milestone and is not yet wired into the server routes. You can always use the portable Markdown skills directly with any provider.
+
+Do not put API keys in skill files, commits, client-side environment variables, or browser storage. Keep them server-side in your self-hosted deployment.
+
+## Skill format
+
+Source skills live in `content/skills/<slug>/SKILL.md`. The supported schema and copy-ready template are in [docs/SKILL_TEMPLATE.md](docs/SKILL_TEMPLATE.md). The build script reads frontmatter into `lib/generated-skills.ts`; edit the source Markdown, never the generated file.
+
+## Contribute
+
+1. Open an issue to propose a workflow or identify a gap.
+2. Create `content/skills/<your-skill>/SKILL.md` from the template.
+3. Include clear inputs, a deterministic deliverable shape, evidence rules, safety limits, and handoffs.
+4. Add evaluation fixtures under `evals/<your-skill>/` for setup, apply, tune, validate, and safety modes.
+5. Run `pnpm build:skills`, `pnpm eval:skills`, and `pnpm lint`, then open a pull request.
+
+Contributions must be original, model/provider neutral, and safe to redistribute. Do not include customer-confidential material, API keys, or unlicensed content.
+
+## Repository map
+
+```text
+content/skills/       Canonical skill Markdown
+docs/                 Packaging, audit, and pricing documents
+evals/                Skill quality fixtures and rubric
+scripts/              Catalog generation and validation
+app/, components/     Next.js catalog and hosted-app UI
+lib/                  Catalog, billing, and integration code
+supabase/migrations/  Optional managed/self-hosted persistence schema
+```
+
+See [docs/audit.md](docs/audit.md) for the current skill inventory and architecture findings.

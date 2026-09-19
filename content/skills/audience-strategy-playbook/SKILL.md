@@ -1,5 +1,6 @@
 ---
 name: Audience Strategy Playbook
+title: Audience Strategy Playbook
 description: Prioritize beachhead audiences, buying situations, and message opportunities using evidence.
 category: Strategy
 complexity: High
@@ -8,6 +9,14 @@ inputs:
   - Offer and market
   - Sales or research evidence
 output: audience strategy playbook
+parameters:
+  - company
+  - audience
+  - offer
+  - proof
+  - constraints
+models:
+  - any-instruction-following-llm
 featured: true
 version: 1.2.0
 writes_profile:
