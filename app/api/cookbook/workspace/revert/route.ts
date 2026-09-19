@@ -1,3 +1,4 @@
+import { requireTaskAccess } from "@/lib/cookbook-access";
 import { account, apiError, uuid } from "@/lib/cookbook-server";
 export async function POST(request: Request) {
   try {
@@ -14,6 +15,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     const { db, user } = await account();
+    await requireTaskAccess(user.id,skillId);
     const { data: target, error: readError } = await db
       .from("cookbook_documents")
       .select("content")

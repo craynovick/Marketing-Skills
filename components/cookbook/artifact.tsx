@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Markdown, safeLink } from "./markdown";
 import { json, messageOf, requestJSON, type Draft, type Task } from "./types";
 export function Artifact({
@@ -21,6 +21,8 @@ export function Artifact({
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState("");
   const [compare, setCompare] = useState("");
+  const panel = useRef<HTMLElement>(null);
+  useEffect(() => { panel.current?.focus(); }, []);
   const document = task.document;
   const accepted = document?.id === task.accepted_version_id;
   async function action(url: string, body: unknown) {
@@ -53,7 +55,7 @@ export function Artifact({
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   return (
-    <section className="cw-artifact" aria-label="Draft workspace">
+    <section ref={panel} tabIndex={-1} className="cw-artifact" aria-label="Draft workspace" onKeyDown={event => { if (event.key === "Escape" && !editing) onClose(); }}>
       <div className="cw-artifact-heading">
         <div>
           <small>{accepted ? "ACCEPTED" : "DRAFT WORKSPACE"}</small>
@@ -62,6 +64,7 @@ export function Artifact({
               ? `Version ${document.version}`
               : "Your draft will appear here"}
           </strong>
+          <small>{task.file_name}</small>
         </div>
         <button
           className="cw-icon"

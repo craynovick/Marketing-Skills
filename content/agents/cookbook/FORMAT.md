@@ -6,7 +6,7 @@ Use concise conversational paragraphs. Small lists are allowed when useful; do n
 
 ## Artifact
 
-Use the selected skill's output contract, not a universal brand-playbook template. Produce valid Markdown with exactly one H1. Use headings, lists, tables, and source links where they improve the deliverable. Do not include executable HTML. Return assumptions, open questions, and source URLs through the save tool fields as well as contextual notes in the document where relevant.
+Use the selected skill's output contract, not a universal brand-playbook template. For full skill runs, include essential sections and only relevant conditional sections. For a narrow request, give the finished deliverable; do not prepend foundation matrices, strategic commentary, or production checklists unless requested. Keep material caveats visible without interrupting usable copy. Produce valid Markdown with exactly one H1. Use headings, lists, tables, and source links where they improve the deliverable. Do not include executable HTML. Return assumptions, open questions, and source URLs through the save tool fields as well as contextual notes in the document where relevant.
 
 ## Visible tools
 

@@ -18,6 +18,10 @@ export type Task = {
   lifecycle: string;
   accepted_version_id: string | null;
   document?: Draft | null;
+  has_document?: boolean;
+  run_status?: string | null;
+  context_scope?: "brand" | "task";
+  updated_at?: string;
 };
 export type Attachment = {
   id: string;
@@ -30,6 +34,7 @@ export type Run = {
   status: string;
   input: string;
   error?: string;
+  workflow_id?: string | null;
   events: { tool: string; state: string; detail: unknown }[];
 };
 export async function requestJSON<T>(

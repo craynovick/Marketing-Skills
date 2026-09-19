@@ -1,3 +1,4 @@
+import { requireTaskAccess } from "@/lib/cookbook-access";
 import { createAgentUIStreamResponse, generateText, type UIMessage } from "ai";
 import {
   account,
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     const { db, user } = await account();
+    await requireTaskAccess(user.id,taskId);
     const { data: task } = await db
       .from("cookbook_skills")
       .select("*")

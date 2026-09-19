@@ -1,3 +1,4 @@
+import { taskStatus } from "@/lib/cookbook-foundations";
 import Link from "next/link";
 import { marketingChat } from "@/lib/cookbook-chat";
 import type { Task } from "./types";
@@ -12,7 +13,11 @@ export function Sidebar({
   onSkills,
   onSettings,
   onClose,
+  onBrand,
+  onMore,
 }: {
+  onBrand?: () => void;
+  onMore?: () => void;
   tasks: Task[];
   activeId: string;
   busy: boolean;
@@ -41,6 +46,7 @@ export function Sidebar({
       <button className="cw-new" onClick={onNew} disabled={busy}>
         ＋ New chat
       </button>
+      <button className="cw-new" onClick={onBrand}>▤ Your Cookbook</button>
       <div className="cw-navigation-sections">
         {["Chats", "Skills"].map((section) => {
           const isChat = section === "Chats";
@@ -62,7 +68,7 @@ export function Sidebar({
                     disabled={busy} title={task.title}
                     aria-current={task.id === activeId ? "page" : undefined}>
                     <span>{task.title}</span>
-                    <small>{task.lifecycle === "accepted" ? "Accepted" : task.document ? "Draft" : "Ready to start"}</small>
+                    <small>{taskStatus(task)}</small>
                   </button>
                 ))}
                 {!entries.length && <p>{archived ? "Nothing archived here." : isChat ? "Draft posts, emails, and campaigns in a new chat." : "Build reusable brand foundations with a skill."}</p>}
@@ -72,7 +78,7 @@ export function Sidebar({
         })}
       </div>
       <div className="cw-sidebar-bottom">
-        <a href="/cookbook">Brand context</a>
+        {onMore && <button onClick={onMore}>Load more conversations</button>}
         <button onClick={onSettings}>Settings & account</button>
       </div>
     </nav>

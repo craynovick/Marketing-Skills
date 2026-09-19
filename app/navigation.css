@@ -1,0 +1,32 @@
+.site-header{position:relative;z-index:30}
+.site-header nav{gap:20px}
+.header-controls{display:flex;align-items:center;gap:26px;position:relative;font-size:15px;color:#aaa}
+.primary-navigation{display:flex;align-items:center;gap:28px}
+.primary-navigation a,.header-sign-in{display:flex;align-items:center;min-height:44px}
+.header-controls a:hover,.header-controls button:hover{color:var(--paper)}
+.header-controls button{color:inherit;background:transparent;cursor:pointer}
+.header-controls :focus-visible{outline:2px solid var(--acid);outline-offset:3px}
+.navigation-pending{visibility:hidden}
+.header-account-slot{width:70px;display:flex;justify-content:flex-end}
+.account-toggle,.account-placeholder,.navigation-toggle{width:44px;height:44px;display:grid;place-items:center;flex-shrink:0}
+.account-toggle,.account-placeholder{border:1px solid #555;border-radius:50%}
+.account-toggle img{border-radius:50%;object-fit:cover}
+.account-placeholder{opacity:.35}
+.header-sign-in{justify-content:center;border:1px solid var(--acid);color:var(--acid);width:70px;font-size:13px}
+.navigation-toggle{display:none;border:1px solid #555}
+.account-dropdown{position:absolute;right:0;top:calc(100% + 10px);width:min(260px,calc(100vw - 32px));padding:8px;background:var(--ink);border:1px solid #555;box-shadow:0 12px 24px #0003;color:var(--paper)}
+.account-dropdown a,.account-dropdown button{display:flex;align-items:center;min-height:44px;width:100%;padding:10px 12px;text-align:left;border:0;font:inherit}
+.account-dropdown a:hover,.account-dropdown button:hover{background:#292929}
+.account-dropdown button{border-top:1px solid #444;margin-top:4px}
+.account-dropdown p{padding:8px 12px;margin:0;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.account-identity{color:#aaa;border-bottom:1px solid #444}
+body:has(.auth-page) .header-controls{display:none}
+@media(max-width:799px){
+ .site-header nav{padding-left:16px;padding-right:16px}
+ .header-controls{gap:12px}
+ .navigation-toggle{display:grid}
+ .primary-navigation{display:none;position:absolute;right:0;top:calc(100% + 10px);width:min(280px,calc(100vw - 32px));padding:8px;background:var(--ink);border:1px solid #555;box-shadow:0 12px 24px #0003}
+ .primary-navigation.is-open{display:flex;flex-direction:column;align-items:stretch;gap:0}
+ .primary-navigation a{padding:10px 12px}
+ .primary-navigation a:hover{background:#292929}
+}

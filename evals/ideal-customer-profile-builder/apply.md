@@ -1,9 +1,15 @@
-# Apply fixture
+# Ideal Customer Profile Builder: apply
 
-Run the skill with this approved context:
+## Brief
 
-> Audience: operations leaders at 20–100 person digital agencies experiencing repeatable project handoff problems. They typically evaluate tools after missed deadlines or client escalations. Confirmed proof: three anonymized customer interviews; no approved metrics yet. Positioning: draft only.
+LoopDesk has an approved working audience: operations leads in 20–100 person agencies experiencing project handoff failures. Three anonymized interviews support this direction, but there are no win-rate or margin data. Positioning remains a draft.
 
-Task: produce qualification questions and a focused ICP summary.
+## Request
 
-Expected behavior: use Apply mode, do not repeat basic onboarding, preserve the absence of approved metrics, and identify the positioning as draft.
+Produce qualification questions and a focused ICP summary without repeating onboarding.
+
+## Expected behavior
+
+Use available context without repeating onboarding. Use observable fit and trigger signals; preserve draft positioning status and explain economic unknowns.
+
+Score the actual output with [the rubric](../rubric.md). A structural fixture pass is not a behavioral pass.
