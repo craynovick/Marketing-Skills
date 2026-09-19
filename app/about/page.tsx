@@ -34,5 +34,5 @@ export default function About(){return <main className="wrap prose about-page">
     <ul className="roadmap"><li><b>In testing</b> Pantry Sync, live bi-directional sync between your brand Cookbook and agent IDEs.</li><li><b>Simmering</b> Guest Chef Drops, contributed, peer-reviewed recipes from B2B operators and product marketers.</li><li><b>On deck</b> Flavor Profiler, automated brand voice and tone consistency checks for new drafts.</li></ul>
   </section>
 
-  <section className="about-cta"><p className="eyebrow">ON-BRAND MARKETING CONTENT</p><h2>Stop serving bland AI output.</h2><p>Season your marketing with your brand’s actual voice.</p><div><a href="/cookbook">Write your recipe →</a><a href="/#catalog">Grab a recipe</a></div></section>
+  <section className="about-cta"><p className="eyebrow">ON-BRAND MARKETING CONTENT</p><h2>Stop serving bland AI output.</h2><p>Season your marketing with your brand’s actual voice.</p><div><a href="/create">Write your recipe →</a><a href="/#catalog">Grab a recipe</a></div></section>
 </main>}

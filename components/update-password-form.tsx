@@ -63,6 +63,6 @@ export function UpdatePasswordForm() {
       {confirmationError && <span className="field-error" id="confirm-password-error">{confirmationError}</span>}
     </label>
     <button className="submit-button" disabled={saving}>{saving && <span className="spinner" aria-hidden="true" />}{saving ? "Updating password…" : "Update password"}</button>
-    {status && <p role="status" className="form-message form-message--success">{status} <a href="/cookbook">Open Cookbook →</a></p>}
+    {status && <p role="status" className="form-message form-message--success">{status} <a href="/create">Open Cookbook →</a></p>}
   </form>;
 }

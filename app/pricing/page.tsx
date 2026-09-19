@@ -11,7 +11,7 @@ export default function PricingPage() {
       {(Object.entries(plans) as [Plan, typeof plans[Plan]][]).map(([plan, details]) => <article className={`pricing-card ${plan === "pro" ? "featured" : ""}`} key={plan}>
         <p className="eyebrow">{details.name}</p><h2>{details.price}</h2><p>{details.description}</p>
         <ul>{details.features.map(feature => <li key={feature}>{feature}</li>)}</ul>
-        {plan === "free" ? <Link className="pricing-link" href="/cookbook">Start free</Link> : <CheckoutButton plan={plan} label={`Choose ${details.name}`} />}
+        {plan === "free" ? <Link className="pricing-link" href="/create">Start free</Link> : <CheckoutButton plan={plan} label={`Choose ${details.name}`} />}
       </article>)}
     </div>
     <p className="pricing-note">Subscriptions are handled securely by Stripe. You can cancel or update payment details from your account.</p>

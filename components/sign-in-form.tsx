@@ -54,9 +54,9 @@ export function SignInForm() {
     event.preventDefault(); if (!validateEmail() || !validatePassword()) return; setSending(true); setStatus("");
     try {
       const supabase = createClient();
-      if (!isSignUp) { const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) { if (error.message.toLowerCase().includes("email not confirmed")) setCanResend(true); throw error; } await syncLocalCookbook(); window.location.assign("/cookbook"); return; }
+      if (!isSignUp) { const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) { if (error.message.toLowerCase().includes("email not confirmed")) setCanResend(true); throw error; } await syncLocalCookbook(); window.location.assign("/create"); return; }
       const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectUrl() } }); if (error) throw error;
-      if (data.session) { await syncLocalCookbook(); window.location.assign("/cookbook"); return; }
+      if (data.session) { await syncLocalCookbook(); window.location.assign("/create"); return; }
       setCanResend(true); setStatus("Check your email to confirm the account, then sign in with this password.");
     } catch (error) { setStatus(error instanceof Error ? error.message : "Could not complete sign-in."); } finally { setSending(false); }
   };

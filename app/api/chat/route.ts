@@ -3,6 +3,7 @@ import { scrapeWebsite } from "@/app/api/cookbook/analyze/route";
 import { createClient } from "@/lib/supabase/server";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { entitlementsForUser } from "@/lib/entitlements";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -53,7 +54,8 @@ export async function POST(request: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return Response.json({ error: "Sign in to research websites and keep your skill drafts." }, { status: 401 });
-    if (!allowRequest(user.id)) return Response.json({ error: "You have reached the hourly generation limit. Please try again later." }, { status: 429 });
+    const entitlements = entitlementsForUser(user);
+    if (!entitlements.unlimited && !allowRequest(user.id)) return Response.json({ error: "You have reached the hourly generation limit. Please try again later." }, { status: 429 });
     if (body.activeSkillId) {
       const { data: skill } = await supabase.from("cookbook_skills").select("id").eq("id", body.activeSkillId).eq("user_id", user.id).maybeSingle();
       if (!skill) return Response.json({ error: "The selected skill is not available to this account." }, { status: 404 });

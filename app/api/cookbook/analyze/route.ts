@@ -2,6 +2,7 @@ import { lookup } from "node:dns/promises";
 import { createClient } from "@/lib/supabase/server";
 import { fieldQuestions } from "@/lib/cookbook-session";
 import { hasActiveSubscription, isPaidPlan, type Plan, type SubscriptionStatus } from "@/lib/billing";
+import { entitlementsForUser } from "@/lib/entitlements";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -26,10 +27,11 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient(); const { data: { user } } = await supabase.auth.getUser();
     if (!user) return Response.json({ error: "Sign in to scan a website and keep its evidence available for the conversation." }, { status: 401 });
+    const entitlements = entitlementsForUser(user);
     const { data: cookbook, error: cookbookError } = await supabase.from("cookbooks").select("analysis_used_at").eq("user_id", user.id).maybeSingle(); if (cookbookError) throw cookbookError;
     const { data: subscription } = await supabase.from("subscriptions").select("plan, status").eq("user_id", user.id).maybeSingle();
     const plan = (subscription?.plan || "free") as Plan; const status = (subscription?.status || "none") as SubscriptionStatus; const paid = isPaidPlan(plan) && hasActiveSubscription(status);
-    if (cookbook?.analysis_used_at && !paid) return Response.json({ error: "Your account’s free website analysis has already been used. Upgrade for unlimited analyses." }, { status: 429 });
+    if (cookbook?.analysis_used_at && !paid && !entitlements.unlimited) return Response.json({ error: "Your account’s free website analysis has already been used. Upgrade for unlimited analyses." }, { status: 429 });
     const { website } = await request.json() as { website?: string }; if (!website || typeof website !== "string") throw new Error("Enter a website URL first.");
     const scraped = await scrapeWebsite(website); const pages = scraped.pages; const canonicalWebsite = scraped.website;
     const { data: session, error: sessionError } = await supabase.from("cookbook_sessions").insert({ user_id: user.id, website: canonicalWebsite, draft: { website: canonicalWebsite }, next_field: "audience" }).select("id").single(); if (sessionError || !session) throw sessionError || new Error("Could not start a Cookbook session.");

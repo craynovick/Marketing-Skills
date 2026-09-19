@@ -1,3 +1,5 @@
-import { CookbookChatWorkspace } from "@/components/cookbook-chat-workspace";
+import { redirect } from "next/navigation";
 
-export default function CookbookPage() { return <CookbookChatWorkspace />; }
+export default function CookbookPage() {
+  redirect("/create");
+}
