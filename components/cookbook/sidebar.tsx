@@ -1,7 +1,7 @@
 import { PanelToggle } from "./panel-toggle";
 import { taskStatus } from "@/lib/cookbook-foundations";
 import Link from "next/link";
-import { marketingChat } from "@/lib/cookbook-chat";
+import { modeOf } from "@/lib/cookbook-experience";
 import type { Task } from "./types";
 export function Sidebar({
   tasks,
@@ -39,17 +39,18 @@ export function Sidebar({
         <PanelToggle side="left" expanded label="Close navigation" onClick={onClose} />
       </div>
       <button className="cw-new" onClick={onNew} disabled={busy}>
-        ＋ New chat
+        ＋ Create
       </button>
+      <button className="cw-new" disabled={busy} onClick={onSkills}>✳ Skill tuning</button>
       <button className="cw-new" onClick={onBrand}>▤ Your Cookbook</button>
       <div className="cw-navigation-sections">
-        {["Chats", "Skills", "Archived"].map((section) => {
-          const isChat = section === "Chats";
+        {["Create", "Skill tuning", "Archived"].map((section) => {
+          const isChat = section === "Create";
           const isArchive = section === "Archived";
           const entries = tasks.filter((task) =>
             isArchive
               ? Boolean(task.archived_at)
-              : !task.archived_at && (task.skill_slug === marketingChat.slug) === isChat,
+              : !task.archived_at && (modeOf(task) === "create") === isChat,
           );
           return (
             <section key={section} aria-label={section}>
@@ -59,7 +60,7 @@ export function Sidebar({
                     Archived <span aria-hidden="true">{archived ? "⌃" : "⌄"}</span>
                   </button>
                 ) : section}</h2>
-                {section === "Skills" && <button disabled={busy} onClick={onSkills}>Browse</button>}
+                {section === "Skill tuning" && <button disabled={busy} onClick={onSkills}>Browse</button>}
               </div>
               {(!isArchive || archived) && <div className="cw-task-list">
                 {entries.map((task) => (

@@ -6,7 +6,7 @@ import { Artifact } from "./artifact";
 import { Markdown, safeLink } from "./markdown";
 import { json, messageOf, requestJSON, type Draft } from "./types";
 
-export function BrandProposalCard({ proposal, onRefresh, busy = false, onDecision }: { proposal: BrandProposal; onRefresh: () => Promise<void>; busy?: boolean; onDecision?: (action: "kept" | "skipped") => void }) {
+export function BrandProposalCard({ proposal, onRefresh, busy = false, onDecision, approveLabel }: { proposal: BrandProposal; onRefresh: () => Promise<void>; busy?: boolean; approveLabel?: string; onDecision?: (action: "kept" | "skipped") => void | Promise<void> }) {
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState(false);
@@ -24,7 +24,7 @@ export function BrandProposalCard({ proposal, onRefresh, busy = false, onDecisio
       setEditing(false);
       await onRefresh();
       window.dispatchEvent(new Event("cookbook-brand-changed"));
-      if (action !== "edit") onDecision?.(action);
+      if (action !== "edit") await onDecision?.(action);
     } catch (error) { setNotice(messageOf(error)); } finally { setPending(false); }
   }
   return <section className="cw-brand-proposal" aria-label="Suggested brand updates">
@@ -37,7 +37,7 @@ export function BrandProposalCard({ proposal, onRefresh, busy = false, onDecisio
       {!!item.sources.length && <div className="cw-sources">Sources: {item.sources.filter(s=>safeLink(s)).map(s=><a href={safeLink(s)!} key={s} target="_blank" rel="noreferrer">{s}</a>)}</div>}
     </details>)}
     {proposal.status === "pending" && <div className="cw-brand-actions">
-      <button className="cw-primary" disabled={busy||pending} onClick={()=>void review(editing?"edit":"kept")}>{pending ? "Saving…" : editing ? "Save revised proposal" : `Keep ${proposal.items.length === 1 ? "this document" : `these ${proposal.items.length} documents`}`}</button>
+      <button className="cw-primary" disabled={busy||pending} onClick={()=>void review(editing?"edit":"kept")}>{pending ? "Saving…" : editing ? "Save revised proposal" : approveLabel || `Keep ${proposal.items.length === 1 ? "this document" : `these ${proposal.items.length} documents`}`}</button>
       <button disabled={busy||pending} onClick={()=>setEditing(v=>!v)}>{editing?"Cancel editing":"Edit"}</button>
       {!editing && <button disabled={busy||pending} onClick={()=>void review("skipped")}>Skip</button>}
     </div>}
@@ -74,14 +74,14 @@ export function BrandManager({ onStart, onBack }: { onStart: (prompt:string)=>vo
   return <div className={`cw-brand-manager ${selected?"cw-brand-reading":""}`}>
     <div className="cw-brand-overview">
       <button onClick={onBack}>← Back to chat</button>
-      <p className="cw-eyebrow">YOUR CONTEXT. YOUR CRAFT.</p><h1>Your Cookbook</h1>
+      <p className="cw-eyebrow">SKILL TUNING</p><h1>Your Cookbook</h1>
       <p>Your brand, kept together. Review what Cookbook knows and shape what it learns next.</p>
       {notice && <p className="cw-notice" role="alert">{notice} <button onClick={()=>void load()}>Retry</button></p>}
       {!state && !notice && <p role="status">Opening your Cookbook…</p>}
       <div className="cw-foundation-grid">{foundations.map(f=>{
         const item=state?.foundations.find(d=>d.foundation_key===f.key);
         return <button key={f.key} disabled={!state} onClick={()=>item?void open(item):onStart(`Help me build my ${f.name.toLowerCase()}. Use confirmed context and ask one key question at a time.`)}>
-          <span className="cw-foundation-state">{item?.confirmed ? item.document?.id!==item.confirmed.id ? "Changes to review" : "Confirmed" : item?.document ? "Draft to review" : "Ready to build"}</span>
+          <span className="cw-foundation-state">{item?.reviewSuggested ? "Review suggested" : item?.confirmed ? item.document?.id!==item.confirmed.id ? "Changes to review" : "Confirmed" : item?.document ? "Draft to review" : "Ready to build"}</span>
           <strong>{f.name}</strong><span>{f.description}</span>
         </button>;
       })}</div>

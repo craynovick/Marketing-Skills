@@ -21,6 +21,7 @@ async function database() {
    await db.exec(await readFile(new URL(`../supabase/migrations/${name}.sql`,import.meta.url),'utf8'));
  await db.exec(`insert into cookbooks(user_id,company,voice) values('${owner}','Paper Harbor','Warm and specific');`);
  await db.exec(await readFile(new URL('../supabase/migrations/20260919002000_guided_brand_agent.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migrations/20260920000000_guided_experience.sql',import.meta.url),'utf8'));
  await db.exec(`grant select,insert,update,delete on all tables in schema public to authenticated,service_role; grant usage,select on all sequences in schema public to authenticated,service_role;`);
  await login(db,owner);
  return db;
@@ -91,5 +92,42 @@ test('task-only conversations cannot propose account memory; sidebar metadata ex
  const rows=await scalar(db,'select cookbook_list_tasks() as value');
  assert.equal(rows.length,1);assert.equal(rows[0].has_document,false);assert.equal(rows[0].document,undefined);
  assert.equal(rows[0].content,undefined);
+ }finally{await db.close();}
+});
+
+
+test('guided decisions persist with revision checks, validate options, and isolate owners',async()=>{
+ const db=await database();try{
+ const t=await task(db);
+ const card={id:'entry',prompt:'What should we create?',options:[{id:'post',label:'A post',description:'A focused idea'},{id:'email',label:'An email',description:'A useful edition'}]};
+ await db.query('insert into cookbook_decisions(task_id,id,user_id,card) values($1,$2,$3,$4)',[t,'entry',owner,JSON.stringify(card)]);
+ const answer=(value,revision=0,id=run)=>scalar(db,'select to_jsonb(cookbook_answer_decision($1,$2,$3,$4,$5)) as value',[t,'entry',JSON.stringify(value),revision,id]);
+ await assert.rejects(answer({optionId:'invented'}),/INVALID_DECISION/);
+ const saved=await answer({optionId:'post',text:'For our buyers'});assert.equal(saved.revision,1);
+ assert.equal((await answer({optionId:'post',text:'For our buyers'})).revision,1);
+ await assert.rejects(answer({optionId:'email'}),/INVALID_DECISION/);
+ await assert.rejects(answer({optionId:'email'},0,key),/STALE_VERSION/);
+ assert.equal((await answer({skipped:true},1,key)).revision,2);
+ assert.equal(await scalar(db,"select count(*)::int as value from cookbook_messages where role='event'"),2);
+ await login(db,other);
+ assert.equal(await scalar(db,'select count(*)::int as value from cookbook_decisions'),0);
+ await assert.rejects(answer({skipped:true},2,other),/INVALID_TASK/);
+ }finally{await db.close();}
+});
+
+test('guided task metadata is persisted and source versions survive upstream revisions',async()=>{
+ const db=await database();try{
+ const t=await scalar(db,"select cookbook_create_experience('brand-voice-guide','1.0','Voice',$1,'skill-tuning','general','brand') as value",[key]);
+ assert.equal(await scalar(db,'select mode as value from cookbook_skills where id=$1',[t]),'skill-tuning');
+ const before=await scalar(db,"select accepted_version_id as value from cookbook_skills where foundation_key='brand'");
+ const doc=await scalar(db,"select to_jsonb(cookbook_save_document($1,'# Voice rules',0,'user','voice-draft')) as value",[t]);
+ assert.ok(doc.context_versions.some(r=>r.documentId===before));
+ const p=await propose(db,t,'updated-brand',[update('brand',1,'# Brand\n## Company\nPaper Harbor\n## Offer\nGuides')]);
+ await scalar(db,"select to_jsonb(cookbook_review_brand($1,'kept')) as value",[p.id]);
+ const refs=await scalar(db,'select context_versions as value from cookbook_documents where id=$1',[doc.id]);
+ assert.ok(refs.some(r=>r.documentId===before));
+ await db.query("update cookbook_skills set context_scope='task' where id=$1",[t]);
+ const isolated=await scalar(db,"select to_jsonb(cookbook_save_document($1,'# Unrelated voice',1,'user','task-only-draft')) as value",[t]);
+ assert.deepEqual(isolated.context_versions,[]);
  }finally{await db.close();}
 });

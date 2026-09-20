@@ -54,13 +54,13 @@ test('sidebar separates chats, skills, and archives without losing legacy record
   const tasks = [
     { id: 'chat', title: 'Launch posts', skill_slug: marketingChat.slug },
     { id: 'skill', title: 'Brand foundation', skill_slug: skills[0].slug },
-    { id: 'legacy', title: 'Legacy voice', skill_slug: null },
+    { id: 'legacy', title: 'Legacy voice', skill_slug: null, mode: 'skill-tuning' },
     { id: 'archived', title: 'Old chat', skill_slug: marketingChat.slug, archived_at: '2026-09-19' },
   ];
   const props = { tasks, activeId: 'chat', busy: false, archived: false, onNew() {}, onSkills() {}, onSelect() {}, onArchiveView() {}, onClose() {}, onSettings() {} };
   const html = renderToStaticMarkup(React.createElement(Sidebar, props));
-  const chats = html.split('aria-label="Chats"')[1].split('</section>')[0];
-  const foundations = html.split('aria-label="Skills"')[1].split('</section>')[0];
+  const chats = html.split('aria-label="Create"')[1].split('</section>')[0];
+  const foundations = html.split('aria-label="Skill tuning"')[1].split('</section>')[0];
   assert.match(chats, /Launch posts/);
   assert.doesNotMatch(chats, /Brand foundation|Legacy voice|Old chat/);
   assert.match(foundations, /Brand foundation/);
@@ -81,7 +81,7 @@ test('chat creation uses existing durable RPC with a bounded user-specific title
   const query = { select() { return this; }, eq() { return this; }, async single() { return { data: { id: 'created' } }; } };
   const route = loader({ '@/lib/cookbook-server': {
     uuid: value => value === 'valid-id',
-    account: async () => ({ user: { id: 'owner' }, db: { async rpc(name, args) { assert.equal(name, 'cookbook_create_task'); rpcArgs = args; return { data: 'created' }; }, from() { return query; } } }),
+    account: async () => ({ user: { id: 'owner' }, db: { async rpc(name, args) { assert.equal(name, 'cookbook_create_experience'); rpcArgs = args; return { data: 'created' }; }, from() { return query; } } }),
     apiError: () => new Response(null, { status: 500 }),
   } })('@/app/api/cookbook/workspace/skill/route');
   const response = await route.POST(new Request('http://localhost/api', { method: 'POST', body: JSON.stringify({ slug: marketingChat.slug, requestId: 'valid-id', title: 'A'.repeat(100) }) }));
@@ -89,6 +89,8 @@ test('chat creation uses existing durable RPC with a bounded user-specific title
   assert.equal(rpcArgs.p_slug, marketingChat.slug);
   assert.equal(rpcArgs.p_title.length, 80);
   assert.equal(rpcArgs.p_key, 'valid-id');
+  assert.equal(rpcArgs.p_mode, 'create');
+  assert.equal(rpcArgs.p_workflow, 'general');
 });
 test('unknown skill creation is rejected before database access', async () => {
   const route = loader({ '@/lib/cookbook-server': { uuid: () => true, account: () => { throw new Error('Should not access DB'); }, apiError: () => new Response(null, { status: 500 }) } })('@/app/api/cookbook/workspace/skill/route');
@@ -106,7 +108,7 @@ test('agent loads only catalog skills and refuses tools after cancellation', asy
     then(resolve) { return Promise.resolve({ error: null }).then(resolve); },
   };
   const agentLoad = loader({
-    ai: { ToolLoopAgent: class { constructor(options) { Object.assign(this, options); } }, jsonSchema: value => value, tool: value => value, stepCountIs: value => value },
+    ai: { ToolLoopAgent: class { constructor(options) { Object.assign(this, options); } }, jsonSchema: value => value, tool: value => value, stepCountIs: value => value, hasToolCall: value => value },
     '@/app/api/cookbook/analyze/route': { scrapeWebsite() { throw new Error('No network in unit tests'); } },
     '@/lib/cookbook-server': { model: 'test-model' },
   });
@@ -139,4 +141,33 @@ test('approved content from another chat is excluded from brand foundations', ()
   assert.equal(isRelevantFoundation(selected, 'campaign'), true);
   assert.equal(isRelevantFoundation(selected, marketingChat.slug), false);
   assert.equal(isRelevantFoundation(selected, 'unrelated'), false);
+});
+
+test('guided entry defaults honor dependency order and never auto-recommend without evidence', () => {
+  const { quickStart, entryCard, defaultMode, validateCard, answerText, entryUrl } = load('@/lib/cookbook-experience');
+  assert.deepEqual(quickStart.map(s => s.slug), ['audience-strategy-playbook','brand-positioning-workshop','brand-voice-guide']);
+  for (const workflow of ['analyze','social-post','newsletter']) {
+    const card = entryCard('create', workflow);
+    assert.doesNotThrow(() => validateCard(card));
+    assert.equal(card.options.some(o => o.recommended), false);
+    assert.throws(() => answerText(card, {}));
+    assert.throws(() => answerText(card, { optionId: 'missing' }));
+    assert.match(answerText(card, { skipped: true }), /provisionally/);
+  }
+  assert.match(entryCard('skill-tuning','general',quickStart[0].slug,false).prompt,/brand called/);
+  assert.match(entryCard('skill-tuning','general',quickStart[0].slug,true).prompt,/audience/);
+  assert.equal(defaultMode('brand-voice-guide'),'skill-tuning');
+  assert.equal(defaultMode('landing-page-copywriter'),'create');
+  assert.match(entryUrl('create','newsletter'),/workflow=newsletter/);
+});
+
+test('decision cards use explicit submission, accessible choices, and completed summaries', () => {
+  const { DecisionCard } = load('@/components/cookbook/decision-card');
+  const { entryCard } = load('@/lib/cookbook-experience');
+  const card=entryCard('create','social-post');
+  const html=renderToStaticMarkup(React.createElement(DecisionCard,{card,onAnswer:async()=>{}}));
+  assert.match(html,/type="radio"/);assert.doesNotMatch(html,/checked=""/);
+  assert.match(html,/disabled="">Continue/);assert.match(html,/textarea/);
+  const done=renderToStaticMarkup(React.createElement(DecisionCard,{card,answer:{optionId:'text'},onAnswer:async()=>{}}));
+  assert.match(done,/A short text post/);assert.match(done,/Edit answer/);assert.doesNotMatch(done,/textarea/);
 });

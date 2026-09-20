@@ -1,3 +1,6 @@
+import { readBrand } from "@/lib/cookbook-brand-server";
+import { requestsTaskOnlyContext } from "@/lib/cookbook-context";
+import { modeOf } from "@/lib/cookbook-experience";
 import { requireTaskAccess } from "@/lib/cookbook-access";
 import { createAgentUIStreamResponse, generateText, type UIMessage } from "ai";
 import {
@@ -7,7 +10,6 @@ import {
   model,
   uuid,
 } from "@/lib/cookbook-server";
-import { isRelevantFoundation } from "@/lib/cookbook-chat";
 import { createCookbookAgent } from "@/lib/cookbook-agent";
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -116,7 +118,7 @@ export async function POST(request: Request) {
         .maybeSingle(),
       db
         .from("cookbook_skills")
-        .select("title,skill_slug,accepted_version_id")
+        .select("title,skill_slug,accepted_version_id,mode,context_scope")
         .eq("project_id", task.project_id)
         .eq("user_id", user.id)
         .not("accepted_version_id", "is", null),
@@ -170,7 +172,7 @@ export async function POST(request: Request) {
       if (error) throw error;
     }
     const foundationIds = (foundationResult.data || [])
-      .filter((item) => isRelevantFoundation(skill, item.skill_slug))
+      .filter((item) => task.context_scope !== "task" && item.context_scope !== "task" && item.mode === "skill-tuning")
       .map((item) => item.accepted_version_id);
     const { data: foundations, error: foundationError } = await db
       .from("cookbook_documents")
@@ -193,10 +195,22 @@ export async function POST(request: Request) {
       )
       .eq("user_id", user.id)
       .maybeSingle();
+    const { data: decisions, error: decisionError } = await db.from("cookbook_decisions").select("card,answer,revision").eq("task_id", taskId).eq("user_id", user.id).not("answer", "is", null);
+    if (decisionError) throw decisionError;
+    if (requestsTaskOnlyContext(text)) {
+      task.context_scope = "task";
+      const { error: scopeError } = await db.from("cookbook_skills").update({ context_scope: "task" }).eq("id", taskId).eq("user_id", user.id);
+      if (scopeError) throw scopeError;
+    }
+    const shared = task.context_scope === "task" ? null : await readBrand(db, user.id, taskId);
     const context = JSON.stringify({
-      userSavedBrandContext: brand,
+      decisionAnswers: decisions,
+      userSavedBrandContext: task.context_scope === "task" ? null : brand,
       conversationSummary: summary,
-      approvedFoundations: foundations || [],
+      approvedFoundations: task.context_scope === "task" ? [] : foundations || [],
+      confirmedFoundations: shared?.foundations.map(f => ({ key: f.foundation_key, currentVersion: f.document?.version || 0, confirmed: f.confirmed?.content || null })) || [],
+      missingFoundationVersion: 0,
+      taskProposals: shared?.proposals || [],
       priorEvidence: evidence || [],
       selectedFiles: attachments || [],
     });
@@ -224,11 +238,11 @@ export async function POST(request: Request) {
       userId: user.id,
       taskId,
       runId: requestId,
-      skill,
+      skill, mode: modeOf(task), workflow: task.create_workflow,
       version: docResult.data?.version || 0,
       content: docResult.data?.content || "",
       context,
-      signal: request.signal,
+      signal: request.signal, brandEnabled: task.context_scope !== "task",
     });
     const finishRun = finish;
     // A run may include several tool calls and approach the route timeout. Keep its

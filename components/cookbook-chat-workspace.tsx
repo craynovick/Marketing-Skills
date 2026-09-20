@@ -1,4 +1,7 @@
 "use client";
+import { DecisionCard } from "./cookbook/decision-card";
+import { QuickStart } from "./cookbook/quick-start";
+import { answerText, defaultMode, entryCard, entryUrl, modeOf, quickStart, validMode, validWorkflow, workflows, type ChatMode, type CreateWorkflow, type DecisionAnswer, type SavedDecision } from "@/lib/cookbook-experience";
 import Image from "next/image";
 import cookbookLogo from "@/content/media/cookbook_logo_concept_2_ramen_chopsticks.svg";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -32,8 +35,10 @@ type ThreadData = {
   versions: Draft[];
   attachments: Attachment[];
   run?: Run;
+  decisions: SavedDecision[];
+  brand: BrandState | null;
 };
-type Initial = { text: string; files: File[] };
+type Initial = { text: string; files: File[]; answer?: DecisionAnswer };
 function CookbookAvatar() {
   return (
     <Image
@@ -71,15 +76,22 @@ function validateFiles(files: File[], existing = 0) {
 
 export function CookbookChatWorkspace({
   initialSkillSlug,
+  initialMode,
+  initialWorkflow,
   initialTaskId,
   durableEnabled = false,
   initialBrandView = false,
 }: {
   initialSkillSlug?: string;
+  initialMode?: ChatMode;
+  initialWorkflow?: CreateWorkflow;
   initialTaskId?: string;
   durableEnabled?: boolean;
   initialBrandView?: boolean;
 }) {
+  const [mode, setMode] = useState<ChatMode>(initialMode || defaultMode(initialSkillSlug));
+  const [workflow, setWorkflow] = useState<CreateWorkflow>(initialWorkflow || "general");
+  const [brandLoading, setBrandLoading] = useState(true);
   const [hostedWorkflows, setHostedWorkflows] = useState(true);
   const [brandView, setBrandView] = useState(initialBrandView);
   const [brand, setBrand] = useState<BrandState | null>(null);
@@ -134,9 +146,8 @@ export function CookbookChatWorkspace({
     }
   }, [archived]);
   const loadBrand = useCallback(async () => {
-    if (!durableEnabled) return;
-    try { setBrand(await requestJSON<BrandState>("/api/cookbook/foundations")); } catch { /* Workspace displays authentication/connection state. */ }
-  }, [durableEnabled]);
+    try { setBrand(await requestJSON<BrandState>("/api/cookbook/foundations")); } catch { /* Account state provides recovery. */ } finally { setBrandLoading(false); }
+  }, []);
   useEffect(() => { void loadBrand(); window.addEventListener("cookbook-brand-changed", loadBrand); return () => window.removeEventListener("cookbook-brand-changed", loadBrand); }, [loadBrand]);
   async function moreTasks() {
     if (!nextCursor) return;
@@ -154,7 +165,11 @@ export function CookbookChatWorkspace({
   }, [load]);
   useEffect(() => {
     function pop() {
-      setActiveId(new URL(location.href).searchParams.get("task") || "");
+      const params = new URL(location.href).searchParams;
+      setSlug(params.get("skill") || "");
+      setMode(validMode(params.get("mode")) ? params.get("mode") as ChatMode : defaultMode(params.get("skill")));
+      setWorkflow(validWorkflow(params.get("workflow")) ? params.get("workflow") as CreateWorkflow : "general");
+      setActiveId(params.get("task") || "");
       setBrandView(new URL(location.href).searchParams.get("view") === "cookbook");
     }
     window.addEventListener("popstate", pop);
@@ -196,7 +211,7 @@ export function CookbookChatWorkspace({
   function signIn() {
     store("cookbook:new:input", input);
     location.assign(
-      `/sign-in?next=${encodeURIComponent(activeId ? `/create?task=${activeId}` : slug ? `/create?skill=${slug}` : "/create")}`,
+      `/sign-in?next=${encodeURIComponent(activeId ? `/create?task=${activeId}` : entryUrl(mode, workflow, slug))}`,
     );
   }
   async function createTask(selected: string, prompt: Initial | null, contextScope = scope) {
@@ -219,7 +234,7 @@ export function CookbookChatWorkspace({
           slug: selected,
           requestId: creationKey.current,
           title: prompt?.text,
-          contextScope,
+          contextScope, mode, workflow,
         }),
       );
       creationKey.current = crypto.randomUUID();
@@ -249,6 +264,20 @@ export function CookbookChatWorkspace({
     await createTask(slug || (hostedWorkflows ? marketingChat.slug : "brand-positioning-workshop"), { text: input.trim(), files });
   }
 
+  function chooseEntry(nextMode: ChatMode, nextWorkflow: CreateWorkflow = "general", nextSlug = "") {
+    if (busy || pending) return;
+    const existing = nextMode === "skill-tuning" && nextSlug ? tasks.find(t => t.skill_slug === nextSlug && modeOf(t) === "skill-tuning" && !t.archived_at) : undefined;
+    if (existing) { select(existing.id); return; }
+    setInitial(null); setBrandView(false); setActiveId(""); setMode(nextMode); setWorkflow(nextWorkflow); setSlug(nextSlug); setNotice("");
+    history.pushState(null, "", entryUrl(nextMode, nextWorkflow, nextSlug));
+    picker.current?.close(); drawer.current?.close();
+  }
+  const welcomeCard = entryCard(mode, workflow, slug, scope === "task" || brand?.intakeReady);
+  async function answerWelcome(answer: DecisionAnswer) {
+    const text = answerText(welcomeCard, answer);
+    if (account === "signed-out") { store("cookbook:new:input", `${welcomeCard.prompt}\n${text}`); location.assign(`/sign-in?next=${encodeURIComponent(entryUrl(mode, workflow, slug))}`); return; }
+    await createTask(slug || marketingChat.slug, { text: `${welcomeCard.prompt}\n${text}`, files, answer });
+  }
   async function taskAction(changes: Record<string, unknown>) {
     if (!active) return;
     setPending(true);
@@ -281,13 +310,9 @@ export function CookbookChatWorkspace({
       onArchiveView={() => setArchived((v) => !v)}
       onSelect={select}
       onNew={() => {
-        setSlug("");
-        select("");
+        chooseEntry("create");
       }}
-      onSkills={() => {
-        setQuery("");
-        picker.current?.showModal();
-      }}
+      onSkills={() => chooseEntry("skill-tuning", "general", quickStart[0].slug)}
       onSettings={() => settings.current?.showModal()}
       onClose={() => {
         if (drawer.current?.open) drawer.current.close();
@@ -333,6 +358,7 @@ export function CookbookChatWorkspace({
             {brandView ? "Your Cookbook" : active?.title || "New chat"}
             {active && <span aria-hidden="true">⌄</span>}
           </button>
+          <button className="cw-brand-context" onClick={showBrand} title="Review brand context">{active?.context_scope === "task" || !active && scope === "task" ? "This brief only" : brand?.brandName || (brandLoading ? "Loading brand…" : "Set up your brand")}<span> · {brandView || (active ? modeOf(active) : mode) === "skill-tuning" ? "Skill tuning" : "Create"}</span></button>
           <span className="cw-header-status" role="status">
             {busy
               ? "Working…"
@@ -351,8 +377,7 @@ export function CookbookChatWorkspace({
           )}
         </header>
         {brandView ? (
-          durableEnabled ? <BrandManager onBack={() => select(activeId)} onStart={(text) => { setScope("brand"); void createTask("brand-positioning-workshop", {text, files: []}, "brand"); }} /> :
-          <div className="cw-empty"><h1>Your Cookbook</h1><p>Guided brand setup is not enabled on this deployment yet. Existing skill documents are still available from the sidebar.</p><button onClick={() => select(activeId)}>Back to chat</button></div>
+          <BrandManager onBack={() => select(activeId)} onStart={() => chooseEntry("skill-tuning", "general", quickStart[0].slug)} />
         ) : activeId ? (
           <TaskLoader
             key={activeId}
@@ -361,6 +386,7 @@ export function CookbookChatWorkspace({
             onUpdate={updateTask}
             onBusy={setBusy}
             onConsumed={consumeInitial}
+            onEntry={chooseEntry}
             durableEnabled={durableEnabled}
             enterSends={enterSends}
           />
@@ -368,23 +394,20 @@ export function CookbookChatWorkspace({
           <div className="cw-new-task">
             <div className="cw-welcome">
               <CookbookAvatar />
-              <p className="cw-eyebrow">YOUR CONTEXT. YOUR CRAFT.</p>
-              <h1>{(!hostedWorkflows || durableEnabled && !brand?.foundations.some(f=>f.confirmed)) ? "Let’s build your brand." : "What are we making?"}</h1>
-              {!hostedWorkflows && <p>Free hosting includes brand foundations. Use all recipes in your own AI app, or <a href="/pricing">upgrade for hosted content workflows</a>.</p>}
-              <p>
-                Draft a post, shape a campaign, or sharpen your message.
-                Bring your goal and I’ll help turn it into content you can use.
-              </p>
-              {durableEnabled ? <>
-                {brand?.foundations.some(f=>f.confirmed) && <p className="cw-progress">{brand.foundations.filter(f=>f.confirmed).length} of 6 foundations confirmed · <button onClick={()=>{changeInput(`Help me build my ${foundations.find(f=>!brand.foundations.some(d=>d.foundation_key===f.key && d.confirmed))?.name.toLowerCase() || "next campaign"}. Use my confirmed context.`);document.getElementById("cookbook-message")?.focus();}}>Continue {foundations.find(f=>!brand.foundations.some(d=>d.foundation_key===f.key && d.confirmed))?.name.toLowerCase() || "creating"} →</button></p>}
-                <div className="cw-setup-cards">
-                  <button onClick={()=>{setScope("brand");changeInput("Help me set up my brand from this website: https://");document.getElementById("cookbook-message")?.focus();}}><span>↗</span><strong>Analyze my website</strong><small>Start with what you’ve already built.</small></button>
-                  <button onClick={()=>uploadSetup.current?.click()}><span>＋</span><strong>Upload brand materials</strong><small>Bring your guidelines, briefs, or notes.</small></button>
-                  <button onClick={()=>{setScope("brand");changeInput("Help me build my brand together. Start with my brand name, offer, and audience, one key question at a time.");document.getElementById("cookbook-message")?.focus();}}><span>✳</span><strong>Build my brand together</strong><small>Find the essentials, one step at a time.</small></button>
-                </div>
-                <input hidden type="file" multiple accept=".pdf,.docx,.txt,.md" ref={uploadSetup} aria-label="Upload brand materials" onChange={event=>{try{const incoming=Array.from(event.target.files || []);validateFiles([...files,...incoming]);setFiles(current=>[...current,...incoming]);setScope("brand");changeInput("Help me set up my brand from these materials. Propose the key facts for me to review.");}catch(error){setNotice(messageOf(error));}event.target.value="";}} />
-                <p className="cw-setup-hint">Or jump straight into a post, campaign, or question below.</p>
-              </> : <div className="cw-suggestions"><button onClick={()=>changeInput("Analyze this website and develop brand positioning: https://")}>Analyze a website ↗</button><button onClick={()=>changeInput("Draft three social posts about ")}>Draft social posts ＋</button><button onClick={()=>picker.current?.showModal()}>Explore skills ⌄</button></div>}
+              <nav className="cw-mode-switch" aria-label="Agent mode"><button aria-pressed={mode === "create"} onClick={() => chooseEntry("create")}>Create</button><button aria-pressed={mode === "skill-tuning"} onClick={() => chooseEntry("skill-tuning", "general", quickStart[0].slug)}>Skill tuning</button></nav>
+              <p className="cw-eyebrow">{mode === "skill-tuning" ? "SKILL TUNING" : "CREATE"}</p>
+              <h1>{mode === "skill-tuning" ? catalog.find(s => s.slug === slug)?.name || "Shape your brand’s playbooks" : workflows.find(w => w.id === workflow)?.name || "What are we making?"}</h1>
+              <p>{mode === "skill-tuning" ? "Build on what your brand already knows. Review each playbook before it becomes shared context." : "Turn your brand’s audience, positioning, and voice into something useful."}</p>
+              {!hostedWorkflows && mode === "create" && <p>Content workflows require a hosted plan. <a href="/pricing">View plans</a> or configure your brand in Skill tuning.</p>}
+              {mode === "create" ? <div className="cw-workflow-cards">{workflows.map(w => <button key={w.id} aria-pressed={workflow === w.id} onClick={() => chooseEntry("create", w.id)}><strong>{w.name}</strong><span>{w.description}</span></button>)}</div> : <>
+                <QuickStart brand={brand} selected={slug} busy={pending} onSelect={selected => chooseEntry("skill-tuning", "general", selected)} />
+                <button className="cw-browse-skills" onClick={() => picker.current?.showModal()}>Browse all skills →</button>
+                {!brandLoading && !brand?.intakeReady && <div className="cw-intake-actions"><button onClick={() => changeInput("Analyze this website to propose my brand name and offer for review: https://")}>Analyze</button><button onClick={() => uploadSetup.current?.click()}>Upload brand materials</button><input hidden type="file" multiple accept=".pdf,.docx,.txt,.md" ref={uploadSetup} onChange={event => { try { const incoming = Array.from(event.target.files || []); validateFiles([...files, ...incoming]); setFiles(current => [...current, ...incoming]); changeInput("Use these materials to propose my brand name and offer, then guide me through audience strategy."); } catch(error) { setNotice(messageOf(error)); } event.target.value = ""; }} /></div>}
+              </>}
+              {(mode === "skill-tuning" || workflow !== "general") && !brandLoading && <DecisionCard key={`${mode}:${workflow}:${slug}:${brand?.intakeReady}`} card={welcomeCard} onBack={mode === "skill-tuning" && quickStart.findIndex(s => s.slug === slug) > 0 ? () => chooseEntry("skill-tuning", "general", quickStart[quickStart.findIndex(s => s.slug === slug) - 1].slug) : undefined} busy={pending || account === "loading" || account === "error"} onAnswer={answerWelcome} />}
+              {mode === "create" && brand?.quickStart?.every(s => s.confirmed) && <p className="cw-setup-hint">Your audience, positioning, and voice are ready. Start with a Social Post or Newsletter.</p>}
+              {mode === "skill-tuning" && brand?.quickStart?.every(s => s.confirmed) && <div className="cw-intake-actions"><button onClick={() => chooseEntry("skill-tuning", "general", "content-pillar-planner")}>Plan content themes</button><button onClick={() => chooseEntry("skill-tuning", "general", "content-format-planner")}>Tailor formats to your channels</button></div>}
+              {brandLoading && <p role="status">Loading your brand context…</p>}
 
             </div>
             {(notice || account === "error") && (
@@ -395,8 +418,9 @@ export function CookbookChatWorkspace({
                 )}
               </div>
             )}
-            {durableEnabled && <label className="cw-context-choice">Context <select value={scope} onChange={e=>setScope(e.target.value as "brand" | "task")}><option value="brand">My brand</option><option value="task">This brief only (another brand)</option></select></label>}
+            {<label className="cw-context-choice">Context <select value={scope} onChange={e=>setScope(e.target.value as "brand" | "task")}><option value="brand">My brand</option><option value="task">This brief only (another brand)</option></select></label>}
             <Composer
+              placeholder={mode === "skill-tuning" ? "Share what you know, or ask to refine your playbook…" : workflow === "analyze" ? "What would you like to research? Add a URL or question…" : "Share a topic, source, or the content you want to create…"}
               value={input}
               onChange={changeInput}
               onSubmit={() => void submit()}
@@ -466,7 +490,7 @@ export function CookbookChatWorkspace({
                 disabled={pending || account === "loading" || account === "error"}
                 key={s.slug}
                 onClick={() => {
-                  void createTask(s.slug, input.trim() ? { text: input.trim(), files } : null);
+                  chooseEntry(mode === "skill-tuning" ? "skill-tuning" : defaultMode(s.slug), "general", s.slug);
                 }}
               >
                 <strong>{s.name}</strong>
@@ -477,9 +501,7 @@ export function CookbookChatWorkspace({
         </div>
         <button
           onClick={() => {
-            setSlug("");
-            picker.current?.close();
-            select("");
+            chooseEntry("create");
           }}
         >
           Use marketing chat
@@ -563,6 +585,7 @@ function TaskLoader({
   onConsumed,
   enterSends,
   durableEnabled,
+  onEntry,
 }: {
   taskId: string;
   initial: Initial | null;
@@ -571,6 +594,7 @@ function TaskLoader({
   onConsumed: () => void;
   enterSends: boolean;
   durableEnabled: boolean;
+  onEntry: (mode: ChatMode, workflow?: CreateWorkflow, slug?: string) => void;
 }) {
   const [data, setData] = useState<ThreadData | null>(null);
   const [error, setError] = useState("");
@@ -620,6 +644,7 @@ function TaskLoader({
       onConsumed={onConsumed}
       enterSends={enterSends}
       durableEnabled={durableEnabled}
+      onEntry={onEntry}
     />
   );
 }
@@ -631,6 +656,7 @@ function TaskThread({
   onConsumed,
   enterSends,
   durableEnabled,
+  onEntry,
 }: {
   initialData: ThreadData;
   initial: Initial | null;
@@ -639,6 +665,7 @@ function TaskThread({
   onConsumed: () => void;
   enterSends: boolean;
   durableEnabled: boolean;
+  onEntry: (mode: ChatMode, workflow?: CreateWorkflow, slug?: string) => void;
 }) {
   const [data, setData] = useState(initialData);
   const [input, setInput] = useState("");
@@ -648,7 +675,7 @@ function TaskThread({
   const [draftFiles, setDraftFiles] = useState<File[]>([]);
   const runId = useRef(initialData.run?.id || "");
   const [acknowledged, setAcknowledged] = useState(false);
-  const [brandState, setBrandState] = useState<BrandState | null>(null);
+  const [brandState, setBrandState] = useState<BrandState | null>(initialData.brand);
   const syncMessages = useRef<((messages: CookbookMessage[]) => void) | null>(null);
   const isStreaming = useRef(false);
   const resumed = useRef(false);
@@ -672,7 +699,7 @@ function TaskThread({
     setData(next);
     if (!isStreaming.current) syncMessages.current?.(next.messages);
     onUpdate(next.task);
-    if(durableEnabled) setBrandState(await requestJSON<BrandState>(`/api/cookbook/foundations?taskId=${task.id}`));
+    setBrandState(next.brand);
   }, [initialData.task.id, onUpdate, durableEnabled, task.id]);
   const { messages, sendMessage, status, error, clearError, stop, setMessages, resumeStream } =
     useChat<CookbookMessage>({
@@ -700,7 +727,7 @@ function TaskThread({
   const runActive = !!data.run && ["queued", "running"].includes(data.run.status);
   const busy = streaming || uploading || (durableEnabled && runActive);
   useEffect(() => {
-    if(durableEnabled) void requestJSON<BrandState>(`/api/cookbook/foundations?taskId=${task.id}`).then(setBrandState).catch(error=>setNotice(messageOf(error)));
+
     if(durableEnabled && initialData.run?.workflow_id && ["queued","running"].includes(initialData.run.status) && !resumed.current) {
       resumed.current=true;
       // Replay this run from its beginning, replacing its checkpointed assistant.
@@ -753,8 +780,10 @@ function TaskThread({
     }));
     return result.attachments;
   }
-  async function submit(value = input, files = draftFiles) {
+  async function submit(value = input, files = draftFiles, requestId?: string) {
     if (lock.current || busy || !value.trim() || task.archived_at) return;
+    const unanswered = data.decisions.filter(d => !d.answer).at(-1);
+    if (!requestId && unanswered) { await respondDecision(unanswered, { text: value }, files); return; }
     lock.current = true;
     setNotice("");
     clearError();
@@ -764,7 +793,7 @@ function TaskThread({
       const uploaded = files.length ? await upload(files) : [];
       setDraftFiles([]);
       setAcknowledged(false);
-      const id = crypto.randomUUID();
+      const id = requestId || crypto.randomUUID();
       runId.current = id;
       setData((current) => ({ ...current, run: undefined }));
       changeInput("");
@@ -791,10 +820,21 @@ function TaskThread({
     if (initial && !started.current) {
       started.current = true;
       setDraftFiles(initial.files);
-      void submit(initial.text, initial.files);
+      if (initial.answer) void respondDecision({ id: "entry", card: entryCard(modeOf(task), task.create_workflow || "general", task.skill_slug, task.context_scope === "task" || initialData.brand?.intakeReady), answer: null, revision: 0 }, initial.answer, initial.files).catch(error => setNotice(messageOf(error)));
+      else void submit(initial.text, initial.files);
       onConsumed();
     }
   }, [initial]);
+  const decisionRequests = useRef(new Map<string, { payload: string; id: string }>());
+  async function respondDecision(decision: SavedDecision, answer: DecisionAnswer, files: File[] = []) {
+    const payload = JSON.stringify(answer);
+    const previous = decisionRequests.current.get(decision.id);
+    const requestId = previous?.payload === payload ? previous.id : crypto.randomUUID();
+    decisionRequests.current.set(decision.id, { payload, id: requestId });
+    const result = await requestJSON<{ decision: SavedDecision; prompt: string }>("/api/cookbook/decisions", json({ taskId: task.id, decisionId: decision.id, revision: decision.revision, answer, requestId }));
+    setData(current => ({ ...current, decisions: [...current.decisions.filter(d => d.id !== decision.id), result.decision] }));
+    await submit(result.prompt, files, requestId);
+  }
   async function cancel() {
     const id = runId.current || data.run?.id;
     if (!id) return;
@@ -811,6 +851,15 @@ function TaskThread({
       setNotice(messageOf(error));
     }
   }
+  async function continueOnboarding() {
+    const state = await requestJSON<BrandState>("/api/cookbook/foundations");
+    setBrandState(state);
+    window.dispatchEvent(new Event("cookbook-brand-changed"));
+    const next = quickStart.find(s => !state.quickStart?.find(p => p.slug === s.slug)?.confirmed);
+    if (next && next.slug !== task.skill_slug) onEntry("skill-tuning", "general", next.slug);
+    else if (next) await submit("The proposed context is approved. Continue this skill using those facts; ask only the next missing material question.");
+    else onEntry("create");
+  }
   const skill =
     (task.skill_slug === marketingChat.slug ? marketingChat : undefined) ||
     catalog.find((s) => s.slug === task.skill_slug) ||
@@ -822,6 +871,7 @@ function TaskThread({
           <span>{task.context_scope === "task" ? "This brief only · Brand memory excluded" : skill?.name || "Choose a skill for this legacy task"}</span>
           {!panel && <PanelToggle side="right" expanded={false} label="Open draft workspace" onClick={() => setPanel(true)} />}
         </div>
+        {modeOf(task) === "skill-tuning" && <QuickStart brand={brandState} selected={task.skill_slug} busy={busy} onSelect={slug => onEntry("skill-tuning", "general", slug)} />}
         <div
           className="cw-feed"
           ref={feed}
@@ -835,15 +885,11 @@ function TaskThread({
           {!messages.length && (
             <div className="cw-task-welcome">
               <CookbookAvatar />
-              <h2>Let’s make {task.title.toLowerCase()}.</h2>
-              <p>
-                {skill?.description ||
-                  "Select the right recipe below to continue this existing task."}
-              </p>
-              <p>
-                Share the outcome you want and any useful context. I’ll put the
-                work in your draft workspace.
-              </p>
+              <p className="cw-eyebrow">{modeOf(task) === "skill-tuning" ? "SKILL TUNING" : "CREATE"}</p>
+              <h2>{modeOf(task) === "skill-tuning" ? `Let’s shape your ${skill?.name || "playbook"}` : workflows.find(w => w.id === task.create_workflow)?.name || "What would you like to create?"}</h2>
+              <p>{skill?.description}</p>
+              {!data.decisions.length && <DecisionCard card={entryCard(modeOf(task), task.create_workflow || "general", task.skill_slug, task.context_scope === "task" || brandState?.intakeReady)} busy={busy} onAnswer={answer => respondDecision({ id: "entry", card: entryCard(modeOf(task), task.create_workflow || "general", task.skill_slug, task.context_scope === "task" || brandState?.intakeReady), answer: null, revision: 0 }, answer)} />}
+
             </div>
           )}
           {!skill && (
@@ -874,6 +920,10 @@ function TaskThread({
               </select>
             </label>
           )}
+          {data.decisions.filter(d => d.id === "entry").map(d => <DecisionCard key={`${d.id}:${d.revision}`} card={d.card} answer={d.answer} busy={busy} onAnswer={answer => respondDecision(d, answer)} />)}
+          {modeOf(task) === "skill-tuning" && task.document && <details className="cw-brand-proposal"><summary>Review your {skill?.name || "playbook"} · v{task.document.version}</summary><Markdown value={task.document.content} /><button className="cw-primary" disabled={busy || task.document.id === task.accepted_version_id} onClick={async () => { try { await requestJSON("/api/cookbook/workspace/accept", json({ skillId: task.id, version: task.document!.version })); await refresh(); await continueOnboarding(); } catch(error) { setNotice(messageOf(error)); } }}>{task.document.id === task.accepted_version_id ? "Approved" : "Approve and continue"}</button><button onClick={() => setPanel(true)}>Edit or export</button></details>}
+          {data.decisions.filter(d => d.id !== "entry" && !messages.some(m => m.parts.some(p => (p.type === "tool-askQuestion" || p.type === "dynamic-tool" && p.toolName === "askQuestion") && p.state === "output-available" && (p.output as {id?: string})?.id === d.id))).map(d => <DecisionCard key={`${d.id}:${d.revision}`} card={d.card} answer={d.answer} busy={busy} onAnswer={answer => respondDecision(d, answer)} />)}
+          {task.reviewSuggested && <p className="cw-notice" role="status">Review suggested: approved brand context has changed. <button disabled={busy} onClick={() => void submit("Review this draft against the latest approved brand context. Propose only the affected changes and preserve approvals.")}>Review changes</button></p>}
           {messages.map((message) => (
             <article
               className={`cw-message cw-${message.role}`}
@@ -886,7 +936,7 @@ function TaskThread({
                 const part = (rawPart.type === "dynamic-tool" ? {...rawPart, type: `tool-${rawPart.toolName}`} : rawPart) as CookbookMessage["parts"][number];
                 if (part.type === "tool-proposeBrandUpdates") {
                   const proposal = part.state === "output-available" ? brandState?.proposals.find(p=>p.id===part.output.proposalId) : undefined;
-                  return proposal ? <BrandProposalCard key={index} proposal={proposal} busy={busy} onRefresh={refresh} onDecision={action => void submit(`I ${action} the proposed updates to ${proposal.items.map(i=>i.key).join(", ")}. Guide me to the next incomplete foundation with one focused question. If setup is complete, suggest a useful first piece of content.`)} /> : <div className="cw-tool" key={index}>{part.state === "output-available" ? <button onClick={()=>void refresh()}>Brand drafts saved · Review</button> : part.state === "output-error" || !busy ? "Brand update did not finish. Confirmed context is unchanged." : "Preparing brand updates…"}</div>;
+                  return proposal ? <BrandProposalCard key={index} proposal={proposal} busy={busy} onRefresh={refresh} approveLabel={modeOf(task) === "skill-tuning" ? "Approve and continue" : undefined} onDecision={async action => { if (action === "kept") await continueOnboarding(); }} /> : <div className="cw-tool" key={index}>{part.state === "output-available" ? <button onClick={()=>void refresh()}>Brand drafts saved · Review</button> : part.state === "output-error" || !busy ? "Brand update did not finish. Confirmed context is unchanged." : "Preparing brand updates…"}</div>;
                 }
                 if (part.type === "tool-useTaskOnlyContext") return <div className="cw-tool" key={index}>Using this brief only · Account brand context excluded</div>;
                 if (part.type === "text")
@@ -895,23 +945,12 @@ function TaskThread({
                   part.type === "tool-askQuestion" &&
                   part.state === "output-available"
                 )
-                  return (
-                    <div className="cw-question" key={index}>
-                      <p>{part.output.prompt}</p>
-                      <div>
-                        {part.output.options.map((option) => (
-                          <button
-                            disabled={busy}
-                            onClick={() => void submit(option)}
-                            key={option}
-                          >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
-                      <small>Or type your own answer below.</small>
-                    </div>
-                  );
+                  return (() => {
+                    const saved = data.decisions.find(d => d.id === part.output.id);
+                    if (!part.output.id || !Array.isArray(part.output.options) || part.output.options.some(o => typeof o !== "object")) return <div key={index} className="cw-question"><p>{part.output.prompt}</p><small>Reply in the message box below.</small></div>;
+                    const decision = saved || { id: part.output.id, card: part.output, answer: null, revision: 0 };
+                    return <DecisionCard key={`${index}:${decision.revision}`} card={decision.card} answer={decision.answer} busy={busy} onAnswer={answer => respondDecision(decision, answer)} />;
+                  })();
                 if (part.type === "tool-loadSkill")
                   return <div className="cw-tool" key={index}>
                     {part.state === "output-available" ? `Using ${part.output.name}` : part.state === "output-error" ? "Skill could not be loaded." : busy ? "Loading relevant skill…" : "Skill loading stopped."}
@@ -1032,6 +1071,7 @@ function TaskThread({
         </div>
         <div className="cw-compose-area">
           <Composer
+            placeholder={modeOf(task) === "skill-tuning" ? "Answer here, add evidence, or refine your playbook…" : "Share your brief or ask for a revision…"}
             value={input}
             onChange={changeInput}
             onSubmit={() => void submit()}
@@ -1084,6 +1124,7 @@ function TaskThread({
           versions={data.versions}
           busy={busy}
           onRefresh={refresh}
+          onApproved={modeOf(task) === "skill-tuning" ? continueOnboarding : undefined}
           onClose={() => setPanel(false)}
         />
       )}

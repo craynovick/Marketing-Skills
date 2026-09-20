@@ -1,11 +1,11 @@
+import { defaultMode, validMode, validWorkflow } from "@/lib/cookbook-experience";
 import { requireSkillAccess } from "@/lib/cookbook-access";
-import { cookbookV2Enabled } from "@/lib/cookbook-features";
 import { marketingChat } from "@/lib/cookbook-chat";
 import { skills } from "@/lib/generated-skills";
 import { account, apiError, uuid } from "@/lib/cookbook-server";
 export async function POST(request: Request) {
   try {
-    const { slug, requestId, title, contextScope } = await request.json();
+    const { slug, requestId, title, contextScope, mode, workflow } = await request.json();
     const skill = slug === marketingChat.slug ? marketingChat : skills.find((item) => item.slug === slug);
     if (!skill || !uuid(requestId))
       return Response.json(
@@ -14,7 +14,10 @@ export async function POST(request: Request) {
       );
     const { db, user } = await account();
     await requireSkillAccess(user.id,skill.slug);
-    const { data: id, error } = await db.rpc("cookbook_create_task", {
+    if ((mode !== undefined && !validMode(mode)) || (workflow !== undefined && !validWorkflow(workflow))) return Response.json({ error: "Choose a valid mode and workflow." }, { status: 400 });
+    const selectedMode = mode || defaultMode(slug);
+    const { data: id, error } = await db.rpc("cookbook_create_experience", {
+      p_mode: selectedMode, p_workflow: selectedMode === "skill-tuning" ? "general" : workflow || "general", p_scope: contextScope === "task" ? "task" : "brand",
       p_slug: skill.slug,
       p_version: skill.version,
       p_title: skill.slug === marketingChat.slug && typeof title === "string"
@@ -23,10 +26,6 @@ export async function POST(request: Request) {
       p_key: requestId,
     });
     if (error) throw error;
-    if (cookbookV2Enabled() && contextScope === "task") {
-      const {error:scopeError} = await db.from("cookbook_skills").update({context_scope:"task"}).eq("id",id).eq("user_id",user.id);
-      if(scopeError) throw scopeError;
-    }
     const { data: task, error: readError } = await db
       .from("cookbook_skills")
       .select("*")

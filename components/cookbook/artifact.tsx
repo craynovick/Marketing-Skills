@@ -9,12 +9,14 @@ export function Artifact({
   busy,
   onRefresh,
   onClose,
+  onApproved,
 }: {
   task: Task;
   versions: Draft[];
   busy: boolean;
   onRefresh: () => Promise<void>;
   onClose: () => void;
+  onApproved?: () => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
@@ -37,6 +39,7 @@ export function Artifact({
       await onRefresh();
       setEditing(false);
       setNotice("Saved.");
+      if (url.endsWith("/accept")) { window.dispatchEvent(new Event("cookbook-brand-changed")); await onApproved?.(); }
     } catch (error) {
       setNotice(messageOf(error));
       if ((error as { status?: number }).status === 409) await onRefresh();
@@ -91,7 +94,7 @@ export function Artifact({
                 })
               }
             >
-              {accepted ? "Accepted" : "Accept draft"}
+              {accepted ? "Accepted" : onApproved ? "Approve and continue" : "Accept draft"}
             </button>
             <button
               onClick={async () => {

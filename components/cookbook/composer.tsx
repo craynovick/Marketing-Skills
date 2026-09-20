@@ -16,6 +16,7 @@ export function Composer({
   disabled,
   onStop,
   enterSends = true,
+  placeholder = "Describe what you want to make, or paste a website…",
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -31,6 +32,7 @@ export function Composer({
   disabled?: boolean;
   onStop?: () => void;
   enterSends?: boolean;
+  placeholder?: string;
 }) {
   const input = useRef<HTMLTextAreaElement>(null);
   const file = useRef<HTMLInputElement>(null);
@@ -100,7 +102,7 @@ export function Composer({
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={key}
         disabled={disabled}
-        placeholder="Describe what you want to make, or paste a website…"
+        placeholder={placeholder}
       />
       <div className="cw-composer-tools">
         <input

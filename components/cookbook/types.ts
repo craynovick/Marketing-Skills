@@ -4,6 +4,7 @@ export type Draft = {
   version: number;
   source: string;
   created_at: string;
+  context_versions?: { taskId: string; documentId: string; key: string; title: string }[];
   assumptions?: string[];
   unanswered_questions?: string[];
   evidence_references?: string[];
@@ -20,6 +21,9 @@ export type Task = {
   document?: Draft | null;
   has_document?: boolean;
   run_status?: string | null;
+  mode?: "create" | "skill-tuning";
+  create_workflow?: "general" | "analyze" | "social-post" | "newsletter";
+  reviewSuggested?: boolean;
   context_scope?: "brand" | "task";
   updated_at?: string;
 };

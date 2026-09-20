@@ -1,3 +1,4 @@
+import { readBrand } from "@/lib/cookbook-brand-server";
 import {
   account,
   apiError,
@@ -75,8 +76,16 @@ export async function GET(request: Request) {
         .maybeSingle();
       if (data) Object.assign(run, data);
     }
+    const [decisions, brand] = await Promise.all([
+      db.from("cookbook_decisions").select("*").eq("task_id", taskId).eq("user_id", user.id).order("created_at"),
+      task.context_scope === "task" ? Promise.resolve(null) : readBrand(db, user.id, taskId),
+    ]);
+    if (decisions.error) throw decisions.error;
+    const references: {taskId:string;documentId:string}[] = versions.data?.[0]?.context_versions || [];
+    const current = new Map([...(brand?.foundations || []), ...(brand?.legacy || [])].map(f => [f.id, f.accepted_version_id]));
     return Response.json({
-      task: { ...task, document: versions.data?.[0], run_status: run?.status },
+      decisions: decisions.data, brand,
+      task: { ...task, reviewSuggested: references.some(ref => current.get(ref.taskId) !== ref.documentId), document: versions.data?.[0], run_status: run?.status },
       messages: history.data
         ?.filter((row) => row.role !== "event")
         .map((row) => ({

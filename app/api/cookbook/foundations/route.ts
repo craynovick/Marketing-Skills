@@ -1,10 +1,8 @@
 import { account, apiError, uuid } from "@/lib/cookbook-server";
-import { cookbookV2Enabled } from "@/lib/cookbook-features";
 import { readBrand } from "@/lib/cookbook-brand-server";
 import { validateBrandUpdates } from "@/lib/cookbook-foundations";
 export async function GET(request: Request) {
   try {
-    if (!cookbookV2Enabled()) return Response.json({ enabled: false });
     const { db, user } = await account();
     const taskId = new URL(request.url).searchParams.get("taskId") || undefined;
     if (taskId && !uuid(taskId)) return Response.json({ error: "Invalid task." }, { status: 400 });
@@ -13,7 +11,6 @@ export async function GET(request: Request) {
 }
 export async function POST(request: Request) {
   try {
-    if (!cookbookV2Enabled()) return Response.json({ error: "Brand setup is not enabled yet." }, { status: 404 });
     const { db } = await account();
     const body = await request.json();
     if (body.action === "kept" || body.action === "skipped") {

@@ -4,7 +4,7 @@ import { skills } from "@/lib/generated-skills";
 
 export const model = process.env.COOKBOOK_MODEL || "openai/gpt-5.6-sol";
 export const documentColumns =
-  "id,skill_id,content,version,source,created_at,status,assumptions,unanswered_questions,evidence_references";
+  "id,skill_id,content,version,source,created_at,status,context_versions,assumptions,unanswered_questions,evidence_references";
 export const uuid = (value: unknown): value is string =>
   typeof value === "string" &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -24,6 +24,7 @@ export function apiError(error: unknown) {
         ? String(error.message)
         : "Request failed";
   const codes: Record<string, [number, string]> = {
+    INVALID_DECISION: [400, "Choose a valid answer or write your own response."],
     PLAN_REQUIRED: [403, "This workflow requires a paid hosted plan. Brand foundations remain free."],
     AUTH_REQUIRED: [401, "Sign in to continue with your Cookbook."],
     STALE_VERSION: [

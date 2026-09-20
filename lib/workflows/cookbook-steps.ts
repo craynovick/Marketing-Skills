@@ -1,3 +1,4 @@
+import { modeOf } from "@/lib/cookbook-experience";
 import { requireTaskAccess } from "@/lib/cookbook-access";
 import { Output, generateText, jsonSchema, asSchema, type Tool, type UIMessage } from "ai";
 import { requestsTaskOnlyContext } from "@/lib/cookbook-context";
@@ -98,11 +99,13 @@ export async function prepareAgent(runId: string) {
   const { data: evidence, error: ee } = research.data ? await db.from("cookbook_workspace_evidence").select("url,title,excerpt").eq("run_id", research.data.id).eq("user_id", run.user_id) : { data: [], error: null };
   if (ee) throw ee;
   const reference = JSON.stringify({ scope: task.context_scope, confirmedFoundations: foundations,
+    approvedSkillPlaybooks: await approvedPlaybooks(db, run.user_id, task),
+    decisionAnswers: await decisionAnswers(db, run.user_id, task.id),
     conversationSummary: thread.summary || "", missingFoundationVersion: 0, taskProposals: task.context_scope === "brand" ? proposals.data : [],
     selectedFiles: files.data, priorEvidence: evidence });
   if (reference.length > 180000) throw new FatalError("Context is too large. Use fewer attachments.");
   const options = await createCookbookAgentOptions({ db, userId: run.user_id, taskId: task.id, runId, skill,
-    content: draft.data?.content || "", version: run.draft_version, context: reference, signal: new AbortController().signal, worker: true, brandEnabled: true });
+    mode: modeOf(task), workflow: task.create_workflow, content: draft.data?.content || "", version: run.draft_version, context: reference, signal: new AbortController().signal, worker: true, brandEnabled: true });
   const specs = await Promise.all(Object.entries(options.tools).map(async ([name, definition]) => ({
     name, description: definition.description || "", schema: await asSchema<unknown>(definition.inputSchema).jsonSchema,
   })));
@@ -144,7 +147,7 @@ export async function executeAgentTool(runId: string, name: string, input: unkno
   if (!skill) throw new FatalError("INVALID_TASK");
   const start = Date.now();
   const options = await createCookbookAgentOptions({ db, userId: run.user_id, taskId: task.id, runId, skill,
-    version: run.draft_version, content: "", context: "", signal: new AbortController().signal, worker: true, brandEnabled: task.context_scope === "brand" });
+    mode: modeOf(task), workflow: task.create_workflow, version: run.draft_version, content: "", context: "", signal: new AbortController().signal, worker: true, brandEnabled: task.context_scope === "brand" });
   const definition = (options.tools as Record<string, Tool<unknown, unknown>>)[name];
   if (!definition?.execute) throw new FatalError("Unknown tool.");
   try {
@@ -183,4 +186,18 @@ export async function finishRun(runId: string, status: string, code?: string) {
   const { error } = await db.from("cookbook_agent_runs").update({ status, error: code || null, updated_at: new Date().toISOString() }).eq("id",runId).in("status",["running","queued"]);
   if (error) throw error;
   console.info("Cookbook workflow", {runId, status, code});
+}
+
+async function approvedPlaybooks(db: ReturnType<typeof createAdminClient>, userId: string, task: { project_id: string; context_scope: string }) {
+  if (task.context_scope === "task") return [];
+  const { data, error } = await db.from("cookbook_skills").select("skill_slug,accepted_version_id").eq("user_id", userId).eq("project_id", task.project_id).eq("mode", "skill-tuning").eq("context_scope", "brand").is("foundation_key", null).not("accepted_version_id", "is", null);
+  if (error) throw error;
+  const { data: docs, error: de } = await db.from("cookbook_documents").select("id,content,version").eq("user_id", userId).in("id", (data || []).map(s => s.accepted_version_id));
+  if (de) throw de;
+  return (data || []).map(s => ({ slug: s.skill_slug, ...docs?.find(d => d.id === s.accepted_version_id) }));
+}
+async function decisionAnswers(db: ReturnType<typeof createAdminClient>, userId: string, taskId: string) {
+  const { data, error } = await db.from("cookbook_decisions").select("card,answer,revision").eq("user_id", userId).eq("task_id", taskId).not("answer", "is", null).order("created_at");
+  if (error) throw error;
+  return data;
 }
