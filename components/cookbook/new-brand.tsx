@@ -12,7 +12,7 @@ export function NewBrand({ onCreated, onClose }: { onCreated: (brand: BrandProje
     catch (error) { setError(messageOf(error)); } finally { setPending(false); }
   }}>
     <div className="cw-modal-heading"><h2>New brand</h2><button type="button" onClick={onClose} aria-label="Close new brand">×</button></div>
-    <p>Start with the basics, then tune Audience Strategy, Brand Positioning, and Brand Voice.</p>
+    <p>Start with the basics. Add a public website and Cookbook can research it before shaping Audience Strategy, Brand Positioning, and Brand Voice.</p>
     <label>Brand name<input autoFocus required maxLength={120} value={name} onChange={e => setName(e.target.value)} /></label>
     <label>What do you offer?<textarea required maxLength={2000} value={offer} onChange={e => setOffer(e.target.value)} /></label>
     <label>Website (optional)<input type="url" maxLength={2000} placeholder="https://" value={website} onChange={e => setWebsite(e.target.value)} /></label>
@@ -22,6 +22,6 @@ export function NewBrand({ onCreated, onClose }: { onCreated: (brand: BrandProje
       setFiles(incoming); setError('');
     }} /></label>
     {error && <p role="alert">{error}</p>}
-    <button className="cw-primary" disabled={pending || !name.trim() || !offer.trim()}>{pending ? 'Creating…' : 'Create brand and tune skills'}</button>
+    <button className="cw-primary" disabled={pending || !name.trim() || !offer.trim()}>{pending ? 'Creating…' : 'Create brand and research audience'}</button>
   </form>;
 }

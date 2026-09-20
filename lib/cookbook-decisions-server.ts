@@ -11,6 +11,8 @@ export async function saveDecision(db: DB, userId: string, taskId: string, card:
   return data as SavedDecision;
 }
 export async function ensureEntryDecision(db: DB, userId: string, task: { id: string; mode?: string; create_workflow?: CreateWorkflow; skill_slug?: string | null; context_scope?: string }) {
-  const brand = task.context_scope === 'task' ? null : await readBrand(db, userId);
+  // Resolve brand context through the task. A user can own several brands, so
+  // an unscoped read is ambiguous precisely during a new-brand handoff.
+  const brand = task.context_scope === 'task' ? null : await readBrand(db, userId, task.id);
   return saveDecision(db, userId, task.id, entryCard(modeOf(task), task.create_workflow || 'general', task.skill_slug, task.context_scope === 'task' || brand?.intakeReady));
 }

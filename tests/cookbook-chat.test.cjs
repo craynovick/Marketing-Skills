@@ -197,9 +197,38 @@ test('guided entry defaults honor dependency order and never auto-recommend with
   }
   assert.match(entryCard('skill-tuning','general',quickStart[0].slug,false).prompt,/brand called/);
   assert.match(entryCard('skill-tuning','general',quickStart[0].slug,true).prompt,/audience/);
+  assert.match(entryCard('skill-tuning','general',quickStart[0].slug,true).freeTextLabel,/research your website/);
   assert.equal(defaultMode('brand-voice-guide'),'skill-tuning');
   assert.equal(defaultMode('landing-page-copywriter'),'create');
   assert.match(entryUrl('create','newsletter'),/workflow=newsletter/);
+});
+
+test('entry decisions resolve brand context through their task', async () => {
+  let taskId;
+  const decisions = new Map();
+  const query = {
+    upsert(value) { decisions.set(value.id, value); return Promise.resolve({ error: null }); },
+    select() { return this; }, eq(key, value) { if (key === 'id') this.id = value; return this; },
+    async single() { return { data: decisions.get(this.id), error: null }; },
+  };
+  const decisionLoad = loader({
+    '@/lib/cookbook-brand-server': { async readBrand(_db, _userId, incomingTaskId) { taskId = incomingTaskId; return { intakeReady: true }; } },
+  });
+  const { ensureEntryDecision } = decisionLoad('@/lib/cookbook-decisions-server');
+  await ensureEntryDecision({ from() { return query; } }, 'owner', { id: 'task-one', mode: 'skill-tuning', skill_slug: 'audience-strategy-playbook', context_scope: 'brand' });
+  assert.equal(taskId, 'task-one');
+});
+
+test('agent policy pairs relevant public research with skills and create work', () => {
+  const experience = fs.readFileSync(path.join(root, 'lib/cookbook-experience.ts'), 'utf8');
+  const agent = fs.readFileSync(path.join(root, 'content/agents/cookbook/AGENT.md'), 'utf8');
+  const chat = fs.readFileSync(path.join(root, 'content/agents/cookbook/CHAT.md'), 'utf8');
+  for (const source of [experience, agent, chat]) {
+    assert.match(source, /scrapeWebsite/);
+    assert.match(source, /selected skill|loaded skill/i);
+  }
+  assert.match(agent, /saved brand has a public website/);
+  assert.match(chat, /supplies a URL/);
 });
 
 test('decision cards use explicit submission, accessible choices, and completed summaries', () => {
