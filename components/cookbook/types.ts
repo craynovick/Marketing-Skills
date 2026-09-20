@@ -22,6 +22,7 @@ export type Task = {
   skill_slug: string | null;
   skill_version: string | null;
   archived_at: string | null;
+  pinned_at?: string | null;
   lifecycle: string;
   accepted_version_id: string | null;
   document?: Draft | null;
@@ -45,6 +46,8 @@ export type Run = {
   input: string;
   error?: string;
   workflow_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
   events: { tool: string; state: string; detail: unknown }[];
 };
 export async function requestJSON<T>(

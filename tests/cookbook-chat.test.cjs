@@ -33,6 +33,38 @@ test('empty and terminal tasks never claim a draft is being saved', () => {
   assert.equal(taskStatus({ lifecycle: 'draft', run_status: 'awaiting_input' }), 'Your input needed');
 });
 
+test('persisted run lifecycle overrides transient stream failures', () => {
+  const { runLifecycle, activeRunLifecycle, terminalRunLifecycle } = load('@/lib/cookbook-run-lifecycle');
+  assert.equal(runLifecycle({ status: 'queued' }, 'error'), 'queued');
+  assert.equal(runLifecycle({ status: 'running' }, 'error'), 'running');
+  assert.equal(runLifecycle({ status: 'interrupted' }, 'ready'), 'failed');
+  assert.equal(runLifecycle(null, 'submitted'), 'starting');
+  assert.equal(runLifecycle(null, 'error'), 'failed');
+  assert.equal(activeRunLifecycle(runLifecycle({ status: 'running' }, 'error')), true);
+  assert.equal(terminalRunLifecycle(runLifecycle({ status: 'failed' }, 'streaming')), true);
+});
+
+test('admin storage configuration rejects masked secrets before a run is queued', () => {
+  const previousUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const { assertSupabaseAdminConfiguration } = loader({ '@supabase/supabase-js': { createClient() {} } })('@/lib/supabase/admin');
+  try {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'sb_secret_abc•••';
+    assert.throws(() => assertSupabaseAdminConfiguration(), /masked or malformed/);
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'sb_secret_valid_ascii';
+    assert.deepEqual(assertSupabaseAdminConfiguration(), {
+      url: 'https://example.supabase.co',
+      key: 'sb_secret_valid_ascii',
+    });
+  } finally {
+    if (previousUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    else process.env.NEXT_PUBLIC_SUPABASE_URL = previousUrl;
+    if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = previousKey;
+  }
+});
+
 test('explicit fictional and unrelated briefs exclude account memory', () => {
   const { requestsTaskOnlyContext } = load('@/lib/cookbook-context');
   for (const text of ['Three posts for a fictional stationery brand, Paper Harbor.',
@@ -45,6 +77,12 @@ test('explicit fictional and unrelated briefs exclude account memory', () => {
 test('chat identity survives renaming and does not become a strategy skill', () => {
   assert.equal(resolveSkill({ skill_slug: marketingChat.slug, title: skills[0].name, file_name: 'draft.md' }).slug, marketingChat.slug);
 });
+test('chat titles stay concise and omit pasted URLs', () => {
+  const { conciseTaskTitle } = load('@/lib/cookbook-chat');
+  assert.equal(conciseTaskTitle('Invite Denver families to Wings Over the Rockies this weekend. Write one Instagram post.'), 'Invite Denver families to Wings Over the Rockies');
+  assert.equal(conciseTaskTitle('https://example.com'), 'New chat');
+  assert.ok(conciseTaskTitle('word '.repeat(30)).length <= 60);
+});
 test('legacy exact skill identities still resolve; unknown tasks remain unresolved', () => {
   assert.equal(resolveSkill({ title: skills[0].name, file_name: 'legacy.md' }).slug, skills[0].slug);
   assert.equal(resolveSkill({ title: 'Unrecognized', file_name: 'legacy.md' }), undefined);
@@ -52,17 +90,23 @@ test('legacy exact skill identities still resolve; unknown tasks remain unresolv
 test('sidebar has one Cookbook action and a collapsible Create-only history', () => {
   const { Sidebar } = load('@/components/cookbook/sidebar');
   const tasks = [
-    { id: 'chat', title: 'Launch posts', skill_slug: marketingChat.slug },
+    { id: 'chat', title: 'Launch posts', skill_slug: marketingChat.slug, updated_at: '2026-09-20' },
+    { id: 'pinned', title: 'Pinned launch', skill_slug: marketingChat.slug, pinned_at: '2026-09-19', updated_at: '2026-09-19' },
     { id: 'skill', title: 'Brand foundation', skill_slug: skills[0].slug },
     { id: 'legacy', title: 'Legacy voice', skill_slug: null, mode: 'skill-tuning' },
     { id: 'archived', title: 'Old chat', skill_slug: marketingChat.slug, archived_at: '2026-09-19' },
   ];
-  const props = { tasks, activeId: 'chat', busy: false, archived: false, onNew() {}, onSkills() {}, onSelect() {}, onArchiveView() {}, onClose() {}, onSettings() {} };
+  const props = { tasks, activeId: 'chat', busy: false, archived: false, onNew() {}, onSkills() {}, onSelect() {}, onTaskAction() {}, onArchiveView() {}, onClose() {}, onSettings() {} };
   const html = renderToStaticMarkup(React.createElement(Sidebar, props));
   const chats = html.split('aria-label="Create"')[1].split('</section>')[0];
   assert.equal((html.match(/Your Cookbook/g) || []).length, 1);
   assert.match(chats, /aria-expanded="true"/);
   assert.match(chats, /Launch posts/);
+  assert.ok(chats.indexOf('Pinned launch') < chats.indexOf('Launch posts'));
+  assert.match(chats, /aria-label="Pinned"/);
+  assert.match(chats, /Actions for Launch posts/);
+  assert.match(chats, />Pin<|>Pin<!-- -->/);
+  assert.match(chats, />Archive<|>Archive<!-- -->/);
   assert.doesNotMatch(chats, /Brand foundation|Legacy voice|Old chat/);
   const archived = renderToStaticMarkup(React.createElement(Sidebar, { ...props, archived: true }));
   assert.doesNotMatch(html, /Old chat/);
@@ -84,7 +128,7 @@ test('chat creation uses existing durable RPC with a bounded user-specific title
   assert.equal(response.status, 201);
   assert.equal(rpcArgs.p_project, 'brand-one');
   assert.equal(rpcArgs.p_slug, marketingChat.slug);
-  assert.equal(rpcArgs.p_title.length, 80);
+  assert.equal(rpcArgs.p_title.length, 60);
   assert.equal(rpcArgs.p_key, 'valid-id');
   assert.equal(rpcArgs.p_mode, 'create');
   assert.equal(rpcArgs.p_workflow, 'general');

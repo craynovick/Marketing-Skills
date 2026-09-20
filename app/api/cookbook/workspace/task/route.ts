@@ -2,7 +2,7 @@ import { skills } from "@/lib/generated-skills";
 import { account, apiError, uuid } from "@/lib/cookbook-server";
 export async function PATCH(request: Request) {
   try {
-    const { taskId, title, archived, slug } = await request.json();
+    const { taskId, title, archived, pinned, slug } = await request.json();
     if (!uuid(taskId))
       return Response.json({ error: "A task is required." }, { status: 400 });
     const changes: Record<string, unknown> = {
@@ -16,6 +16,8 @@ export async function PATCH(request: Request) {
       changes.title = title.trim();
     if (typeof archived === "boolean")
       changes.archived_at = archived ? new Date().toISOString() : null;
+    if (typeof pinned === "boolean")
+      changes.pinned_at = pinned ? new Date().toISOString() : null;
     const { db, user } = await account();
     if (slug) {
       const skill = skills.find((item) => item.slug === slug);

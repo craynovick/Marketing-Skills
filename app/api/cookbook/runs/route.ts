@@ -3,9 +3,13 @@ import { start } from "workflow/api";
 import { account, apiError, uuid } from "@/lib/cookbook-server";
 import { cookbookV2Enabled } from "@/lib/cookbook-features";
 import { cookbookWorkflow } from "@/lib/workflows/cookbook";
+import { assertSupabaseAdminConfiguration } from "@/lib/supabase/admin";
 export async function POST(request: Request) {
   try {
     if (!cookbookV2Enabled()) return Response.json({ error: "Background runs are not enabled." }, { status: 404 });
+    // A workflow step uses the service-role client. Validate it before a queue
+    // row is created so a malformed deployment secret cannot strand the run.
+    assertSupabaseAdminConfiguration();
     const { db, user } = await account();
     const { taskId, requestId, messages, attachmentIds = [] } = await request.json();
     const last = messages?.at(-1);

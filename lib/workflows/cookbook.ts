@@ -5,8 +5,8 @@ import { claimRun, resolveContextScope, prepareAgent, executeAgentTool, persistS
 
 export async function cookbookWorkflow(runId: string) {
   "use workflow";
-  if (!await claimRun(runId, getWorkflowMetadata().workflowRunId)) return;
   try {
+    if (!await claimRun(runId, getWorkflowMetadata().workflowRunId)) return;
     await resolveContextScope(runId);
     await summarizeConversation(runId);
     let setup = await prepareAgent(runId);
@@ -38,8 +38,14 @@ export async function cookbookWorkflow(runId: string) {
     await agent.stream({ messages: setup.messages, writable: getWritable<ModelCallStreamPart>(),
       stopWhen: [stepCountIs(10), () => awaitingInput] });
     await finishRun(runId, awaitingInput ? "awaiting_input" : "completed");
-  } catch {
-    await finishRun(runId, "failed", "Generation could not finish. Review saved changes and retry.");
+  } catch (error) {
+    const cause = error instanceof Error ? error.message : "Unknown workflow failure";
+    console.error("Cookbook workflow", { runId, status: "failed", cause });
+    try {
+      await finishRun(runId, "failed", "Generation could not finish. Review saved changes and retry.");
+    } catch (statusError) {
+      console.error("Cookbook workflow", { runId, stage: "record-failure", status: "failed", cause: statusError instanceof Error ? statusError.message : "Unknown persistence failure" });
+    }
     await closeFailedStream(getWritable<ModelCallStreamPart>());
   }
 }

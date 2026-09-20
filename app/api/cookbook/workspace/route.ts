@@ -10,11 +10,12 @@ export async function GET(request: Request) {
     if (!project) return Response.json({ hostedWorkflows, skills: [], nextCursor: null });
     if (cookbookV2Enabled()) {
       const params = new URL(request.url).searchParams;
-      const [before, beforeId] = (params.get("before") || "").split("|");
+      const [beforePin, before, beforeId] = (params.get("before") || "").split("|");
       if (before && (!Number.isFinite(Date.parse(before)) || !uuid(beforeId))) return Response.json({error:"Invalid page cursor."},{status:400});
-      const {data,error} = await db.rpc("cookbook_list_brand_tasks",{p_project:project.id,p_before:before || null,p_before_id:beforeId || null,p_limit:30,p_archived:params.get("archived")==="true"});
+      if (beforePin && !Number.isFinite(Date.parse(beforePin))) return Response.json({error:"Invalid page cursor."},{status:400});
+      const {data,error} = await db.rpc("cookbook_list_brand_tasks",{p_project:project.id,p_before_pin:beforePin || null,p_before:before || null,p_before_id:beforeId || null,p_limit:30,p_archived:params.get("archived")==="true"});
       if(error) throw error;
-      return Response.json({hostedWorkflows,skills:data,nextCursor:data?.length===30?`${data.at(-1).updated_at}|${data.at(-1).id}`:null});
+      return Response.json({hostedWorkflows,skills:data,nextCursor:data?.length===30?`${data.at(-1).pinned_at || ""}|${data.at(-1).updated_at}|${data.at(-1).id}`:null});
     }
     const { data: skills, error } = await db
       .from("cookbook_skills")

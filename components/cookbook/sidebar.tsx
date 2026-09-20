@@ -18,6 +18,7 @@ export function Sidebar({
   onClose,
   onBrand,
   onMore,
+  onTaskAction,
 }: {
   onBrand?: () => void;
   onMore?: () => void;
@@ -30,6 +31,7 @@ export function Sidebar({
   onNew: () => void;
   onSettings: () => void;
   onClose: () => void;
+  onTaskAction: (task: Task, changes: { archived?: boolean; pinned?: boolean }) => void;
 }) {
   const [createOpen, setCreateOpen] = useState(true);
   return (
@@ -48,11 +50,17 @@ export function Sidebar({
         {["Create", "Archived"].map((section) => {
           const isChat = section === "Create";
           const isArchive = section === "Archived";
-          const entries = tasks.filter((task) =>
-            isArchive
-              ? Boolean(task.archived_at)
-              : !task.archived_at && (modeOf(task) === "create") === isChat,
-          );
+          const entries = tasks
+            .filter((task) =>
+              isArchive
+                ? Boolean(task.archived_at)
+                : !task.archived_at && (modeOf(task) === "create") === isChat,
+            )
+            .sort((a, b) => {
+              if (Boolean(a.pinned_at) !== Boolean(b.pinned_at))
+                return a.pinned_at ? -1 : 1;
+              return (b.updated_at || "").localeCompare(a.updated_at || "");
+            });
           return (
             <section key={section} aria-label={section}>
               <div className="cw-nav-heading">
@@ -64,12 +72,27 @@ export function Sidebar({
               </div>
               {(isArchive ? archived : createOpen) && <div className="cw-task-list">
                 {entries.map((task) => (
-                  <button key={task.id} onClick={() => onSelect(task.id)}
-                    disabled={busy} title={task.title}
-                    aria-current={task.id === activeId ? "page" : undefined}>
-                    <span>{task.title}</span>
-                    <small>{taskStatus(task)}</small>
-                  </button>
+                  <div className="cw-task-row" key={task.id}>
+                    <button className="cw-task-select" onClick={() => onSelect(task.id)}
+                      disabled={busy} title={task.title}
+                      aria-current={task.id === activeId ? "page" : undefined}>
+                      <span>{task.pinned_at && <span className="cw-pin" aria-label="Pinned">●</span>}{task.title}</span>
+                      <small>{taskStatus(task)}</small>
+                    </button>
+                    <details className="cw-task-actions">
+                      <summary aria-label={`Actions for ${task.title}`} title="Conversation actions">•••</summary>
+                      <div role="group" aria-label={`Actions for ${task.title}`}>
+                        <button disabled={busy} onClick={(event) => {
+                          event.currentTarget.closest("details")?.removeAttribute("open");
+                          onTaskAction(task, { pinned: !task.pinned_at });
+                        }}>{task.pinned_at ? "Unpin" : "Pin"}</button>
+                        <button disabled={busy} onClick={(event) => {
+                          event.currentTarget.closest("details")?.removeAttribute("open");
+                          onTaskAction(task, { archived: !task.archived_at });
+                        }}>{task.archived_at ? "Restore" : "Archive"}</button>
+                      </div>
+                    </details>
+                  </div>
                 ))}
                 {!entries.length && <p>{isArchive ? "Nothing archived yet." : isChat ? "Draft posts, emails, and campaigns in a new chat." : "Build reusable brand foundations with a skill."}</p>}
               </div>}

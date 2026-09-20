@@ -16,6 +16,7 @@ import type { BrandState } from "@/lib/cookbook-brand-server";
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
 import { marketingChat } from "@/lib/cookbook-chat";
+import { activeRunLifecycle, runLifecycle, terminalRunLifecycle, type RunLifecycle } from "@/lib/cookbook-run-lifecycle";
 import { skills as catalog } from "@/lib/generated-skill-catalog";
 import type { CookbookMessage } from "@/lib/cookbook-agent";
 import { Composer } from "./cookbook/composer";
@@ -357,17 +358,16 @@ function BrandWorkspace({
     if (account === "signed-out") { store(`cookbook:new:${projectId}:input`, `${welcomeCard.prompt}\n${text}`); location.assign(`/sign-in?next=${encodeURIComponent(entryUrl(mode, workflow, slug))}`); return; }
     await createTask(slug || marketingChat.slug, { text: `${welcomeCard.prompt}\n${text}`, files, answer });
   }
-  async function taskAction(changes: Record<string, unknown>) {
-    if (!active) return;
+  async function taskAction(target: Task, changes: Record<string, unknown>) {
     setPending(true);
     try {
       const data = await requestJSON<{ skill: Task }>(
         "/api/cookbook/workspace/task",
-        json({ taskId: active.id, ...changes }, "PATCH"),
+        json({ taskId: target.id, ...changes }, "PATCH"),
       );
-      updateTask({ ...active, ...data.skill });
+      updateTask({ ...target, ...data.skill });
       taskMenu.current?.close();
-      if (changes.archived) selectAfterArchive();
+      if (changes.archived && target.id === activeId) selectAfterArchive();
     } catch (error) {
       setNotice(messageOf(error));
     } finally {
@@ -388,6 +388,7 @@ function BrandWorkspace({
       onMore={nextCursor ? () => void moreTasks() : undefined}
       onArchiveView={() => setArchived((v) => !v)}
       onSelect={select}
+      onTaskAction={(task, changes) => void taskAction(task, changes)}
       onNew={() => {
         chooseEntry("create");
       }}
@@ -506,7 +507,7 @@ function BrandWorkspace({
                 )}
               </div>
             )}
-            {mode === "create" && (selectedRecipe || workflow !== "general") && <div className="cw-recipe-chip"><span>{selectedRecipe?.name || workflows.find(item => item.id === workflow)?.name}</span><button aria-label="Remove selected recipe" onClick={() => chooseEntry("create")}>×</button></div>}
+            {mode === "create" && selectedRecipe && slug !== "conversion-audit" && <div className="cw-recipe-chip"><span>{selectedRecipe.name}</span><button aria-label="Remove selected recipe" onClick={() => chooseEntry("create")}>×</button></div>}
             {<label className="cw-context-choice"><span>Using:</span> <select value={scope} onChange={e=>setScope(e.target.value as "brand" | "task")}><option value="brand">{brands.find(item => item.id === projectId)?.name || "My brand"}</option><option value="task">This brief only</option></select></label>}
             <Composer
               placeholder={mode === "skill-tuning" ? "Share what you know, or ask to refine your playbook…" : workflow === "analyze" ? "What would you like to research? Add a URL or question…" : "Share a topic, source, or the content you want to create…"}
@@ -654,13 +655,13 @@ function BrandWorkspace({
         </label>
         <button
           disabled={pending || !rename.trim()}
-          onClick={() => void taskAction({ title: rename })}
+          onClick={() => active && void taskAction(active, { title: rename })}
         >
           Save name
         </button>
         <button
           disabled={pending}
-          onClick={() => void taskAction({ archived: !active?.archived_at })}
+          onClick={() => active && void taskAction(active, { archived: !active.archived_at })}
         >
           {active?.archived_at ? "Restore task" : "Archive task"}
         </button>
@@ -741,6 +742,70 @@ function TaskLoader({
     />
   );
 }
+
+function RunStatusCard({
+  lifecycle,
+  reconnecting,
+  run,
+  error,
+  onRetry,
+  onReconnect,
+  onStop,
+}: {
+  lifecycle: RunLifecycle | null;
+  reconnecting: boolean;
+  run?: Run;
+  error?: Error;
+  onRetry: () => void;
+  onReconnect: () => void;
+  onStop: () => void;
+}) {
+  const [now, setNow] = useState(0);
+  const active = activeRunLifecycle(lifecycle);
+  useEffect(() => {
+    if (!active) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
+    return () => window.clearInterval(timer);
+  }, [active]);
+  if (!lifecycle || lifecycle === "completed" || lifecycle === "awaiting_input") return null;
+  const origin = run?.created_at ? Date.parse(run.created_at) : now;
+  const elapsedSeconds = now ? Math.max(0, Math.floor((now - origin) / 1_000)) : 0;
+  const title = reconnecting
+    ? "Reconnecting"
+    : lifecycle === "starting"
+      ? "Starting"
+      : lifecycle === "queued"
+        ? "Waiting for an agent"
+        : lifecycle === "running"
+          ? "Drafting"
+          : lifecycle === "cancelled"
+            ? "Run stopped"
+            : "This run did not finish";
+  const detail = reconnecting
+    ? "Your work is still active. Cookbook is restoring the live connection."
+    : lifecycle === "starting"
+      ? "Preparing your request."
+      : lifecycle === "queued"
+        ? "Your request is queued and will start automatically."
+        : lifecycle === "running"
+          ? "Cookbook is working in the background. You can switch tasks safely."
+          : run?.error || error?.message || "Your prompt and saved work are retained.";
+  return (
+    <section className={`cw-run-status ${active ? "is-active" : "is-terminal"}`} aria-live="polite">
+      <div>
+        <strong>{title}</strong>
+        <p>{detail}</p>
+        {active && elapsedSeconds >= 5 && <small>{elapsedSeconds}s elapsed{elapsedSeconds >= 15 ? " · You can leave this task and return later." : ""}</small>}
+      </div>
+      <div className="cw-run-actions">
+        {reconnecting && <button className="cw-primary" onClick={onReconnect}>Reconnect</button>}
+        {!active && <button className="cw-primary" onClick={onRetry}>Retry request</button>}
+        {active && <button onClick={onStop}>Stop run</button>}
+      </div>
+    </section>
+  );
+}
+
 function TaskThread({
   initialData,
   initial,
@@ -777,6 +842,7 @@ function TaskThread({
   const syncMessages = useRef<((messages: CookbookMessage[]) => void) | null>(null);
   const isStreaming = useRef(false);
   const resumed = useRef(false);
+  const reconnectAttempts = useRef(0);
   const started = useRef(false);
   const lastInput = useRef("");
   const lock = useRef(false);
@@ -798,6 +864,7 @@ function TaskThread({
     if (!isStreaming.current) syncMessages.current?.(next.messages);
     onUpdate(next.task);
     setBrandState(next.brand);
+    return next;
   }, [initialData.task.id, onUpdate, durableEnabled, task.id]);
   const { messages, sendMessage, status, error, clearError, stop, setMessages, resumeStream } =
     useChat<CookbookMessage>({
@@ -810,8 +877,6 @@ function TaskThread({
       },
       onError: () => {
         lock.current = false;
-        setInput(lastInput.current);
-        store(key, lastInput.current);
         void refresh().catch(() => {});
       },
     });
@@ -822,17 +887,44 @@ function TaskThread({
     syncMessages.current = setMessages;
     if (wasStreaming && !streaming) void refresh().catch(error => setNotice(messageOf(error)));
   }, [streaming, setMessages, refresh]);
-  const runActive = !!data.run && ["queued", "running"].includes(data.run.status);
-  const busy = streaming || uploading || (durableEnabled && runActive);
+  const lifecycle = runLifecycle(data.run, status);
+  const runActive = activeRunLifecycle(lifecycle);
+  const runTerminal = terminalRunLifecycle(lifecycle);
+  const reconnecting = durableEnabled && runActive && Boolean(error);
+  const busy = uploading || runActive;
   useEffect(() => {
-
-    if(durableEnabled && initialData.run?.workflow_id && ["queued","running"].includes(initialData.run.status) && !resumed.current) {
+    if(durableEnabled && data.run && ["queued","running"].includes(data.run.status) && !resumed.current) {
       resumed.current=true;
       // Replay this run from its beginning, replacing its checkpointed assistant.
-      setMessages(initialData.messages.filter(m=>m.id!==`${initialData.run!.id}:assistant`));
+      setMessages(data.messages.filter(m=>m.id!==`${data.run!.id}:assistant`));
       void resumeStream();
     }
-  }, [durableEnabled, task.id, initialData, setMessages, resumeStream]);
+  }, [durableEnabled, task.id, data.run, data.messages, setMessages, resumeStream]);
+  useEffect(() => {
+    if (!durableEnabled || !error || !runActive) {
+      if (!error) reconnectAttempts.current = 0;
+      return;
+    }
+    if (reconnectAttempts.current >= 5) return;
+    const attempt = reconnectAttempts.current++;
+    const delay = Math.min(8_000, 500 * 2 ** attempt) + Math.floor(Math.random() * 250);
+    const timer = window.setTimeout(async () => {
+      try {
+        const next = await refresh();
+        if (!next.run || !["queued", "running"].includes(next.run.status)) return;
+        clearError();
+        await resumeStream();
+      } catch {
+        // The next persisted-status poll or bounded reconnect attempt retries.
+      }
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [durableEnabled, error, runActive, refresh, clearError, resumeStream]);
+  useEffect(() => {
+    const retained = data.run?.input || lastInput.current;
+    if (!runTerminal || !retained || input) return;
+    changeInput(retained);
+  }, [runTerminal, data.run?.input, error]);
   useEffect(() => {
     onBusy(durableEnabled ? uploading || (status === "submitted" && !acknowledged) : busy);
     return () => onBusy(false);
@@ -913,6 +1005,7 @@ function TaskThread({
     setNotice("");
     clearError();
     lastInput.current = value;
+    let handingOff = false;
     try {
       setUploading(true);
       const uploaded = files.length ? await upload(files) : [];
@@ -923,6 +1016,7 @@ function TaskThread({
       setData((current) => ({ ...current, run: undefined }));
       changeInput("");
       setUploading(false);
+      handingOff = true;
       await sendMessage(
         { text: value },
         {
@@ -935,7 +1029,7 @@ function TaskThread({
       );
     } catch (error) {
       changeInput(value);
-      setNotice(messageOf(error));
+      if (!durableEnabled || !handingOff) setNotice(messageOf(error));
     } finally {
       lock.current = false;
       setUploading(false);
@@ -971,10 +1065,18 @@ function TaskThread({
       await stop();
       lock.current = false;
       await refresh();
-      setNotice("Stopped. Saved drafts remain available.");
+      setNotice("");
     } catch (error) {
       setNotice(messageOf(error));
     }
+  }
+  async function reconnect() {
+    setNotice("");
+    clearError();
+    reconnectAttempts.current = 0;
+    const next = await refresh();
+    if (next.run && ["queued", "running"].includes(next.run.status))
+      await resumeStream();
   }
   async function continueOnboarding() {
     const state = await requestJSON<BrandState>(`/api/cookbook/foundations?projectId=${task.project_id}`);
@@ -1064,7 +1166,7 @@ function TaskThread({
                 const part = (rawPart.type === "dynamic-tool" ? {...rawPart, type: `tool-${rawPart.toolName}`} : rawPart) as CookbookMessage["parts"][number];
                 if (part.type === "tool-proposeBrandUpdates") {
                   const proposal = part.state === "output-available" ? brandState?.proposals.find(p=>p.id===part.output.proposalId) : undefined;
-                  return proposal ? <BrandProposalCard key={index} proposal={proposal} busy={busy} onRefresh={refresh} approveLabel={modeOf(task) === "skill-tuning" ? "Approve and continue" : undefined} onDecision={async action => { if (action === "kept") await continueOnboarding(); }} /> : <div className="cw-tool" key={index}>{part.state === "output-available" ? <button onClick={()=>void refresh()}>Brand drafts saved · Review</button> : part.state === "output-error" || !busy ? "Brand update did not finish. Confirmed context is unchanged." : "Preparing brand updates…"}</div>;
+                  return proposal ? <BrandProposalCard key={index} proposal={proposal} busy={busy} onRefresh={async () => { await refresh(); }} approveLabel={modeOf(task) === "skill-tuning" ? "Approve and continue" : undefined} onDecision={async action => { if (action === "kept") await continueOnboarding(); }} /> : <div className="cw-tool" key={index}>{part.state === "output-available" ? <button onClick={()=>void refresh()}>Brand drafts saved · Review</button> : part.state === "output-error" || !busy ? "Brand update did not finish. Confirmed context is unchanged." : "Preparing brand updates…"}</div>;
                 }
                 if (part.type === "tool-useTaskOnlyContext") return <div className="cw-tool" key={index}>Using this brief only · Account brand context excluded</div>;
                 if (part.type === "text")
@@ -1146,49 +1248,22 @@ function TaskThread({
               })}
             </article>
           ))}
-          {streaming && (
-            <p className="cw-running" role="status">
-              {status === "submitted"
-                ? "Reviewing your request…"
-                : "Cookbook is working…"}{" "}
-              {durableEnabled ? "You can switch tasks; work continues in the background." : "Keep this page open."}
-            </p>
-          )}
-          {(error || notice) && (
+          {durableEnabled ? (
+            <RunStatusCard
+              lifecycle={lifecycle}
+              reconnecting={reconnecting}
+              run={data.run}
+              error={error}
+              onRetry={() => void submit(data.run?.input || lastInput.current || input)}
+              onReconnect={() => void reconnect().catch((error) => setNotice(messageOf(error)))}
+              onStop={() => void cancel()}
+            />
+          ) : streaming ? (
+            <p className="cw-running" role="status">Cookbook is working… Keep this page open.</p>
+          ) : null}
+          {notice && (
             <div className="cw-error" role="alert">
-              {notice ||
-                "This run did not finish. Your prompt and saved work are retained."}
-              {error && (
-                <button
-                  disabled={busy}
-                  onClick={() => void submit(lastInput.current || input)}
-                >
-                  Retry request
-                </button>
-              )}
-            </div>
-          )}
-          {data.run &&
-            ["failed", "interrupted", "cancelled"].includes(data.run.status) &&
-            !streaming && (
-              <div className="cw-notice">
-                <p>
-                  Run {data.run.status}.{" "}
-                  {data.run.error ||
-                    (task.document ? "Your saved draft is available in the workspace." : "No task draft was saved. Your conversation and completed research are retained.")}
-                </p>
-                <button
-                  disabled={busy}
-                  onClick={() => changeInput(data.run!.input)}
-                >
-                  Review request and retry
-                </button>
-              </div>
-            )}
-          {runActive && !streaming && (
-            <div className="cw-notice">
-              This task is working in the background.{" "}
-              <button onClick={() => void cancel()}>Stop run</button>
+              {notice}
             </div>
           )}
           {task.archived_at && (
@@ -1204,12 +1279,12 @@ function TaskThread({
             onChange={changeInput}
             onSubmit={() => void submit()}
             skill={skill?.name || "Choose a skill"}
-            busy={streaming}
+            busy={busy}
             disabled={
               uploading ||
               !skill ||
               Boolean(task.archived_at) ||
-              (!streaming && data.run?.status === "running")
+              runActive
             }
             onStop={() => void cancel()}
             attachments={data.attachments}
@@ -1252,7 +1327,7 @@ function TaskThread({
           versions={data.versions}
           busy={busy}
           active={panel}
-          onRefresh={refresh}
+          onRefresh={async () => { await refresh(); }}
           onApproved={modeOf(task) === "skill-tuning" ? continueOnboarding : undefined}
           onClose={hideDraft}
         />

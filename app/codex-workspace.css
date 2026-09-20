@@ -32,6 +32,43 @@ body:has(.cw-shell) > footer {
 .cw-shell * {
   box-sizing: border-box;
 }
+.cw-loading-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 18px;
+  border-right: 1px solid var(--line);
+}
+.cw-loading-main { min-width: 0; }
+.cw-loading-main header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line);
+}
+.cw-loading-content {
+  width: min(740px, calc(100% - 36px));
+  margin: 18vh auto 0;
+}
+.cw-loading-content p { color: var(--muted); }
+.cw-loading-block {
+  display: block;
+  width: 100%;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--surface-raised), var(--surface-hover), var(--surface-raised));
+  background-size: 200% 100%;
+  animation: cw-loading-pulse 1.4s ease-in-out infinite;
+}
+.cw-loading-block.is-logo { width: 64%; height: 24px; margin-bottom: 22px; }
+.cw-loading-block.is-title { width: 180px; height: 20px; }
+.cw-loading-block.is-context { width: 220px; height: 36px; }
+.cw-loading-block.is-heading { width: 72%; height: 44px; }
+.cw-loading-block.is-copy { width: 55%; height: 18px; margin-top: 18px; }
+.cw-loading-block.is-composer { height: 112px; margin-top: 42px; }
+@keyframes cw-loading-pulse { to { background-position: -200% 0; } }
 .cw-shell button,
 .cw-shell input,
 .cw-shell textarea,
@@ -168,30 +205,83 @@ body:has(.cw-shell) > footer {
 .cw-task-list {
   min-height: 0;
 }
-.cw-task-list button {
+.cw-task-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: center;
+  margin-bottom: 4px;
+  border-radius: 8px;
+}
+.cw-task-select {
   display: block;
   width: 100%;
   border: 0;
   background: transparent;
   text-align: left;
-  margin-bottom: 4px;
+  min-width: 0;
+  padding-right: 4px;
 }
-.cw-task-list button[aria-current="page"] {
+.cw-task-row:has(.cw-task-select[aria-current="page"]) {
   background: var(--surface-hover);
 }
-.cw-task-list span {
+.cw-task-select > span {
   display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: 500;
 }
-.cw-task-list small {
+.cw-task-select small {
   display: block;
   margin-top: 3px;
   color: var(--muted);
   font-size: 11px;
 }
+.cw-pin {
+  display: inline-block !important;
+  margin-right: 7px;
+  color: var(--accent);
+  font-size: 8px;
+  vertical-align: 2px;
+}
+.cw-task-actions {
+  position: relative;
+}
+.cw-task-actions summary {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+  letter-spacing: 1px;
+}
+.cw-task-actions summary::-webkit-details-marker { display: none; }
+.cw-task-actions summary:hover,
+.cw-task-actions[open] summary { background: var(--surface-raised); color: var(--ink); }
+.cw-task-actions > div {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  right: 0;
+  display: grid;
+  width: 132px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  box-shadow: 0 12px 30px #0008;
+}
+.cw-task-actions button {
+  min-height: 38px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+.cw-task-actions button:hover { background: var(--surface-hover); }
 .cw-task-list p {
   padding: 15px 9px;
   color: var(--muted);
@@ -424,6 +514,30 @@ body:has(.cw-shell) > footer {
 .cw-notice button,
 .cw-error button {
   margin: 5px;
+}
+.cw-run-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-raised);
+  font-size: 13px;
+}
+.cw-run-status.is-terminal {
+  border-color: #754537;
+  background: #33231f;
+}
+.cw-run-status p { margin: 4px 0; }
+.cw-run-status small { color: var(--muted); }
+.cw-run-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
 }
 .cw-empty {
   padding: 40px;
@@ -837,6 +951,18 @@ body:has(.cw-shell) > footer {
   .cw-artifact { border-left: 0; }
 }
 @media (max-width: 767px) {
+  .cw-loading-shell { grid-template-columns: 1fr; }
+  .cw-loading-sidebar { display: none; }
+  .cw-loading-main header { height: 58px; padding: 0 16px; }
+  .cw-loading-block.is-context { width: 120px; }
+  .cw-loading-content { margin-top: 12vh; }
+  .cw-run-status {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cw-run-actions { width: 100%; }
+  .cw-run-actions button { flex: 1; min-height: 44px; }
   .cw-header {
     padding: 0 10px;
     height: 58px;
@@ -911,6 +1037,7 @@ body:has(.cw-shell) > footer {
   .cw-feed {
     scroll-behavior: auto;
   }
+  .cw-loading-block { animation: none; }
 }
 
 /* Guided setup and a single home for reusable brand documents. */

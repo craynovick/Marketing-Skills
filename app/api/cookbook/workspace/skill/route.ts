@@ -1,7 +1,7 @@
 import { resolveProject } from '@/lib/cookbook-projects';
 import { defaultMode, validMode, validWorkflow } from "@/lib/cookbook-experience";
 import { requireSkillAccess } from "@/lib/cookbook-access";
-import { marketingChat } from "@/lib/cookbook-chat";
+import { conciseTaskTitle, marketingChat } from "@/lib/cookbook-chat";
 import { skills } from "@/lib/generated-skills";
 import { account, apiError, uuid } from "@/lib/cookbook-server";
 export async function POST(request: Request) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       p_slug: skill.slug,
       p_version: skill.version,
       p_title: skill.slug === marketingChat.slug && typeof title === "string"
-        ? title.trim().slice(0, 80) || "New chat"
+        ? conciseTaskTitle(title)
         : skill.name,
       p_key: requestId,
     });

@@ -59,14 +59,14 @@ export async function GET(request: Request) {
     const [history, versions, attachments, runs] = results;
     const run = runs.data?.[0];
     if (
-      !run?.workflow_id && run?.status === "running" &&
+      run && ["queued", "running"].includes(run.status) &&
       Date.now() - Date.parse(run.updated_at) > RUN_STALE_AFTER_MS
     ) {
       const { data } = await db
         .from("cookbook_agent_runs")
-        .update({ status: "interrupted" })
+        .update({ status: "interrupted", error: "This run stopped responding. Please retry." })
         .eq("id", run.id)
-        .eq("status", "running")
+        .in("status", ["queued", "running"])
         .lt(
           "updated_at",
           new Date(Date.now() - RUN_STALE_AFTER_MS).toISOString(),
