@@ -11,8 +11,7 @@ const RUN_STALE_AFTER_MS = 10 * 60 * 1000;
 export async function GET(request: Request) {
   try {
     const taskId = new URL(request.url).searchParams.get("taskId");
-    if (!uuid(taskId))
-      return Response.json({ error: "A task is required." }, { status: 400 });
+    if (!uuid(taskId)) return Response.json({ error: "A task is required." }, { status: 400 });
     const { db, user } = await account();
     const { data: task } = await db
       .from("cookbook_skills")
@@ -83,9 +82,15 @@ export async function GET(request: Request) {
     if (decisions.error) throw decisions.error;
     const references: {taskId:string;documentId:string}[] = versions.data?.[0]?.context_versions || [];
     const current = new Map([...(brand?.foundations || []), ...(brand?.legacy || [])].map(f => [f.id, f.accepted_version_id]));
+    let sourceChanged = false;
+    if (task.source_task_id) {
+      const latest = await db.from("cookbook_documents").select("id").eq("skill_id", task.source_task_id).eq("user_id", user.id).order("version", { ascending: false }).limit(1).maybeSingle();
+      if (latest.error) throw latest.error;
+      sourceChanged = latest.data?.id !== task.source_document_id;
+    }
     return Response.json({
       decisions: decisions.data, brand,
-      task: { ...task, reviewSuggested: references.some(ref => current.get(ref.taskId) !== ref.documentId), document: versions.data?.[0], run_status: run?.status },
+      task: { ...task, sourceChanged, reviewSuggested: references.some(ref => current.get(ref.taskId) !== ref.documentId), document: versions.data?.[0], run_status: run?.status },
       messages: history.data
         ?.filter((row) => row.role !== "event")
         .map((row) => ({

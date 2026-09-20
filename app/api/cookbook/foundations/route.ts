@@ -6,7 +6,7 @@ export async function GET(request: Request) {
     const { db, user } = await account();
     const taskId = new URL(request.url).searchParams.get("taskId") || undefined;
     if (taskId && !uuid(taskId)) return Response.json({ error: "Invalid task." }, { status: 400 });
-    return Response.json({ enabled: true, ...await readBrand(db, user.id, taskId) });
+    return Response.json({ enabled: true, ...await readBrand(db, user.id, taskId, new URL(request.url).searchParams.get("projectId") || undefined) });
   } catch (error) { return apiError(error); }
 }
 export async function POST(request: Request) {

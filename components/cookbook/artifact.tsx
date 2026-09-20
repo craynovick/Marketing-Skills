@@ -1,4 +1,5 @@
 "use client";
+import { copyText } from "@/lib/cookbook-copy";
 import { PanelToggle } from "./panel-toggle";
 import { useEffect, useRef, useState } from "react";
 import { Markdown, safeLink } from "./markdown";
@@ -96,6 +97,7 @@ export function Artifact({
             >
               {accepted ? "Accepted" : onApproved ? "Approve and continue" : "Accept draft"}
             </button>
+            <button onClick={async () => { try { await navigator.clipboard.writeText(copyText(document.content)); setNotice("Copied text."); } catch { setNotice("Copy failed. Try downloading the draft."); } }}>Copy text</button>
             <button
               onClick={async () => {
                 try {
@@ -106,7 +108,7 @@ export function Artifact({
                 }
               }}
             >
-              Copy
+              Copy Markdown
             </button>
             <button onClick={download}>
               Download {accepted ? "" : "draft"}

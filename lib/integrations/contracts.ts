@@ -15,7 +15,7 @@ export const artifactSchema = z.object({
   contentMarkdown: z.string().trim().min(1).max(60000), agentName: z.string().trim().min(1).max(80).optional(),
   metadata: z.record(z.string(), z.unknown()).default({}).refine(v => JSON.stringify(v).length <= 8000, 'Metadata must be at most 8,000 characters.'),
 }).strict();
-export const connectionSchema = z.object({name: z.string().trim().min(1).max(80), scopes: z.array(z.enum(scopes)).min(1).max(3).refine(a => new Set(a).size === a.length)}).strict();
+export const connectionSchema = z.object({projectId: z.string().uuid().optional(), name: z.string().trim().min(1).max(80), scopes: z.array(z.enum(scopes)).min(1).max(3).refine(a => new Set(a).size === a.length)}).strict();
 export const listSchema = z.object({limit: z.coerce.number().int().min(1).max(100).default(20), cursor: z.string().max(300).optional()}).strict();
 export type PantrySection = {key: typeof sectionKeys[number]; approvedContent: string | null; approvedVersion: number; latestVersion: number; pending: boolean};
 export type Pantry = {projectId: string; sections: PantrySection[]};

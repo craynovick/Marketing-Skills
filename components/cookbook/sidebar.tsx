@@ -1,3 +1,6 @@
+"use client";
+import { useState } from "react";
+import Image from "next/image";
 import { PanelToggle } from "./panel-toggle";
 import { taskStatus } from "@/lib/cookbook-foundations";
 import Link from "next/link";
@@ -11,7 +14,6 @@ export function Sidebar({
   onArchiveView,
   onSelect,
   onNew,
-  onSkills,
   onSettings,
   onClose,
   onBrand,
@@ -26,25 +28,24 @@ export function Sidebar({
   onArchiveView: () => void;
   onSelect: (id: string) => void;
   onNew: () => void;
-  onSkills: () => void;
   onSettings: () => void;
   onClose: () => void;
 }) {
+  const [createOpen, setCreateOpen] = useState(true);
   return (
     <nav className="cw-sidebar" aria-label="Cookbook navigation">
       <div className="cw-brand">
         <Link href="/" aria-label="Cookbook home">
-          Cookbook<span>YOUR MARKETING AGENT</span>
+          <Image src="/cookbook-wordmark.svg" alt="Cookbook" width={164} height={28} />
         </Link>
         <PanelToggle side="left" expanded label="Close navigation" onClick={onClose} />
       </div>
       <button className="cw-new" onClick={onNew} disabled={busy}>
         ＋ Create
       </button>
-      <button className="cw-new" disabled={busy} onClick={onSkills}>✳ Skill tuning</button>
       <button className="cw-new" onClick={onBrand}>▤ Your Cookbook</button>
       <div className="cw-navigation-sections">
-        {["Create", "Skill tuning", "Archived"].map((section) => {
+        {["Create", "Archived"].map((section) => {
           const isChat = section === "Create";
           const isArchive = section === "Archived";
           const entries = tasks.filter((task) =>
@@ -59,10 +60,9 @@ export function Sidebar({
                   <button className="cw-archive-toggle" disabled={busy} onClick={onArchiveView} aria-expanded={archived}>
                     Archived <span aria-hidden="true">{archived ? "⌃" : "⌄"}</span>
                   </button>
-                ) : section}</h2>
-                {section === "Skill tuning" && <button disabled={busy} onClick={onSkills}>Browse</button>}
+                ) : <button className="cw-archive-toggle" onClick={() => setCreateOpen(v => !v)} aria-expanded={createOpen}>Create <span aria-hidden="true">{createOpen ? "⌃" : "⌄"}</span></button>}</h2>
               </div>
-              {(!isArchive || archived) && <div className="cw-task-list">
+              {(isArchive ? archived : createOpen) && <div className="cw-task-list">
                 {entries.map((task) => (
                   <button key={task.id} onClick={() => onSelect(task.id)}
                     disabled={busy} title={task.title}

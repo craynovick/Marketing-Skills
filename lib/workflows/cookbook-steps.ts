@@ -1,3 +1,4 @@
+import { taskContext } from '@/lib/cookbook-task-context';
 import { modeOf } from "@/lib/cookbook-experience";
 import { requireTaskAccess } from "@/lib/cookbook-access";
 import { Output, generateText, jsonSchema, asSchema, type Tool, type UIMessage } from "ai";
@@ -98,7 +99,7 @@ export async function prepareAgent(runId: string) {
   }));
   const { data: evidence, error: ee } = research.data ? await db.from("cookbook_workspace_evidence").select("url,title,excerpt").eq("run_id", research.data.id).eq("user_id", run.user_id) : { data: [], error: null };
   if (ee) throw ee;
-  const reference = JSON.stringify({ scope: task.context_scope, confirmedFoundations: foundations,
+  const reference = JSON.stringify({ ...await taskContext(db, run.user_id, task), scope: task.context_scope, confirmedFoundations: foundations,
     approvedSkillPlaybooks: await approvedPlaybooks(db, run.user_id, task),
     decisionAnswers: await decisionAnswers(db, run.user_id, task.id),
     conversationSummary: thread.summary || "", missingFoundationVersion: 0, taskProposals: task.context_scope === "brand" ? proposals.data : [],

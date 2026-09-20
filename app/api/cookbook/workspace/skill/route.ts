@@ -1,3 +1,4 @@
+import { resolveProject } from '@/lib/cookbook-projects';
 import { defaultMode, validMode, validWorkflow } from "@/lib/cookbook-experience";
 import { requireSkillAccess } from "@/lib/cookbook-access";
 import { marketingChat } from "@/lib/cookbook-chat";
@@ -5,7 +6,7 @@ import { skills } from "@/lib/generated-skills";
 import { account, apiError, uuid } from "@/lib/cookbook-server";
 export async function POST(request: Request) {
   try {
-    const { slug, requestId, title, contextScope, mode, workflow } = await request.json();
+    const { slug, requestId, title, contextScope, mode, workflow, projectId } = await request.json();
     const skill = slug === marketingChat.slug ? marketingChat : skills.find((item) => item.slug === slug);
     if (!skill || !uuid(requestId))
       return Response.json(
@@ -15,8 +16,11 @@ export async function POST(request: Request) {
     const { db, user } = await account();
     await requireSkillAccess(user.id,skill.slug);
     if ((mode !== undefined && !validMode(mode)) || (workflow !== undefined && !validWorkflow(workflow))) return Response.json({ error: "Choose a valid mode and workflow." }, { status: 400 });
+    const project = await resolveProject(db, user.id, projectId);
+    if (!project) throw new Error("BRAND_REQUIRED");
     const selectedMode = mode || defaultMode(slug);
-    const { data: id, error } = await db.rpc("cookbook_create_experience", {
+    const { data: id, error } = await db.rpc("cookbook_create_brand_task", {
+      p_project: project.id,
       p_mode: selectedMode, p_workflow: selectedMode === "skill-tuning" ? "general" : workflow || "general", p_scope: contextScope === "task" ? "task" : "brand",
       p_slug: skill.slug,
       p_version: skill.version,

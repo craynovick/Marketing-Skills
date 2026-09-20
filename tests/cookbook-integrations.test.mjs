@@ -23,6 +23,7 @@ async function database() {
  await db.exec(await readFile(new URL('../supabase/migrations/20260919002000_guided_brand_agent.sql',import.meta.url),'utf8'));
  await db.exec(`grant select,insert,update,delete on all tables in schema public to authenticated,service_role; grant usage,select on all sequences in schema public to authenticated,service_role;`);
  await db.exec(await readFile(new URL('../supabase/migrations/20260919003000_cookbook_integrations.sql',import.meta.url),'utf8'));
+ for (const name of ['20260920000000_guided_experience','20260921000000_brands_and_adaptations','20260921001000_brand_connections']) await db.exec(await readFile(new URL(`../supabase/migrations/${name}.sql`,import.meta.url),'utf8'));
  await login(db,owner);
  return db;
 }
@@ -130,5 +131,18 @@ test('completed setup prevents scans while self-hosted installation can scan wit
  await scan(db,'fail',{requestId:request});
  await connection(db);
  assert.equal((await call(db,'connection',{},'hash-owner',true)).entitlements.deliverables,true);
+ }finally{await db.close();}
+});
+
+
+test('connection creation requires a brand for multi-brand accounts and validates ownership', async()=>{
+ const db=await database();try{
+  const brand=await scalar(db,"select cookbook_create_brand('Second','New offer','',gen_random_uuid()) as value");
+  await login(db,'','service_role');
+  const payload={name:'Scoped connector',hash:'new-hash',scopes:['context:read']};
+  await assert.rejects(scalar(db,"select cookbook_manage_connection($1,'create',$2) as value",[owner,JSON.stringify(payload)]),/BRAND_REQUIRED/);
+  const connection=await scalar(db,"select cookbook_manage_connection($1,'create',$2) as value",[owner,JSON.stringify({...payload,projectId:brand})]);
+  assert.equal(connection.project_id,brand);
+  await assert.rejects(scalar(db,"select cookbook_manage_connection($1,'create',$2) as value",[other,JSON.stringify({...payload,hash:'other-hash',projectId:brand})]),/INVALID_BRAND/);
  }finally{await db.close();}
 });

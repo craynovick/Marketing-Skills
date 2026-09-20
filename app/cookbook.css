@@ -64,7 +64,7 @@ h1,h2,h3,p{overflow-wrap:anywhere}
   .wrap{padding-left:16px;padding-right:16px}
   .site-header nav{height:auto;min-height:64px;gap:12px;padding-top:6px;padding-bottom:6px}
   .brand-lockup{flex:0 0 auto}
-  .brand-lockup img{width:54px;height:46px}
+  .brand-lockup img{width:140px;height:24px}
   .site-header .nav-links{min-width:0;flex:1;justify-content:flex-start;overflow-x:auto;scrollbar-width:none;white-space:nowrap;padding:5px 0}
   .site-header .nav-links::-webkit-scrollbar{display:none}
   .site-header .nav-links a,.auth-controls{flex:0 0 auto}

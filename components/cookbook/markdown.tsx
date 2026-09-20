@@ -121,7 +121,9 @@ export function Markdown({ value }: { value: string }) {
       );
       continue;
     }
-    result.push(<p key={start}>{inline(line)}</p>);
+    const paragraph = [line];
+    while (i < lines.length && lines[i].trim() && !/^(#{1,6}\s|[-*]\s|\d+\.\s|>|```|\|)/.test(lines[i])) paragraph.push(lines[i++]);
+    result.push(<p key={start}>{paragraph.map((part, index) => <Fragment key={index}>{index > 0 && <br />}{inline(part.replace(/  $/, ""))}</Fragment>)}</p>);
   }
   return <div className="cw-markdown">{result}</div>;
 }

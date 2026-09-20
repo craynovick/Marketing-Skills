@@ -49,7 +49,7 @@ test('legacy exact skill identities still resolve; unknown tasks remain unresolv
   assert.equal(resolveSkill({ title: skills[0].name, file_name: 'legacy.md' }).slug, skills[0].slug);
   assert.equal(resolveSkill({ title: 'Unrecognized', file_name: 'legacy.md' }), undefined);
 });
-test('sidebar separates chats, skills, and archives without losing legacy records', () => {
+test('sidebar has one Cookbook action and a collapsible Create-only history', () => {
   const { Sidebar } = load('@/components/cookbook/sidebar');
   const tasks = [
     { id: 'chat', title: 'Launch posts', skill_slug: marketingChat.slug },
@@ -60,12 +60,10 @@ test('sidebar separates chats, skills, and archives without losing legacy record
   const props = { tasks, activeId: 'chat', busy: false, archived: false, onNew() {}, onSkills() {}, onSelect() {}, onArchiveView() {}, onClose() {}, onSettings() {} };
   const html = renderToStaticMarkup(React.createElement(Sidebar, props));
   const chats = html.split('aria-label="Create"')[1].split('</section>')[0];
-  const foundations = html.split('aria-label="Skill tuning"')[1].split('</section>')[0];
+  assert.equal((html.match(/Your Cookbook/g) || []).length, 1);
+  assert.match(chats, /aria-expanded="true"/);
   assert.match(chats, /Launch posts/);
   assert.doesNotMatch(chats, /Brand foundation|Legacy voice|Old chat/);
-  assert.match(foundations, /Brand foundation/);
-  assert.match(foundations, /Legacy voice/);
-  assert.doesNotMatch(foundations, /Launch posts/);
   const archived = renderToStaticMarkup(React.createElement(Sidebar, { ...props, archived: true }));
   assert.doesNotMatch(html, /Old chat/);
   const archiveSection = archived.split('aria-label="Archived"')[1].split('</section>')[0];
@@ -73,19 +71,18 @@ test('sidebar separates chats, skills, and archives without losing legacy record
   assert.doesNotMatch(archiveSection, /Launch posts|Brand foundation|Legacy voice/);
   assert.match(archiveSection, /aria-expanded="true"/);
   assert.match(archived, /Launch posts/);
-  assert.match(archived, /Brand foundation/);
-  assert.match(archived, /Legacy voice/);
 });
 test('chat creation uses existing durable RPC with a bounded user-specific title', async () => {
   let rpcArgs;
   const query = { select() { return this; }, eq() { return this; }, async single() { return { data: { id: 'created' } }; } };
-  const route = loader({ '@/lib/cookbook-server': {
+  const route = loader({ '@/lib/cookbook-projects': { resolveProject: async () => ({id:'brand-one'}) }, '@/lib/cookbook-server': {
     uuid: value => value === 'valid-id',
-    account: async () => ({ user: { id: 'owner' }, db: { async rpc(name, args) { assert.equal(name, 'cookbook_create_experience'); rpcArgs = args; return { data: 'created' }; }, from() { return query; } } }),
+    account: async () => ({ user: { id: 'owner' }, db: { async rpc(name, args) { assert.equal(name, 'cookbook_create_brand_task'); rpcArgs = args; return { data: 'created' }; }, from() { return query; } } }),
     apiError: () => new Response(null, { status: 500 }),
   } })('@/app/api/cookbook/workspace/skill/route');
   const response = await route.POST(new Request('http://localhost/api', { method: 'POST', body: JSON.stringify({ slug: marketingChat.slug, requestId: 'valid-id', title: 'A'.repeat(100) }) }));
   assert.equal(response.status, 201);
+  assert.equal(rpcArgs.p_project, 'brand-one');
   assert.equal(rpcArgs.p_slug, marketingChat.slug);
   assert.equal(rpcArgs.p_title.length, 80);
   assert.equal(rpcArgs.p_key, 'valid-id');
@@ -170,4 +167,25 @@ test('decision cards use explicit submission, accessible choices, and completed 
   assert.match(html,/disabled="">Continue/);assert.match(html,/textarea/);
   const done=renderToStaticMarkup(React.createElement(DecisionCard,{card,answer:{optionId:'text'},onAnswer:async()=>{}}));
   assert.match(done,/A short text post/);assert.match(done,/Edit answer/);assert.doesNotMatch(done,/textarea/);
+});
+
+
+test('Create starters exclude Analyze while legacy research links remain valid', () => {
+ const {workflows, validWorkflow} = load('@/lib/cookbook-experience');
+ assert.deepEqual(workflows.map(w=>w.id),['social-post','newsletter']);
+ assert.equal(validWorkflow('analyze'),true);
+});
+test('social clipboard text preserves line breaks without document title or emphasis', () => {
+ const {copyText} = load('@/lib/cookbook-copy');
+ assert.equal(copyText('# Draft\n\nA **warm** welcome.\nCome explore.\n\nSee you soon!'), 'A warm welcome.\nCome explore.\n\nSee you soon!');
+});
+test('platform formats include video scripts and preserve plain text render breaks', () => {
+ const {platforms, adaptationPrompt} = load('@/lib/cookbook-platforms');
+ assert.equal(platforms.length,7);
+ assert.match(adaptationPrompt('tiktok'),/spoken script/);
+ assert.match(adaptationPrompt('youtube-shorts'),/visual cues/);
+ const {Markdown} = load('@/components/cookbook/markdown');
+ const html=renderToStaticMarkup(React.createElement(Markdown,{value:'# Draft\n\nFirst line\nSecond line\n\nNext paragraph'}));
+ assert.match(html,/First line<br\/>Second line/);
+ assert.match(html,/<p>Next paragraph<\/p>/);
 });

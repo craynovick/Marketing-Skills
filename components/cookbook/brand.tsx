@@ -1,7 +1,10 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { foundations, type BrandProposal } from "@/lib/cookbook-foundations";
 import type { BrandState, Foundation } from "@/lib/cookbook-brand-server";
+import { skills as catalog } from "@/lib/generated-skill-catalog";
+import { quickStart } from "@/lib/cookbook-experience";
+import { BrandFeatures } from "./feature-context";
 import { Artifact } from "./artifact";
 import { Markdown, safeLink } from "./markdown";
 import { json, messageOf, requestJSON, type Draft } from "./types";
@@ -45,19 +48,21 @@ export function BrandProposalCard({ proposal, onRefresh, busy = false, onDecisio
   </section>;
 }
 
-export function BrandManager({ onStart, onBack }: { onStart: (prompt:string)=>void; onBack: ()=>void }) {
+export function BrandManager({ projectId, onSkill, onNewBrand, onBack }: { projectId: string; onSkill: (slug:string)=>void; onNewBrand: ()=>void; onBack: ()=>void }) {
+  const features = useContext(BrandFeatures);
+  const [query, setQuery] = useState("");
   const [state,setState]=useState<BrandState|null>(null);
   const [notice,setNotice]=useState("");
   const [selected,setSelected]=useState<Foundation|null>(null);
   const [versions,setVersions]=useState<Draft[]>([]);
   const lastFocus=useRef<HTMLElement|null>(null);
   const load=useCallback(async()=>{
-    try { const result=await requestJSON<BrandState & {enabled:boolean}>("/api/cookbook/foundations");
+    try { const result=await requestJSON<BrandState & {enabled:boolean}>(`/api/cookbook/foundations?projectId=${projectId}`);
       if(!result.enabled) {setNotice("Guided brand setup is not enabled on this deployment yet.");return;}
       setState(result);setNotice("");
       return result;
     } catch(error){setNotice(messageOf(error));}
-  },[]);
+  },[projectId]);
   useEffect(()=>{void load();},[load]);
   async function open(item:Foundation) {
     lastFocus.current=window.document.activeElement as HTMLElement;
@@ -74,19 +79,34 @@ export function BrandManager({ onStart, onBack }: { onStart: (prompt:string)=>vo
   return <div className={`cw-brand-manager ${selected?"cw-brand-reading":""}`}>
     <div className="cw-brand-overview">
       <button onClick={onBack}>← Back to chat</button>
-      <p className="cw-eyebrow">SKILL TUNING</p><h1>Your Cookbook</h1>
+      <div className="cw-library-heading"><h1>Your Cookbook</h1><button disabled={!features} onClick={onNewBrand}>＋ New brand</button></div>
+      <p className="cw-eyebrow">{state?.brandName || "YOUR BRAND"}</p>
       <p>Your brand, kept together. Review what Cookbook knows and shape what it learns next.</p>
       {notice && <p className="cw-notice" role="alert">{notice} <button onClick={()=>void load()}>Retry</button></p>}
       {!state && !notice && <p role="status">Opening your Cookbook…</p>}
+      <h2>Start with your brand</h2>
+      <div className="cw-foundation-grid">{quickStart.map(step => {
+        const progress = state?.quickStart.find(s => s.slug === step.slug);
+        const saved = state?.legacy.find(s => s.skill_slug === step.slug);
+        return <button key={step.slug} onClick={() => onSkill(step.slug)}><small>{progress?.reviewSuggested ? "Update suggested" : progress?.confirmed ? "Approved" : saved ? "Draft" : "Not started"}</small><strong>{step.name}</strong><span>{step.description}</span></button>;
+      })}</div>
+      <h2>Your tuned skills</h2>
+      <div className="cw-foundation-grid">{state?.legacy.filter(t => !quickStart.some(s => s.slug === t.skill_slug)).map(t => <button key={t.id} onClick={() => onSkill(t.skill_slug!)}><small>{t.reviewSuggested ? "Update suggested" : t.accepted_version_id ? "Approved" : "Draft"}</small><strong>{t.title}</strong></button>)}</div>
+      {!state?.legacy.some(t => !quickStart.some(s => s.slug === t.skill_slug)) && <p>Tune a skill below using files or a conversation.</p>}
+      <h2>Explore skills</h2>
+      <input aria-label="Search Cookbook skills" placeholder="Search skills…" value={query} onChange={e => setQuery(e.target.value)} />
+      <div className="cw-foundation-grid">{catalog.filter(s => `${s.name} ${s.description}`.toLowerCase().includes(query.toLowerCase())).map(s => <button key={s.slug} onClick={() => onSkill(s.slug)}><strong>{s.name}</strong><span>{s.description}</span></button>)}</div>
+      {query && !catalog.some(s => `${s.name} ${s.description}`.toLowerCase().includes(query.toLowerCase())) && <p>No matching skills.</p>}
+      <details><summary>Approved brand context and updates</summary>
       <div className="cw-foundation-grid">{foundations.map(f=>{
         const item=state?.foundations.find(d=>d.foundation_key===f.key);
-        return <button key={f.key} disabled={!state} onClick={()=>item?void open(item):onStart(`Help me build my ${f.name.toLowerCase()}. Use confirmed context and ask one key question at a time.`)}>
+        return <button key={f.key} disabled={!state} onClick={()=>item?void open(item):onSkill(quickStart.find(s => s.key === f.key)?.slug || "brand-positioning-workshop")}>
           <span className="cw-foundation-state">{item?.reviewSuggested ? "Review suggested" : item?.confirmed ? item.document?.id!==item.confirmed.id ? "Changes to review" : "Confirmed" : item?.document ? "Draft to review" : "Ready to build"}</span>
           <strong>{f.name}</strong><span>{f.description}</span>
         </button>;
       })}</div>
       {!!state?.proposals.length && <div><h2>Updates to review</h2>{state.proposals.map(p=><BrandProposalCard key={p.id} proposal={p} onRefresh={async()=>{await load();}} />)}</div>}
-      {!!state?.legacy.length && <details><summary>Previously accepted skill foundations</summary><p>These are preserved for review. They are not silently merged into your new brand documents.</p>{state.legacy.map(t=><p key={t.id}><a href={`/create?task=${t.id}`}>{t.title} →</a></p>)}</details>}
+      </details>
     </div>
     {selected && <Artifact key={selected.id} task={selected} versions={versions} busy={false} onRefresh={refreshDocument} onClose={close} />}
   </div>;

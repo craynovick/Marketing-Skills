@@ -1,3 +1,4 @@
+import { taskContext } from '@/lib/cookbook-task-context';
 import { readBrand } from "@/lib/cookbook-brand-server";
 import { requestsTaskOnlyContext } from "@/lib/cookbook-context";
 import { modeOf } from "@/lib/cookbook-experience";
@@ -188,13 +189,6 @@ export async function POST(request: Request) {
           .eq("user_id", user.id)
           .eq("run_id", evidenceRun)
       : { data: [] };
-    const { data: brand } = await db
-      .from("cookbooks")
-      .select(
-        "company,audience,positioning,offer,voice,pillars,formats,proof,constraints",
-      )
-      .eq("user_id", user.id)
-      .maybeSingle();
     const { data: decisions, error: decisionError } = await db.from("cookbook_decisions").select("card,answer,revision").eq("task_id", taskId).eq("user_id", user.id).not("answer", "is", null);
     if (decisionError) throw decisionError;
     if (requestsTaskOnlyContext(text)) {
@@ -203,9 +197,8 @@ export async function POST(request: Request) {
       if (scopeError) throw scopeError;
     }
     const shared = task.context_scope === "task" ? null : await readBrand(db, user.id, taskId);
-    const context = JSON.stringify({
+    const context = JSON.stringify({ ...await taskContext(db, user.id, task),
       decisionAnswers: decisions,
-      userSavedBrandContext: task.context_scope === "task" ? null : brand,
       conversationSummary: summary,
       approvedFoundations: task.context_scope === "task" ? [] : foundations || [],
       confirmedFoundations: shared?.foundations.map(f => ({ key: f.foundation_key, currentVersion: f.document?.version || 0, confirmed: f.confirmed?.content || null })) || [],

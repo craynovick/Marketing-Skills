@@ -10,7 +10,7 @@ Use the selected skill's output contract, not a universal brand-playbook templat
 
 ## Visible tools
 
-The application renders tool lifecycle states from actual tool calls. Research output includes the canonical website, reviewed page URLs/titles/excerpts, page count, and failed pages. Do not convert page count into an invented confidence percentage. Save output references an immutable draft version. Question output contains one prompt and 2–4 choices; users can always answer in their own words.
+The application renders tool lifecycle states from actual tool calls. Research output includes the canonical website, reviewed page URLs/titles/excerpts, page count, and failed pages. Do not convert page count into an invented confidence percentage. Save output references an immutable draft version. Question output contains one prompt and 2–3 choices, or no choices for a free-text question; users can always answer in their own words.
 
 ## Marketing chat override
 

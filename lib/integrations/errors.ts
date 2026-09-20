@@ -1,5 +1,6 @@
 import { ZodError } from 'zod';
 const errors: Record<string, [number, string]> = {
+  BRAND_REQUIRED: [409, 'Choose which brand to connect.'], INVALID_BRAND: [400, 'Choose a valid brand.'],
   DISABLED: [404, 'Cookbook integrations are not enabled.'], AUTH_REQUIRED: [401, 'A valid, unexpired Cookbook connection key is required.'],
   FORBIDDEN: [403, 'This connection does not have the required permission.'], PLAN_REQUIRED: [403, 'This operation requires a paid hosted plan. Brand foundations remain free.'],
   NOT_FOUND: [404, 'The requested item is not available.'], INVALID_TASK: [404, 'The task is not available.'],

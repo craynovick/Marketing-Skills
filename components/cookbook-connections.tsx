@@ -4,9 +4,13 @@ import Link from 'next/link';
 import { scopes } from '@/lib/integrations/constants';
 type Connection = {id:string;name:string;scopes:string[];expires_at:string;revoked_at:string|null};
 export function CookbookConnections() {
+  const [brands, setBrands] = useState<{id:string;name:string}[]>([]);
+  const [projectId, setProjectId] = useState('');
+
   const [connections,setConnections]=useState<Connection[]>([]),[name,setName]=useState('My AI app'),[client,setClient]=useState('codex');
   const [selected,setSelected]=useState<string[]>(['context:read','foundations:write']);
   const [key,setKey]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
+  useEffect(() => { const abort = new AbortController(); fetch('/api/cookbook/brands', {signal:abort.signal}).then(async r => {const d=await r.json();if(!r.ok)throw new Error(d.error);if(!abort.signal.aborted){setBrands(d.brands);if(d.brands.length===1)setProjectId(d.brands[0].id);}}).catch(e=>{if(!abort.signal.aborted)setNotice(e.message);});return()=>abort.abort(); }, []);
   async function load() {const response=await fetch('/api/cookbook/connections');const data=await response.json();if(!response.ok)throw new Error(data.error);return data.connections as Connection[];}
   useEffect(()=>{let active=true;void load().then(data=>{if(active)setConnections(data);}).catch(e=>{if(active)setNotice(e.message);});return()=>{active=false;};},[]);
   async function change(method:string,body:unknown) {
@@ -16,10 +20,11 @@ export function CookbookConnections() {
   }
   return <section className="account-card cookbook-connections"><h2>Connect your AI app</h2>
     <p>Use Cookbook recipes and your approved brand context in your own AI app. Brand changes wait for your review.</p>
+    <label>Brand <select value={projectId} onChange={e=>setProjectId(e.target.value)}><option value="">Choose a brand</option>{brands.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
     <label>App <select value={client} onChange={e=>setClient(e.target.value)}><option value="codex">Codex</option><option value="claude-code">Claude Code</option><option value="manual">Other MCP client</option></select></label>
     <label>Connection name <input value={name} maxLength={80} onChange={e=>setName(e.target.value)} /></label>
     <fieldset><legend>Permissions</legend>{scopes.map(scope=><label key={scope}><input type="checkbox" checked={selected.includes(scope)} onChange={e=>setSelected(current=>e.target.checked?[...current,scope]:current.filter(s=>s!==scope))}/>{{'context:read':'Read brand context and saved work','foundations:write':'Propose foundation changes','artifacts:write':'Save deliverables (paid hosting)'}[scope]}</label>)}</fieldset>
-    <button disabled={busy||!name.trim()||!selected.length} onClick={()=>void change('POST',{name,scopes:selected})}>{busy?'Saving…':'Create connection key'}</button>
+    <button disabled={busy||!name.trim()||!selected.length||!projectId} onClick={()=>void change('POST',{name,scopes:selected,projectId})}>{busy?'Saving…':'Create connection key'}</button>
     {key && <div role="status"><p>Copy this key now. It is shown only once and expires in 90 days. Paste it into the installer’s hidden prompt, not into your AI conversation.</p><input aria-label="New connection key" readOnly value={key} onFocus={e=>e.target.select()}/><button onClick={()=>void navigator.clipboard.writeText(key).then(()=>setNotice('Key copied.')).catch(()=>setNotice('Select and copy the key manually.'))}>Copy key</button><button onClick={()=>setKey('')}>Hide key</button></div>}
     <p><Link href="/docs/connect">Install the Cookbook connector</Link>, then run:</p>
     <pre>{client==='manual'?'cookbook connect --client manual':`cookbook connect --client ${client}`}</pre>

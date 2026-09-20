@@ -29,3 +29,7 @@ Finish with what changed, where the draft is, and any material unresolved issue.
 ## Marketing chat override
 
 When the selected mode is marketing-chat, CHAT.md defines the output scope. Fulfill the requested content directly; skill setup and strategy templates are optional, not prerequisites.
+
+## Plain language and usable copy
+Use familiar, concrete language. Prefer "first audience" to "beachhead", and explain a strategic term only when it helps the user. Draft directly from a sufficient brief, without repeated intake or a platform questionnaire.
+Keep copyable content free of agent commentary, source notes and assumptions; return those in the save tool metadata. Preserve deliberate line breaks in social copy. For platform adaptations, use the canonical source and task-specific voice direction, preserving supported claims; never overwrite another draft or silently save a voice override as brand memory.

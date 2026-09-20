@@ -22,6 +22,7 @@ async function database() {
  await db.exec(`insert into cookbooks(user_id,company,voice) values('${owner}','Paper Harbor','Warm and specific');`);
  await db.exec(await readFile(new URL('../supabase/migrations/20260919002000_guided_brand_agent.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/migrations/20260920000000_guided_experience.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migrations/20260921000000_brands_and_adaptations.sql',import.meta.url),'utf8'));
  await db.exec(`grant select,insert,update,delete on all tables in schema public to authenticated,service_role; grant usage,select on all sequences in schema public to authenticated,service_role;`);
  await login(db,owner);
  return db;
@@ -130,4 +131,43 @@ test('guided task metadata is persisted and source versions survive upstream rev
  const isolated=await scalar(db,"select to_jsonb(cookbook_save_document($1,'# Unrelated voice',1,'user','task-only-draft')) as value",[t]);
  assert.deepEqual(isolated.context_versions,[]);
  }finally{await db.close();}
+});
+
+
+test('brands isolate tasks, lists, proposals, and legacy ambiguous creation', async () => {
+ const db=await database(); try {
+  const original=await scalar(db,'select id as value from cookbook_projects limit 1');
+  const second=await scalar(db,"select cookbook_create_brand('Second brand','Different offer','',gen_random_uuid()) as value");
+  assert.notEqual(original,second);
+  assert.equal(await scalar(db,"select count(*)::int as value from cookbook_skills where project_id=$1",[second]),0);
+  await assert.rejects(scalar(db,"select cookbook_create_task('marketing-chat','1','Ambiguous',gen_random_uuid()) as value"),/BRAND_REQUIRED/);
+  const t=await scalar(db,"select cookbook_create_brand_task($1,'audience-strategy-playbook','1','Audience',gen_random_uuid(),'skill-tuning','general','brand') as value",[second]);
+  const proposal=await propose(db,t,'second-brand',[update('audience')]);
+  assert.equal(await scalar(db,'select project_id as value from cookbook_skills where id=$1',[proposal.items[0].taskId]),second);
+  const listed=await scalar(db,'select cookbook_list_brand_tasks($1) as value',[second]);
+  assert.deepEqual(listed.map(x=>x.id),[t]);
+  assert.ok((await scalar(db,'select cookbook_list_brand_tasks($1) as value',[original])).every(x=>x.id!==t));
+  await login(db,other);
+  await assert.rejects(scalar(db,"select cookbook_create_brand_task($1,'marketing-chat','1','Other',gen_random_uuid(),'create','general','brand') as value",[second]),/INVALID_BRAND/);
+  assert.deepEqual(await scalar(db,'select cookbook_list_brand_tasks($1) as value',[second]),[]);
+ } finally {await db.close();}
+});
+
+test('platform adaptations retain immutable source and independent versions', async () => {
+ const db=await database(); try {
+  const t=await task(db);
+  const doc=await scalar(db,"select to_jsonb(cookbook_save_document($1,'# Original\nSource copy',0,'user','1',null,'{}')) as value",[t]);
+  const platforms=['linkedin','instagram','facebook','x','threads','tiktok','youtube-shorts'];
+  const ids=[];
+  for (const platform of platforms) {
+   const id=await scalar(db,"select cookbook_create_adaptation($1,$2,$3,'Warmer',gen_random_uuid()) as value",[t,doc.id,platform]); ids.push(id);
+   assert.equal(await scalar(db,'select source_document_id as value from cookbook_skills where id=$1',[id]),doc.id);
+  }
+  assert.equal(new Set(ids).size,7);
+  await scalar(db,"select to_jsonb(cookbook_save_document($1,'# LinkedIn\nNew copy',0,'user','1',null,'{}')) as value",[ids[0]]);
+  assert.equal(await scalar(db,'select count(*)::int as value from cookbook_documents where skill_id=$1',[t]),1);
+  assert.equal(await scalar(db,'select count(*)::int as value from cookbook_documents where skill_id=$1',[ids[1]]),0);
+  await login(db,other);
+  await assert.rejects(scalar(db,"select cookbook_create_adaptation($1,$2,'x','',gen_random_uuid()) as value",[t,doc.id]),/INVALID_TASK/);
+ } finally {await db.close();}
 });

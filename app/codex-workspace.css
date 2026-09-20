@@ -263,12 +263,12 @@ body:has(.cw-shell) > footer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: clamp(24px, 8vh, 100px) 24px 24px;
+  padding: clamp(20px, 3vh, 40px) 24px 24px;
 }
 .cw-welcome {
   width: 100%;
   max-width: 690px;
-  margin: auto 0 32px;
+  margin: 0 0 24px;
 }
 .cw-avatar {
   display: block;
@@ -1005,3 +1005,25 @@ body:has(.cw-shell) > footer {
  .cw-quick-start button span span { display:none; }
  .cw-quick-start strong { font-size:12px; }
 }
+
+/* Create and Cookbook share compact, accessible brand controls. */
+.cw-brand a img { display:block; width:164px; height:28px; object-fit:contain; }
+.cw-brand-selector { min-width:0; max-width:36%; }
+.cw-brand-selector select { width:100%; min-height:40px; padding:6px 10px; background:var(--surface); color:inherit; border:1px solid var(--line); border-radius:9px; text-overflow:ellipsis; }
+.cw-add-brand { white-space:nowrap; min-height:44px; }
+.cw-sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+.cw-library-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.cw-library-heading button { white-space:nowrap; }
+.cw-brand-overview>input { width:100%; padding:12px; margin:0 0 14px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:inherit; }
+.cw-brand-overview>h2 { margin:28px 0 14px; font-size:18px; }
+.cw-brand-overview>details { margin-top:28px; }
+.cw-modal form label { display:grid; gap:6px; margin:14px 0; }
+.cw-modal form textarea { min-height:90px; padding:10px; color:inherit; background:var(--surface); border:1px solid var(--line); border-radius:8px; }
+.cw-adaptations { border:1px solid var(--line); border-radius:12px; padding:14px; margin:16px 0; }
+.cw-adaptations fieldset { border:0; padding:0; }
+.cw-platform { margin:12px 0; }
+.cw-platform label { display:flex; align-items:center; gap:8px; min-height:40px; }
+.cw-platform>input { width:100%; padding:10px; background:var(--surface); color:inherit; border:1px solid var(--line); border-radius:8px; }
+.cw-adaptations ul { padding-left:20px; }
+.cw-adaptations li { margin:10px 0; }
+@media(max-width:600px) { .cw-add-brand span { display:none; } .cw-brand-selector { max-width:45%; } .cw-library-heading h1 { font-size:30px; } .cw-header-status { display:none; } }

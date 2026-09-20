@@ -11,6 +11,12 @@ export type Draft = {
 };
 export type Task = {
   id: string;
+  project_id: string;
+  source_task_id?: string | null;
+  source_document_id?: string | null;
+  platform?: string | null;
+  voice_direction?: string;
+  sourceChanged?: boolean;
   title: string;
   file_name: string;
   skill_slug: string | null;
