@@ -9,6 +9,7 @@ export function Artifact({
   task,
   versions,
   busy,
+  active = true,
   onRefresh,
   onClose,
   onApproved,
@@ -16,6 +17,7 @@ export function Artifact({
   task: Task;
   versions: Draft[];
   busy: boolean;
+  active?: boolean;
   onRefresh: () => Promise<void>;
   onClose: () => void;
   onApproved?: () => Promise<void>;
@@ -27,16 +29,10 @@ export function Artifact({
   const [notice, setNotice] = useState("");
   const [compare, setCompare] = useState("");
   const panel = useRef<HTMLElement>(null);
-  useEffect(() => { panel.current?.focus(); }, []);
+  useEffect(() => { if (active) panel.current?.focus(); }, [active]);
   const document = task.document;
   const accepted = document?.id === task.accepted_version_id;
   const recipe = catalog.find(item => item.slug === task.skill_slug);
-  const reviewItems = document ? [
-    { label: "Finished deliverable", ready: document.content.trim().length >= 80 },
-    { label: "Brand context identified", ready: task.context_scope === "task" || Boolean(document.context_versions?.length) },
-    { label: "No unresolved material assumptions", ready: !document.assumptions?.length },
-    { label: "No unresolved open questions", ready: !document.unanswered_questions?.length },
-  ] : [];
   async function action(url: string, body: unknown) {
     setPending(true);
     setNotice("");
@@ -122,10 +118,6 @@ export function Artifact({
               Download {accepted ? "" : "draft"}
             </button>
           </div>
-          <section className="cw-quality-summary" aria-label="Draft review summary">
-            <div><small>REVIEW SUMMARY</small><strong>{accepted ? "Accepted" : reviewItems.every(item => item.ready) ? "Ready for human review" : "Review the flagged context"}</strong></div>
-            <ul>{reviewItems.map(item => <li className={item.ready ? "is-ready" : "is-open"} key={item.label}><span aria-hidden="true">{item.ready ? "✓" : "!"}</span>{item.label}</li>)}</ul>
-          </section>
           <div className="cw-artifact-content">
             {editing ? (
               <>
@@ -179,29 +171,31 @@ export function Artifact({
             ) : (
               <Markdown value={document.content} />
             )}
+            {(!!document.assumptions?.length || !!document.unanswered_questions?.length || !!document.evidence_references?.length || !!document.context_versions?.length) && <details className="cw-draft-details">
+              <summary>Details</summary>
             {!!document.assumptions?.length && (
-              <details open>
-                <summary>Assumptions ({document.assumptions.length})</summary>
+              <section>
+                <h3>Assumptions</h3>
                 <ul>
                   {document.assumptions.map((x, i) => (
                     <li key={i}>{x}</li>
                   ))}
                 </ul>
-              </details>
+              </section>
             )}
             {!!document.unanswered_questions?.length && (
-              <details open>
-                <summary>Open questions</summary>
+              <section>
+                <h3>Open questions</h3>
                 <ul>
                   {document.unanswered_questions.map((x, i) => (
                     <li key={i}>{x}</li>
                   ))}
                 </ul>
-              </details>
+              </section>
             )}
             {!!document.evidence_references?.length && (
-              <details>
-                <summary>Sources</summary>
+              <section>
+                <h3>Sources</h3>
                 {document.evidence_references.map((url, i) =>
                   safeLink(url) ? (
                     <a
@@ -215,9 +209,10 @@ export function Artifact({
                     </a>
                   ) : null,
                 )}
-              </details>
+              </section>
             )}
-            {!!document.context_versions?.length && <details><summary>Brand context used ({document.context_versions.length})</summary><ul>{document.context_versions.map(item => <li key={item.documentId}>{item.title}</li>)}</ul></details>}
+            {!!document.context_versions?.length && <section><h3>Brand context used</h3><ul>{document.context_versions.map(item => <li key={item.documentId}>{item.title}</li>)}</ul></section>}
+            </details>}
             <details className="cw-history">
               <summary>Version history</summary>
               <label>

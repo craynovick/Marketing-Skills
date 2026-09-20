@@ -17,6 +17,7 @@ export function Composer({
   onStop,
   enterSends = true,
   placeholder = "Describe what you want to make, or paste a website…",
+  focusKey,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -33,6 +34,7 @@ export function Composer({
   onStop?: () => void;
   enterSends?: boolean;
   placeholder?: string;
+  focusKey?: number;
 }) {
   const input = useRef<HTMLTextAreaElement>(null);
   const file = useRef<HTMLInputElement>(null);
@@ -42,6 +44,9 @@ export function Composer({
       input.current.style.height = `${Math.min(input.current.scrollHeight, 180)}px`;
     }
   }, [value]);
+  useEffect(() => {
+    if (focusKey !== undefined) input.current?.focus();
+  }, [focusKey]);
   function key(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (
       event.key === "Enter" &&

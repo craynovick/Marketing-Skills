@@ -178,6 +178,7 @@ function BrandWorkspace({
   const [collapsed, setCollapsed] = useState(false);
   const [archived, setArchived] = useState(false);
   const [input, setInput] = useState("");
+  const [composerFocus, setComposerFocus] = useState(0);
   const [files, setFiles] = useState<File[]>(initialFiles);
   useEffect(() => { onFilesStored(files); }, [files, onFilesStored]);
   const [slug, setSlug] = useState(initialSkillSlug || "");
@@ -344,6 +345,7 @@ function BrandWorkspace({
     const existing = nextMode === "skill-tuning" && nextSlug ? [...tasks, ...(brand?.legacy || [])].find(t => t.skill_slug === nextSlug && modeOf(t) === "skill-tuning" && !t.archived_at) : undefined;
     if (existing) { updateTask(existing); select(existing.id); return; }
     setInitial(null); setBrandView(false); setActiveId(""); setMode(nextMode); setWorkflow(nextWorkflow); setSlug(nextSlug); setNotice("");
+    if (nextMode === "create") setComposerFocus(value => value + 1);
     history.pushState(null, "", `${entryUrl(nextMode, nextWorkflow, nextSlug)}&projectId=${projectId}`);
     picker.current?.close(); drawer.current?.close();
   }
@@ -448,7 +450,7 @@ function BrandWorkspace({
                 : account === "error"
                   ? "Connection unavailable"
                 : account === "signed-out"
-                  ? "Sign in to save"
+                  ? "Sign in to create and save"
                   : active ? taskStatus(active) : "Ready to create"}
           </span>
           {account === "signed-out" && (
@@ -475,23 +477,23 @@ function BrandWorkspace({
           <div className="cw-new-task">
             <div className="cw-welcome">
               <CookbookAvatar />
-              <nav className="cw-mode-switch" aria-label="Agent mode"><button aria-pressed={mode === "create"} onClick={() => chooseEntry("create")}>Create</button><button aria-pressed={false} onClick={showBrand}>Cookbook</button></nav>
               <p className="cw-eyebrow">{mode === "skill-tuning" ? "COOKBOOK" : "CREATE"}</p>
-              <h1>{mode === "skill-tuning" ? selectedRecipe?.name || "Shape your brand’s playbooks" : selectedRecipe?.name || workflows.find(w => w.id === workflow)?.name || "What do you want to make or improve?"}</h1>
-              <p>{mode === "skill-tuning" ? "Build on what your brand already knows. Review each playbook before it becomes shared context." : "Turn your brand’s audience, positioning, and voice into something useful."}</p>
+              <h1>{mode === "skill-tuning" ? selectedRecipe?.name || "Shape your brand’s playbooks" : "What do you want to make or improve?"}</h1>
+              <p>{mode === "skill-tuning" ? "Build on what your brand already knows. Review each playbook before it becomes shared context." : "Start with the work. Cookbook will ask only when a choice is needed."}</p>
               {!hostedWorkflows && mode === "create" && <p>Content workflows require a hosted plan. <a href="/pricing">View plans</a> or configure your brand in Cookbook.</p>}
               {mode === "create" ? <>
-                {selectedRecipe ? <section className="cw-selected-recipe" aria-label="Selected recipe"><div><small>SELECTED RECIPE</small><strong>{selectedRecipe.name}</strong><span>{selectedRecipe.when}</span></div><button onClick={() => chooseEntry("create")}>Change</button></section> : <div className="cw-workflow-cards">
-                  {workflows.map(w => <button key={w.id} aria-pressed={workflow === w.id} onClick={() => chooseEntry("create", w.id)}><strong>{w.name}</strong><span>{w.description}</span></button>)}
-                  {["conversion-audit", "lifecycle-email-sequence", "growth-experiment-planner"].map(recipeSlug => { const recipe = catalog.find(item => item.slug === recipeSlug)!; return <button key={recipeSlug} aria-pressed={false} onClick={() => chooseEntry("create", "general", recipeSlug)}><strong>{recipe.name}</strong><span>{recipe.description}</span></button>; })}
-                </div>}
-                {selectedRecipe && <div className="cw-example-prompts" aria-label="Example prompts">{selectedRecipe.example_prompts.map(prompt => <button key={prompt} onClick={() => changeInput(prompt)}>{prompt}</button>)}</div>}
+                <div className="cw-entry-shortcuts" aria-label="Start with a recipe">
+                  <button aria-pressed={workflow === "social-post"} onClick={() => chooseEntry("create", "social-post")}>Social post</button>
+                  <button aria-pressed={workflow === "newsletter"} onClick={() => chooseEntry("create", "newsletter")}>Newsletter</button>
+                  <button aria-pressed={slug === "conversion-audit"} onClick={() => chooseEntry("create", "general", "conversion-audit")}>Improve a page</button>
+                  <button onClick={() => { setQuery(""); picker.current?.showModal(); }}>More recipes</button>
+                </div>
               </> : <>
                 <QuickStart brand={brand} selected={slug} busy={pending} onSelect={selected => chooseEntry("skill-tuning", "general", selected)} />
                 <button className="cw-browse-skills" onClick={() => picker.current?.showModal()}>Browse all skills →</button>
                 {!brandLoading && !brand?.intakeReady && <div className="cw-intake-actions"><button onClick={() => changeInput("Analyze this website to propose my brand name and offer for review: https://")}>Analyze</button><button onClick={() => uploadSetup.current?.click()}>Upload brand materials</button><input hidden type="file" multiple accept=".pdf,.docx,.txt,.md" ref={uploadSetup} onChange={event => { try { const incoming = Array.from(event.target.files || []); validateFiles([...files, ...incoming]); setFiles(current => [...current, ...incoming]); changeInput("Use these materials to propose my brand name and offer, then guide me through audience strategy."); } catch(error) { setNotice(messageOf(error)); } event.target.value = ""; }} /></div>}
               </>}
-              {(mode === "skill-tuning" || workflow !== "general") && !brandLoading && <DecisionCard key={`${mode}:${workflow}:${slug}:${brand?.intakeReady}`} card={welcomeCard} onBack={mode === "skill-tuning" && quickStart.findIndex(s => s.slug === slug) > 0 ? () => chooseEntry("skill-tuning", "general", quickStart[quickStart.findIndex(s => s.slug === slug) - 1].slug) : undefined} busy={pending || account === "loading" || account === "error"} onAnswer={answerWelcome} />}
+              {mode === "skill-tuning" && !brandLoading && <DecisionCard key={`${mode}:${workflow}:${slug}:${brand?.intakeReady}`} card={welcomeCard} onBack={quickStart.findIndex(s => s.slug === slug) > 0 ? () => chooseEntry("skill-tuning", "general", quickStart[quickStart.findIndex(s => s.slug === slug) - 1].slug) : undefined} busy={pending || account === "loading" || account === "error"} onAnswer={answerWelcome} />}
               {mode === "skill-tuning" && brand?.quickStart?.every(s => s.confirmed) && <div className="cw-intake-actions"><button onClick={() => chooseEntry("skill-tuning", "general", "content-pillar-planner")}>Plan content themes</button><button onClick={() => chooseEntry("skill-tuning", "general", "content-format-planner")}>Tailor formats to your channels</button></div>}
               {brandLoading && <p role="status">Loading your brand context…</p>}
 
@@ -504,7 +506,8 @@ function BrandWorkspace({
                 )}
               </div>
             )}
-            {<label className="cw-context-choice">Context <select value={scope} onChange={e=>setScope(e.target.value as "brand" | "task")}><option value="brand">My brand</option><option value="task">This brief only (another brand)</option></select></label>}
+            {mode === "create" && (selectedRecipe || workflow !== "general") && <div className="cw-recipe-chip"><span>{selectedRecipe?.name || workflows.find(item => item.id === workflow)?.name}</span><button aria-label="Remove selected recipe" onClick={() => chooseEntry("create")}>×</button></div>}
+            {<label className="cw-context-choice"><span>Using:</span> <select value={scope} onChange={e=>setScope(e.target.value as "brand" | "task")}><option value="brand">{brands.find(item => item.id === projectId)?.name || "My brand"}</option><option value="task">This brief only</option></select></label>}
             <Composer
               placeholder={mode === "skill-tuning" ? "Share what you know, or ask to refine your playbook…" : workflow === "analyze" ? "What would you like to research? Add a URL or question…" : "Share a topic, source, or the content you want to create…"}
               value={input}
@@ -537,6 +540,7 @@ function BrandWorkspace({
               busy={false}
               disabled={pending || account === "loading" || account === "error"}
               enterSends={enterSends}
+              focusKey={composerFocus}
             />
             {pending && (
               <p className="cw-notice" role="status">
@@ -761,7 +765,10 @@ function TaskThread({
   const [input, setInput] = useState("");
   const [notice, setNotice] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [panel, setPanel] = useState(false);
+  const panelPreferenceKey = `cookbook:${initialData.task.id}:draft-panel`;
+  const [panel, setPanel] = useState(Boolean(initialData.task.document));
+  const [panelMounted, setPanelMounted] = useState(Boolean(initialData.task.document));
+  const [mobileView, setMobileView] = useState<"chat" | "draft">("chat");
   const seenDocument = useRef(initialData.task.document?.id || "");
   const [draftFiles, setDraftFiles] = useState<File[]>([]);
   const runId = useRef(initialData.run?.id || "");
@@ -834,14 +841,36 @@ function TaskThread({
     setInput(read(key));
   }, [key]);
   useEffect(() => {
+    if (!initialData.task.document) return;
+    try {
+      if (localStorage.getItem(panelPreferenceKey) === "hidden") setPanel(false);
+    } catch {}
+  }, [initialData.task.document, panelPreferenceKey]);
+  useEffect(() => {
     if (nearBottom.current && feed.current)
       feed.current.scrollTop = feed.current.scrollHeight;
   }, [messages]);
   useEffect(() => {
     const next = task.document?.id || "";
-    if (next && next !== seenDocument.current) setPanel(true);
+    if (next && next !== seenDocument.current) {
+      setPanelMounted(true);
+      let hidden = false;
+      try { hidden = localStorage.getItem(panelPreferenceKey) === "hidden"; } catch {}
+      if (!hidden) setPanel(true);
+    }
     if (next) seenDocument.current = next;
-  }, [task.document?.id]);
+  }, [task.document?.id, panelPreferenceKey]);
+  function showDraft() {
+    setPanelMounted(true);
+    setPanel(true);
+    setMobileView("draft");
+    try { localStorage.setItem(panelPreferenceKey, "visible"); } catch {}
+  }
+  function hideDraft() {
+    setPanel(false);
+    setMobileView("chat");
+    try { localStorage.setItem(panelPreferenceKey, "hidden"); } catch {}
+  }
   useEffect(() => {
     if (!busy || durableEnabled) return;
     const handler = (event: BeforeUnloadEvent) => {
@@ -961,11 +990,12 @@ function TaskThread({
     catalog.find((s) => s.slug === task.skill_slug) ||
     catalog.find((s) => s.name === task.title);
   return (
-    <div className={`cw-task-body ${panel ? "cw-panel-open" : ""}`}>
+    <div className={`cw-task-body ${panel ? "cw-panel-open" : ""} cw-mobile-${mobileView}`}>
+      {panel && <nav className="cw-workspace-tabs" aria-label="Workspace view"><button aria-pressed={mobileView === "chat"} onClick={() => setMobileView("chat")}>Chat</button><button aria-pressed={mobileView === "draft"} onClick={() => setMobileView("draft")}>Draft{task.document ? ` · v${task.document.version}` : ""}</button></nav>}
       <div className="cw-chat-pane">
         <div className="cw-conversation-heading">
           <span>{task.context_scope === "task" ? "This brief only · Brand memory excluded" : skill?.name || "Choose a skill for this legacy task"}</span>
-          {!panel && <PanelToggle side="right" expanded={false} label="Open draft workspace" onClick={() => setPanel(true)} />}
+          {!panel && <PanelToggle side="right" expanded={false} label="Open draft workspace" onClick={showDraft} />}
         </div>
         {modeOf(task) === "skill-tuning" && <QuickStart brand={brandState} selected={task.skill_slug} busy={busy} onSelect={slug => onEntry("skill-tuning", "general", slug)} />}
         <div
@@ -1017,7 +1047,7 @@ function TaskThread({
             </label>
           )}
           {data.decisions.filter(d => d.id === "entry").map(d => <DecisionCard key={`${d.id}:${d.revision}`} card={d.card} answer={d.answer} busy={busy} onAnswer={answer => respondDecision(d, answer)} />)}
-          {modeOf(task) === "skill-tuning" && task.document && <details className="cw-brand-proposal"><summary>Review your {skill?.name || "playbook"} · v{task.document.version}</summary><Markdown value={task.document.content} /><button className="cw-primary" disabled={busy || task.document.id === task.accepted_version_id} onClick={async () => { try { await requestJSON("/api/cookbook/workspace/accept", json({ skillId: task.id, version: task.document!.version })); await refresh(); await continueOnboarding(); } catch(error) { setNotice(messageOf(error)); } }}>{task.document.id === task.accepted_version_id ? "Approved" : "Approve and continue"}</button><button onClick={() => setPanel(true)}>Edit or export</button></details>}
+          {modeOf(task) === "skill-tuning" && task.document && <details className="cw-brand-proposal"><summary>Review your {skill?.name || "playbook"} · v{task.document.version}</summary><Markdown value={task.document.content} /><button className="cw-primary" disabled={busy || task.document.id === task.accepted_version_id} onClick={async () => { try { await requestJSON("/api/cookbook/workspace/accept", json({ skillId: task.id, version: task.document!.version })); await refresh(); await continueOnboarding(); } catch(error) { setNotice(messageOf(error)); } }}>{task.document.id === task.accepted_version_id ? "Approved" : "Approve and continue"}</button><button onClick={showDraft}>Edit or export</button></details>}
           {data.decisions.filter(d => d.id !== "entry" && !messages.some(m => m.parts.some(p => (p.type === "tool-askQuestion" || p.type === "dynamic-tool" && p.toolName === "askQuestion") && p.state === "output-available" && (p.output as {id?: string})?.id === d.id))).map(d => <DecisionCard key={`${d.id}:${d.revision}`} card={d.card} answer={d.answer} busy={busy} onAnswer={answer => respondDecision(d, answer)} />)}
           {task.source_task_id && <p className="cw-notice"><a href={`/create?task=${task.source_task_id}`}>Original draft →</a>{task.sourceChanged && " Source changed since this adaptation. Review before using."}</p>}
           {task.document && task.create_workflow === "social-post" && !task.source_task_id && <Adaptations task={task} busy={busy} durable={durableEnabled} />}
@@ -1102,7 +1132,7 @@ function TaskThread({
                   return (
                     <div className="cw-tool" key={index}>
                       {part.state === "output-available" ? (
-                        <button onClick={() => setPanel(true)}>
+                        <button onClick={showDraft}>
                           Draft v{part.output.version} saved · Review →
                         </button>
                       ) : part.state === "output-error" ? (
@@ -1216,14 +1246,15 @@ function TaskThread({
           />
         </div>
       </div>
-      {panel && (
+      {panelMounted && (
         <Artifact
           task={task}
           versions={data.versions}
           busy={busy}
+          active={panel}
           onRefresh={refresh}
           onApproved={modeOf(task) === "skill-tuning" ? continueOnboarding : undefined}
-          onClose={() => setPanel(false)}
+          onClose={hideDraft}
         />
       )}
     </div>
