@@ -10,3 +10,20 @@
 .home-page .chips .active,.home-page .skill-tags .tag-foundational{background:var(--acid);color:#101010;border-color:var(--acid)}
 .home-page .skill-row:hover{background:#111}
 .home-page .catalog-section :focus-visible{outline:2px solid var(--acid);outline-offset:4px}
+
+/* A shared night-kitchen treatment for the manifesto and recipe detail routes. */
+body:has(.about-page),body:has(.skill-page){--ink:#f2f0e9;--paper:#090909;--line:#3c3c38;--muted:#aaa8a1;background:var(--paper);color:var(--ink);color-scheme:dark}
+body:has(.about-page) .prose,body:has(.skill-page) .skill-page{background:var(--paper)}
+body:has(.about-page) .about-page a:not(.about-cta a),body:has(.skill-page) .skill-page a:hover{color:var(--acid)}
+body:has(.about-page) .principles{background:var(--line);border-color:var(--line)}
+body:has(.about-page) .principles article{background:#141414}
+body:has(.about-page) .roadmap b{color:var(--ink)}
+body:has(.about-page) .about-cta{background:var(--acid);border-color:var(--acid);color:#101010}
+body:has(.about-page) .about-cta .eyebrow{color:#3b4214}
+body:has(.skill-page) .skill-sidebar{background:#111;padding:20px;border:1px solid var(--line)}
+body:has(.skill-page) .skill-actions{border-top:0}
+body:has(.skill-page) .skill-download{color:var(--ink);border-color:var(--line)}
+body:has(.skill-page) .recommendation-card{border-color:var(--line);background:#111}
+body:has(.skill-page) .recommendation-card:hover{background:#181818;border-color:var(--ink)}
+body:has(.skill-page) .skill-create,body:has(.skill-page) .actions button{color:#101010}
+@media(max-width:700px){body:has(.skill-page) .skill-sidebar{padding:18px}}
