@@ -165,7 +165,6 @@ function BrandWorkspace({
   const [hostedWorkflows, setHostedWorkflows] = useState(true);
   const [brandView, setBrandView] = useState(initialBrandView);
   const [brand, setBrand] = useState<BrandState | null>(null);
-  const [scope, setScope] = useState<"brand" | "task">("brand");
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const uploadSetup = useRef<HTMLInputElement>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -289,7 +288,7 @@ function BrandWorkspace({
       `/sign-in?next=${encodeURIComponent(activeId ? `/create?task=${activeId}` : entryUrl(mode, workflow, slug))}`,
     );
   }
-  async function createTask(selected: string, prompt: Initial | null, contextScope = scope) {
+  async function createTask(selected: string, prompt: Initial | null, contextScope: "brand" | "task" = "brand") {
     if (creating.current || account === "loading" || account === "error") return;
     if (account !== "ready") {
       setSlug(selected);
@@ -350,7 +349,7 @@ function BrandWorkspace({
     history.pushState(null, "", `${entryUrl(nextMode, nextWorkflow, nextSlug)}&projectId=${projectId}`);
     picker.current?.close(); drawer.current?.close();
   }
-  const welcomeCard = entryCard(mode, workflow, slug, scope === "task" || brand?.intakeReady);
+  const welcomeCard = entryCard(mode, workflow, slug, Boolean(brand?.intakeReady));
   const selectedRecipe = slug ? catalog.find(item => item.slug === slug) : undefined;
   async function answerWelcome(answer: DecisionAnswer) {
     if (!projectId && account === "ready") { openNewBrand(); return; }
@@ -478,8 +477,8 @@ function BrandWorkspace({
           <div className="cw-new-task">
             <div className="cw-welcome">
               <CookbookAvatar />
-              <p className="cw-eyebrow">{mode === "skill-tuning" ? "COOKBOOK" : "CREATE"}</p>
-              <h1>{mode === "skill-tuning" ? selectedRecipe?.name || "Shape your brand’s playbooks" : "What do you want to make or improve?"}</h1>
+              {mode === "skill-tuning" && <p className="cw-eyebrow">COOKBOOK</p>}
+              <h1>{mode === "skill-tuning" ? selectedRecipe?.name || "Shape your brand’s playbooks" : "What do you want to work on?"}</h1>
               <p>{mode === "skill-tuning" ? "Build on what your brand already knows. Review each playbook before it becomes shared context." : "Start with the work. Cookbook will ask only when a choice is needed."}</p>
               {!hostedWorkflows && mode === "create" && <p>Content workflows require a hosted plan. <a href="/pricing">View plans</a> or configure your brand in Cookbook.</p>}
               {mode === "create" ? <>
@@ -508,7 +507,6 @@ function BrandWorkspace({
               </div>
             )}
             {mode === "create" && selectedRecipe && slug !== "conversion-audit" && <div className="cw-recipe-chip"><span>{selectedRecipe.name}</span><button aria-label="Remove selected recipe" onClick={() => chooseEntry("create")}>×</button></div>}
-            {<label className="cw-context-choice"><span>Using:</span> <select value={scope} onChange={e=>setScope(e.target.value as "brand" | "task")}><option value="brand">{brands.find(item => item.id === projectId)?.name || "My brand"}</option><option value="task">This brief only</option></select></label>}
             <Composer
               placeholder={mode === "skill-tuning" ? "Share what you know, or ask to refine your playbook…" : workflow === "analyze" ? "What would you like to research? Add a URL or question…" : "Share a topic, source, or the content you want to create…"}
               value={input}
@@ -1113,7 +1111,7 @@ function TaskThread({
           {!messages.length && (
             <div className="cw-task-welcome">
               <CookbookAvatar />
-              <p className="cw-eyebrow">{modeOf(task) === "skill-tuning" ? "COOKBOOK" : "CREATE"}</p>
+              {modeOf(task) === "skill-tuning" && <p className="cw-eyebrow">COOKBOOK</p>}
               <h2>{modeOf(task) === "skill-tuning" ? `Let’s shape your ${skill?.name || "playbook"}` : workflows.find(w => w.id === task.create_workflow)?.name || "What would you like to create?"}</h2>
               <p>{skill?.description}</p>
               {!data.decisions.length && <DecisionCard card={entryCard(modeOf(task), task.create_workflow || "general", task.skill_slug, task.context_scope === "task" || brandState?.intakeReady)} busy={busy} onAnswer={answer => respondDecision({ id: "entry", card: entryCard(modeOf(task), task.create_workflow || "general", task.skill_slug, task.context_scope === "task" || brandState?.intakeReady), answer: null, revision: 0 }, answer)} />}
