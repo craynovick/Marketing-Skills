@@ -75,7 +75,7 @@ export function AuthControls() {
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
     </button>
     <div id="primary-navigation" className={`primary-navigation${open === "navigation" ? " is-open" : ""}`} onClick={() => setOpen(null)}>
-      <Link href="/#catalog">Library</Link><Link href="/create">Create</Link>
+      <Link href="/#catalog">Skills</Link><Link href="/create">Create</Link>
       {!user && <Link href="/pricing" className={ready ? undefined : "navigation-pending"} tabIndex={ready ? undefined : -1} aria-hidden={!ready}>Pricing</Link>}
       <Link href="/docs">Docs</Link><Link href="/about">About</Link>
     </div>

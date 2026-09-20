@@ -1,4 +1,6 @@
 "use client";
+import Image from "next/image";
+import cookbookLogo from "@/content/media/cookbook_logo_concept_2_ramen_chopsticks.svg";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { WorkflowChatTransport } from "@ai-sdk/workflow/client";
 import { BrandManager, BrandProposalCard } from "./cookbook/brand";
@@ -10,6 +12,7 @@ import { marketingChat } from "@/lib/cookbook-chat";
 import { skills as catalog } from "@/lib/generated-skill-catalog";
 import type { CookbookMessage } from "@/lib/cookbook-agent";
 import { Composer } from "./cookbook/composer";
+import { PanelToggle } from "./cookbook/panel-toggle";
 import { Sidebar } from "./cookbook/sidebar";
 import { Artifact } from "./cookbook/artifact";
 import { Markdown, safeLink } from "./cookbook/markdown";
@@ -31,6 +34,18 @@ type ThreadData = {
   run?: Run;
 };
 type Initial = { text: string; files: File[] };
+function CookbookAvatar() {
+  return (
+    <Image
+      className="cw-avatar"
+      src={cookbookLogo}
+      alt="Cookbook"
+      width={64}
+      height={52}
+    />
+  );
+}
+
 function store(key: string, value: string) {
   try {
     sessionStorage.setItem(key, value);
@@ -104,7 +119,10 @@ export function CookbookChatWorkspace({
       const data = await requestJSON<{ skills: Task[]; hostedWorkflows?: boolean; nextCursor?: string | null }>(
         `/api/cookbook/workspace?archived=${archived}`,
       );
-      setTasks(data.skills);
+      setTasks((current) => [
+        ...current.filter((task) => Boolean(task.archived_at) !== archived && !data.skills.some((incoming) => incoming.id === task.id)),
+        ...data.skills,
+      ]);
       setHostedWorkflows(data.hostedWorkflows !== false);
       setNextCursor(data.nextCursor || null);
       setAccount("ready");
@@ -272,8 +290,11 @@ export function CookbookChatWorkspace({
       }}
       onSettings={() => settings.current?.showModal()}
       onClose={() => {
-        drawer.current?.close();
-        setCollapsed(true);
+        if (drawer.current?.open) drawer.current.close();
+        else {
+          setCollapsed(true);
+          store("cookbook:collapsed", "true");
+        }
       }}
     />
   );
@@ -294,13 +315,13 @@ export function CookbookChatWorkspace({
       </dialog>
       <main className="cw-main">
         <header className="cw-header">
-          <button
-            className="cw-icon"
+          <PanelToggle
+            className="cw-navigation-open"
+            side="left"
+            expanded={false}
+            label="Open navigation"
             onClick={navigation}
-            aria-label="Toggle navigation"
-          >
-            ☰
-          </button>
+          />
           <button
             className="cw-task-title"
             disabled={!active || busy || pending}
@@ -346,7 +367,7 @@ export function CookbookChatWorkspace({
         ) : (
           <div className="cw-new-task">
             <div className="cw-welcome">
-              <span className="cw-avatar">C</span>
+              <CookbookAvatar />
               <p className="cw-eyebrow">YOUR CONTEXT. YOUR CRAFT.</p>
               <h1>{(!hostedWorkflows || durableEnabled && !brand?.foundations.some(f=>f.confirmed)) ? "Let’s build your brand." : "What are we making?"}</h1>
               {!hostedWorkflows && <p>Free hosting includes brand foundations. Use all recipes in your own AI app, or <a href="/pricing">upgrade for hosted content workflows</a>.</p>}
@@ -799,9 +820,7 @@ function TaskThread({
       <div className="cw-chat-pane">
         <div className="cw-conversation-heading">
           <span>{task.context_scope === "task" ? "This brief only · Brand memory excluded" : skill?.name || "Choose a skill for this legacy task"}</span>
-          <button onClick={() => setPanel(true)}>
-            Open {task.document ? "draft" : "workspace"} ▤
-          </button>
+          {!panel && <PanelToggle side="right" expanded={false} label="Open draft workspace" onClick={() => setPanel(true)} />}
         </div>
         <div
           className="cw-feed"
@@ -815,7 +834,7 @@ function TaskThread({
         >
           {!messages.length && (
             <div className="cw-task-welcome">
-              <span className="cw-avatar">C</span>
+              <CookbookAvatar />
               <h2>Let’s make {task.title.toLowerCase()}.</h2>
               <p>
                 {skill?.description ||

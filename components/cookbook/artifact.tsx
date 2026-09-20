@@ -1,4 +1,5 @@
 "use client";
+import { PanelToggle } from "./panel-toggle";
 import { useEffect, useRef, useState } from "react";
 import { Markdown, safeLink } from "./markdown";
 import { json, messageOf, requestJSON, type Draft, type Task } from "./types";
@@ -66,13 +67,7 @@ export function Artifact({
           </strong>
           <small>{task.file_name}</small>
         </div>
-        <button
-          className="cw-icon"
-          aria-label="Close draft workspace"
-          onClick={onClose}
-        >
-          ×
-        </button>
+        <PanelToggle side="right" expanded label="Close draft workspace" onClick={onClose} />
       </div>
       {document ? (
         <>

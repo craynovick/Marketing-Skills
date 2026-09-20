@@ -37,5 +37,5 @@ export default function About(){return <main className="wrap prose about-page">
     <ul className="roadmap"><li><b>Simmering</b> Guest Chef Drops, contributed, peer-reviewed recipes from B2B operators and product marketers.</li><li><b>On deck</b> Flavor Profiler, automated brand voice and tone consistency checks for new drafts.</li></ul>
   </section>
 
-  <section className="about-cta"><p className="eyebrow">ON-BRAND MARKETING CONTENT</p><h2>Stop serving bland AI output.</h2><p>Season your marketing with your brand’s actual voice.</p><div><Link href="/create">Write your recipe →</Link><Link href="/#catalog">Grab a recipe</Link></div></section>
+  <section className="about-cta"><p className="eyebrow">ON-BRAND MARKETING CONTENT</p><h2>Stop serving bland AI output.</h2><p>Season your marketing with your brand’s actual voice.</p><div><Link href="/create">Create</Link><Link href="/#catalog">Skills</Link></div></section>
 </main>}

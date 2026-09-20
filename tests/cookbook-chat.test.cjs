@@ -67,8 +67,14 @@ test('sidebar separates chats, skills, and archives without losing legacy record
   assert.match(foundations, /Legacy voice/);
   assert.doesNotMatch(foundations, /Launch posts/);
   const archived = renderToStaticMarkup(React.createElement(Sidebar, { ...props, archived: true }));
-  assert.match(archived, /Old chat/);
-  assert.doesNotMatch(archived, /Launch posts|Brand foundation|Legacy voice/);
+  assert.doesNotMatch(html, /Old chat/);
+  const archiveSection = archived.split('aria-label="Archived"')[1].split('</section>')[0];
+  assert.match(archiveSection, /Old chat/);
+  assert.doesNotMatch(archiveSection, /Launch posts|Brand foundation|Legacy voice/);
+  assert.match(archiveSection, /aria-expanded="true"/);
+  assert.match(archived, /Launch posts/);
+  assert.match(archived, /Brand foundation/);
+  assert.match(archived, /Legacy voice/);
 });
 test('chat creation uses existing durable RPC with a bounded user-specific title', async () => {
   let rpcArgs;
