@@ -2,6 +2,11 @@
 name: Ideal Customer Profile Builder
 title: Ideal Customer Profile Builder
 description: Turn customer evidence into a focused, testable ideal customer profile and buying context.
+use_when: Use this when you have customer evidence and need to choose a commercially useful beachhead profile.
+avoid_when: Use Audience Strategy Playbook when the profiles are already defined and you need to rank broader audience opportunities.
+example_prompts:
+  - Build a testable ICP for our vertical SaaS from these customer interviews and deal notes.
+  - Narrow this agency's five customer types to one starting profile without inventing market size.
 category: Research
 complexity: Medium
 inputs:

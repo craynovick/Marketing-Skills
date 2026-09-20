@@ -2,6 +2,11 @@
 name: Brand Voice Guide
 title: Brand Voice Guide
 description: Turn approved positioning, audience context, and writing evidence into usable, brand-specific voice rules.
+use_when: Use this when you have representative writing or clear voice intent and need repeatable rules with examples.
+avoid_when: Use a copywriting recipe when the voice is already defined and you only need a finished asset.
+example_prompts:
+  - Create a concise voice guide from these five approved founder emails and our positioning.
+  - Define a warm but precise consumer voice with before-and-after examples and words to avoid.
 category: Strategy
 complexity: Medium
 inputs:

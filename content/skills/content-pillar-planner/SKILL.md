@@ -2,6 +2,11 @@
 name: Content Pillar Planner
 title: Content Pillar Planner
 description: Turn approved audience, positioning, voice, and proof into a focused content pillar system.
+use_when: Use this when you need a small set of durable themes tied to buyer questions and business goals.
+avoid_when: Use Content Format Planner when themes are already chosen and the decision is how to express them by channel.
+example_prompts:
+  - Build four content pillars for our SaaS from these buyer questions and positioning.
+  - Create a focused pillar system for this consumer brand without turning product categories into themes.
 category: Content
 complexity: High
 inputs:

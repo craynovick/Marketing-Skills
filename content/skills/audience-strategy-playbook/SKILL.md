@@ -2,6 +2,11 @@
 name: Audience Strategy Playbook
 title: Audience Strategy Playbook
 description: Prioritize beachhead audiences, buying situations, and message opportunities using evidence.
+use_when: Use this when you need to decide which audience and buying situation deserve focus first.
+avoid_when: Use Ideal Customer Profile Builder for a detailed customer profile or GTM Strategy for the full route-to-market decision.
+example_prompts:
+  - Rank these three SaaS audiences using our customer evidence, sales capacity, and launch goal.
+  - Recommend a beachhead audience for this local service business and identify what must still be validated.
 category: Strategy
 complexity: High
 inputs:

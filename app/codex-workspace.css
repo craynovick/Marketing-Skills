@@ -591,6 +591,14 @@ body:has(.cw-shell) > footer {
 .cw-artifact-actions button {
   font-size: 12px;
 }
+.cw-quality-summary { margin:14px 20px 0; padding:14px; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
+.cw-quality-summary>div { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+.cw-quality-summary small { color:var(--muted); font-size:10px; letter-spacing:.08em; }
+.cw-quality-summary strong { font-size:13px; }
+.cw-quality-summary ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; list-style:none; margin:12px 0 0; padding:0; }
+.cw-quality-summary li { display:flex; gap:7px; font-size:12px; color:var(--muted); }
+.cw-quality-summary .is-ready span { color:#6d7e31; }
+.cw-quality-summary .is-open { color:#8b5f19; }
 .cw-artifact-content {
   padding: 25px;
   overflow-wrap: anywhere;
@@ -955,6 +963,14 @@ body:has(.cw-shell) > footer {
 .cw-workflow-cards button[aria-pressed=true] { border-color:#c5ce90; background:#c5ce9012; }
 .cw-workflow-cards strong,.cw-workflow-cards span { display:block; }
 .cw-workflow-cards span { font-size:13px; line-height:1.6; color:#a9ac9e; margin-top:8px; }
+.cw-selected-recipe { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin:24px 0 12px; padding:18px; border:1px solid #c5ce9066; border-radius:18px; background:#c5ce900c; text-align:left; }
+.cw-selected-recipe small,.cw-selected-recipe strong,.cw-selected-recipe span { display:block; }
+.cw-selected-recipe small { color:#cbd39e; font-size:10px; letter-spacing:.08em; }
+.cw-selected-recipe strong { margin-top:6px; font-size:17px; }
+.cw-selected-recipe span { margin-top:7px; color:#a9ac9e; font-size:13px; line-height:1.5; }
+.cw-selected-recipe button { flex-shrink:0; border:1px solid #ffffff30; border-radius:999px; padding:8px 13px; background:transparent; }
+.cw-example-prompts { display:grid; gap:7px; margin-bottom:18px; }
+.cw-example-prompts button { padding:11px 14px; border:1px solid #ffffff1f; border-radius:12px; background:#ffffff04; color:#bfc2b4; text-align:left; font-size:13px; }
 .cw-decision { background:#ffffff08; border:1px solid #ffffff20; border-radius:24px; padding:22px; text-align:left; margin:20px 0; width:100%; box-sizing:border-box; }
 .cw-decision-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
 .cw-decision-heading h3 { font-family:inherit; font-size:19px; line-height:1.5; font-weight:500; margin:0 0 18px; }
@@ -998,6 +1014,7 @@ body:has(.cw-shell) > footer {
  .cw-workflow-cards { gap:7px; }
  .cw-workflow-cards button { padding:12px 8px; border-radius:12px; }
  .cw-workflow-cards span { display:none; }
+ .cw-quality-summary ul { grid-template-columns:1fr; }
  .cw-decision { padding:16px; border-radius:20px; }
  .cw-decision-heading h3 { font-size:17px; }
  .cw-decision-option { padding:10px 7px; gap:10px; }

@@ -4,6 +4,7 @@ import { PanelToggle } from "./panel-toggle";
 import { useEffect, useRef, useState } from "react";
 import { Markdown, safeLink } from "./markdown";
 import { json, messageOf, requestJSON, type Draft, type Task } from "./types";
+import { skills as catalog } from "@/lib/generated-skill-catalog";
 export function Artifact({
   task,
   versions,
@@ -29,6 +30,13 @@ export function Artifact({
   useEffect(() => { panel.current?.focus(); }, []);
   const document = task.document;
   const accepted = document?.id === task.accepted_version_id;
+  const recipe = catalog.find(item => item.slug === task.skill_slug);
+  const reviewItems = document ? [
+    { label: "Finished deliverable", ready: document.content.trim().length >= 80 },
+    { label: "Brand context identified", ready: task.context_scope === "task" || Boolean(document.context_versions?.length) },
+    { label: "No unresolved material assumptions", ready: !document.assumptions?.length },
+    { label: "No unresolved open questions", ready: !document.unanswered_questions?.length },
+  ] : [];
   async function action(url: string, body: unknown) {
     setPending(true);
     setNotice("");
@@ -69,7 +77,7 @@ export function Artifact({
               ? `Version ${document.version}`
               : "Your draft will appear here"}
           </strong>
-          <small>{task.file_name}</small>
+          <small>{recipe?.name || "Marketing chat"} · {task.context_scope === "task" ? "This brief only" : "Brand context"}</small>
         </div>
         <PanelToggle side="right" expanded label="Close draft workspace" onClick={onClose} />
       </div>
@@ -114,6 +122,10 @@ export function Artifact({
               Download {accepted ? "" : "draft"}
             </button>
           </div>
+          <section className="cw-quality-summary" aria-label="Draft review summary">
+            <div><small>REVIEW SUMMARY</small><strong>{accepted ? "Accepted" : reviewItems.every(item => item.ready) ? "Ready for human review" : "Review the flagged context"}</strong></div>
+            <ul>{reviewItems.map(item => <li className={item.ready ? "is-ready" : "is-open"} key={item.label}><span aria-hidden="true">{item.ready ? "✓" : "!"}</span>{item.label}</li>)}</ul>
+          </section>
           <div className="cw-artifact-content">
             {editing ? (
               <>
@@ -168,7 +180,7 @@ export function Artifact({
               <Markdown value={document.content} />
             )}
             {!!document.assumptions?.length && (
-              <details>
+              <details open>
                 <summary>Assumptions ({document.assumptions.length})</summary>
                 <ul>
                   {document.assumptions.map((x, i) => (
@@ -178,7 +190,7 @@ export function Artifact({
               </details>
             )}
             {!!document.unanswered_questions?.length && (
-              <details>
+              <details open>
                 <summary>Open questions</summary>
                 <ul>
                   {document.unanswered_questions.map((x, i) => (
@@ -205,6 +217,7 @@ export function Artifact({
                 )}
               </details>
             )}
+            {!!document.context_versions?.length && <details><summary>Brand context used ({document.context_versions.length})</summary><ul>{document.context_versions.map(item => <li key={item.documentId}>{item.title}</li>)}</ul></details>}
             <details className="cw-history">
               <summary>Version history</summary>
               <label>

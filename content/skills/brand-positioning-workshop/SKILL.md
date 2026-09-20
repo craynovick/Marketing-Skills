@@ -2,6 +2,11 @@
 name: Brand Positioning Workshop
 title: Brand Positioning Workshop
 description: Develop a differentiated, evidence-backed positioning hypothesis for a defined audience and buying situation.
+use_when: Use this when a defined audience needs a clearer reason to choose the offer over real alternatives.
+avoid_when: Use Landing Page Copywriter when positioning is already approved and the task is page execution.
+example_prompts:
+  - Develop a positioning hypothesis for this SaaS using our win-loss evidence and named alternatives.
+  - Clarify why customers should choose this premium home service instead of doing nothing or hiring a generalist.
 category: Strategy
 complexity: High
 inputs:

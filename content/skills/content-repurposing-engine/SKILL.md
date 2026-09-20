@@ -2,6 +2,11 @@
 name: Content Repurposing Engine
 title: Content Repurposing Engine
 description: Transform one approved source into distinct, platform-native assets without losing meaning, proof, or attribution.
+use_when: Use this when an approved source exists and you need channel-native derivatives that preserve its meaning.
+avoid_when: Use Content Format Planner when there is no source asset yet and you are deciding repeatable formats.
+example_prompts:
+  - Turn this webinar transcript into three LinkedIn posts and one email without adding claims.
+  - Adapt this approved customer story into Instagram captions while preserving attribution and permission limits.
 category: Content
 complexity: Low
 inputs:

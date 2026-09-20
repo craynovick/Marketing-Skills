@@ -2,6 +2,11 @@
 name: Campaign Launch Kit
 title: Campaign Launch Kit
 description: Turn an approved marketing objective into a coordinated, measurable, and reviewable campaign launch plan.
+use_when: Use this when the objective, audience, and offer are known and coordinated campaign execution is needed.
+avoid_when: Use GTM Strategy when the target market, route to market, or sales motion is still the primary decision.
+example_prompts:
+  - Plan a four-week SaaS feature launch across email, product, and sales enablement with clear owners.
+  - Build a bounded seasonal campaign for this consumer brand using our existing channels and budget.
 category: Campaigns
 complexity: High
 inputs:

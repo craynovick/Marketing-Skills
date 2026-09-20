@@ -2,6 +2,11 @@
 name: Brand Claims & Confidentiality Guide
 title: Brand Claims & Confidentiality Guide
 description: Turn evidence, privacy rules, and approval requirements into a reusable claims and proof governance system.
+use_when: Use this when marketing needs clear rules for claims, customer evidence, confidentiality, and approval.
+avoid_when: Use a writing recipe when the claims and permissions are already approved and the task is to create an asset.
+example_prompts:
+  - Create claim rules for our B2B SaaS using these approved metrics and customer permission notes.
+  - Separate public, anonymized, internal-only, and unsupported proof for this consulting firm.
 category: Governance
 complexity: Medium
 inputs:

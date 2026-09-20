@@ -20,11 +20,16 @@ name: Example Skill
 title: Example Skill
 category: Strategy
 description: Describe the concrete decision or deliverable and when this skill applies.
+use_when: Describe the situation this recipe is designed to handle.
+avoid_when: Name the closest adjacent task that should use another recipe.
 version: 1.0.0
 complexity: Medium
 inputs:
   - Decision and desired outcome
   - Evidence, brand context, and constraints
+example_prompts:
+  - Create a concrete, realistic request for this recipe.
+  - Create a second request that demonstrates a different business model or mode.
 parameters:
   - company
   - audience
@@ -95,6 +100,7 @@ Specify task-specific privacy, claim, and external-action boundaries. Drafts do 
 | Field | Meaning |
 |---|---|
 | `name`, `title` | Stable human-readable identity and display title. Preserve existing identities. |
+| `use_when`, `avoid_when`, `example_prompts` | Authored discovery guidance shared by the public detail page and Create recipe picker. |
 | `category`, `description`, `version` | Discovery metadata, precise routing cues, and semantic version. Increment versions when behavior changes. |
 | `inputs`, `parameters` | User-supplied material and existing reusable context keys. |
 | `models` | Provider-neutral capability; default to `any-instruction-following-llm`. |

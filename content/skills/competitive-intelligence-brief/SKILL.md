@@ -2,6 +2,11 @@
 name: Competitive Intelligence Brief
 title: Competitive Intelligence Brief
 description: Build an evidence-led view of competitors and market moves.
+use_when: Use this when a product, positioning, sales, or market decision needs current competitor evidence.
+avoid_when: Use Brand Positioning Workshop when competitor evidence is already available and the decision is your own position.
+example_prompts:
+  - Compare these four SaaS competitors on audience, promise, proof, pricing model, and switching friction.
+  - Build a concise market-move brief from these supplied sources and distinguish observations from inference.
 category: Research
 complexity: Medium
 inputs:

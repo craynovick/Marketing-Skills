@@ -2,6 +2,11 @@
 name: Customer Interview Synthesizer
 title: Customer Interview Synthesizer
 description: Synthesize customer conversations into traceable themes, buying evidence, and validated open questions.
+use_when: Use this after customer interviews or sales conversations when you need traceable patterns, not a generic persona.
+avoid_when: Use Ideal Customer Profile Builder when the evidence is already synthesized and the decision is which segment to prioritize.
+example_prompts:
+  - Synthesize these six SaaS win-loss interviews into buying triggers, objections, alternatives, and open questions.
+  - Compare these service-business interview notes without treating repeated opinions as market prevalence.
 category: Research
 complexity: Medium
 inputs:

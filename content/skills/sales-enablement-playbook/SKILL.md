@@ -2,6 +2,11 @@
 name: Sales Enablement
 title: Sales Enablement
 description: Create buyer-specific sales narratives, discovery questions, qualification, objection handling, proof assets, and marketing-to-sales handoffs; draft only the assets requested.
+use_when: Use this when sales needs buyer-specific messaging, discovery, qualification, objections, or proof handoffs.
+avoid_when: Use Brand Positioning Workshop when the core market position is unresolved or Campaign Launch Kit for channel execution.
+example_prompts:
+  - Write a discovery guide and objection responses for this agency buyer using only our approved proof.
+  - Create a concise sales narrative and qualification checklist for this SaaS without inventing ROI.
 category: Strategy
 complexity: High
 version: 1.0.0

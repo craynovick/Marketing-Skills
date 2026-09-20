@@ -2,6 +2,11 @@
 name: Weekly Growth Readout
 title: Weekly Growth Readout
 description: Turn supplied or imported growth data into a decision-ready weekly readout with explicit data-quality caveats.
+use_when: Use this when comparable weekly data exists and leaders need a concise explanation and next decisions.
+avoid_when: Use Growth Experiment Planner when the task is designing a future test rather than interpreting observed results.
+example_prompts:
+  - Produce a weekly growth readout from these two periods and show every supported calculation.
+  - Explain why revenue changed across channels while separating arithmetic, hypotheses, and missing attribution.
 category: Analytics
 complexity: Low
 inputs:

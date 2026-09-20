@@ -2,6 +2,11 @@
 name: GTM Strategy
 title: GTM Strategy
 description: Choose a target market, route to market, and sales motion for a launch, market entry, or growth decision; use Campaign Launch Kit for detailed campaign execution.
+use_when: Use this when target market, route to market, and sales motion must be chosen together.
+avoid_when: Use Campaign Launch Kit when the market strategy is approved and the work is coordinated execution.
+example_prompts:
+  - Recommend a focused starting segment, route, sales motion, and bounded pilot for this B2B service.
+  - Design a launch GTM for this SaaS given our founder-led sales capacity and limited proof.
 category: Strategy
 complexity: High
 version: 1.0.0

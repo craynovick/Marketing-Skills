@@ -2,6 +2,11 @@
 name: SEO Content Brief
 title: SEO Content Brief
 description: Translate an approved content pillar and positioning into a useful, search-aware editorial brief.
+use_when: Use this when you need a writer-ready brief for a specific search problem and audience.
+avoid_when: Use Content Pillar Planner when the topic strategy is not yet chosen or Landing Page Copywriter for conversion pages.
+example_prompts:
+  - Create an SEO brief for this comparison query using our positioning and supplied SERP notes.
+  - Build a local-service article brief that answers the searcher's decision without inventing keyword volume.
 category: Content
 complexity: Medium
 inputs:

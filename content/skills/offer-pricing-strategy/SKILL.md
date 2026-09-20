@@ -2,6 +2,11 @@
 name: Offer and Pricing Strategy
 title: Offer and Pricing Strategy
 description: Design or evaluate offers, packages, value metrics, and pricing hypotheses using customer value, willingness-to-pay evidence, and economic constraints.
+use_when: Use this when packaging, value metric, price structure, or pricing validation is the decision.
+avoid_when: Use Landing Page Copywriter when the offer and price are settled and only presentation needs work.
+example_prompts:
+  - Simplify these SaaS packages and propose a pricing validation plan without inventing willingness to pay.
+  - Evaluate this service offer using supplied costs, capacity, buyer value, and alternatives.
 category: Strategy
 complexity: High
 version: 1.0.0

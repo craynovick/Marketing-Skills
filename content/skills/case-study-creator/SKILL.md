@@ -2,6 +2,11 @@
 name: Case Study Creator
 title: Case Study Creator
 description: Turn approved customer evidence into a credible, permissioned case study without inventing outcomes or proof.
+use_when: Use this when customer evidence and publication permission can support a finished case study.
+avoid_when: Use Customer Interview Synthesizer when the source material still needs cross-interview analysis.
+example_prompts:
+  - Draft a SaaS case study from this approved interview and flag every missing result or permission.
+  - Create an anonymized service-business story without implying metrics the customer did not provide.
 category: Content
 complexity: Medium
 inputs:

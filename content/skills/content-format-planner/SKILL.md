@@ -2,6 +2,11 @@
 name: Content Format Planner
 title: Content Format Planner
 description: Choose platform-native formats and create production briefs that apply audience, positioning, voice, pillars, and proof.
+use_when: Use this when content themes are known but channel-native formats and production briefs are not.
+avoid_when: Use Content Repurposing Engine when you already have an approved source asset to transform.
+example_prompts:
+  - Choose repeatable LinkedIn and newsletter formats for these content pillars and our two-person team.
+  - Turn this consumer brand's three pillars into feasible Instagram and short-video production briefs.
 category: Content
 complexity: Medium
 inputs:

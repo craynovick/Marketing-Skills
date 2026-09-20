@@ -5,125 +5,272 @@ export const skills = [
     "name": "Customer Interview Synthesizer",
     "description": "Synthesize customer conversations into traceable themes, buying evidence, and validated open questions.",
     "category": "Research",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this after customer interviews or sales conversations when you need traceable patterns, not a generic persona.",
+    "avoid": "Use Ideal Customer Profile Builder when the evidence is already synthesized and the decision is which segment to prioritize.",
+    "example_prompts": [
+      "Synthesize these six SaaS win-loss interviews into buying triggers, objections, alternatives, and open questions.",
+      "Compare these service-business interview notes without treating repeated opinions as market prevalence."
+    ]
   },
   {
     "slug": "ideal-customer-profile-builder",
     "name": "Ideal Customer Profile Builder",
     "description": "Turn customer evidence into a focused, testable ideal customer profile and buying context.",
     "category": "Research",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when you have customer evidence and need to choose a commercially useful beachhead profile.",
+    "avoid": "Use Audience Strategy Playbook when the profiles are already defined and you need to rank broader audience opportunities.",
+    "example_prompts": [
+      "Build a testable ICP for our vertical SaaS from these customer interviews and deal notes.",
+      "Narrow this agency's five customer types to one starting profile without inventing market size."
+    ]
   },
   {
     "slug": "audience-strategy-playbook",
     "name": "Audience Strategy Playbook",
     "description": "Prioritize beachhead audiences, buying situations, and message opportunities using evidence.",
     "category": "Strategy",
-    "version": "1.3.0"
+    "version": "1.3.0",
+    "when": "Use this when you need to decide which audience and buying situation deserve focus first.",
+    "avoid": "Use Ideal Customer Profile Builder for a detailed customer profile or GTM Strategy for the full route-to-market decision.",
+    "example_prompts": [
+      "Rank these three SaaS audiences using our customer evidence, sales capacity, and launch goal.",
+      "Recommend a beachhead audience for this local service business and identify what must still be validated."
+    ]
   },
   {
     "slug": "brand-claims-confidentiality-guide",
     "name": "Brand Claims & Confidentiality Guide",
     "description": "Turn evidence, privacy rules, and approval requirements into a reusable claims and proof governance system.",
     "category": "Governance",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when marketing needs clear rules for claims, customer evidence, confidentiality, and approval.",
+    "avoid": "Use a writing recipe when the claims and permissions are already approved and the task is to create an asset.",
+    "example_prompts": [
+      "Create claim rules for our B2B SaaS using these approved metrics and customer permission notes.",
+      "Separate public, anonymized, internal-only, and unsupported proof for this consulting firm."
+    ]
   },
   {
     "slug": "brand-positioning-workshop",
     "name": "Brand Positioning Workshop",
     "description": "Develop a differentiated, evidence-backed positioning hypothesis for a defined audience and buying situation.",
     "category": "Strategy",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when a defined audience needs a clearer reason to choose the offer over real alternatives.",
+    "avoid": "Use Landing Page Copywriter when positioning is already approved and the task is page execution.",
+    "example_prompts": [
+      "Develop a positioning hypothesis for this SaaS using our win-loss evidence and named alternatives.",
+      "Clarify why customers should choose this premium home service instead of doing nothing or hiring a generalist."
+    ]
   },
   {
     "slug": "brand-voice-guide",
     "name": "Brand Voice Guide",
     "description": "Turn approved positioning, audience context, and writing evidence into usable, brand-specific voice rules.",
     "category": "Strategy",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when you have representative writing or clear voice intent and need repeatable rules with examples.",
+    "avoid": "Use a copywriting recipe when the voice is already defined and you only need a finished asset.",
+    "example_prompts": [
+      "Create a concise voice guide from these five approved founder emails and our positioning.",
+      "Define a warm but precise consumer voice with before-and-after examples and words to avoid."
+    ]
   },
   {
     "slug": "content-pillar-planner",
     "name": "Content Pillar Planner",
     "description": "Turn approved audience, positioning, voice, and proof into a focused content pillar system.",
     "category": "Content",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when you need a small set of durable themes tied to buyer questions and business goals.",
+    "avoid": "Use Content Format Planner when themes are already chosen and the decision is how to express them by channel.",
+    "example_prompts": [
+      "Build four content pillars for our SaaS from these buyer questions and positioning.",
+      "Create a focused pillar system for this consumer brand without turning product categories into themes."
+    ]
   },
   {
     "slug": "content-format-planner",
     "name": "Content Format Planner",
     "description": "Choose platform-native formats and create production briefs that apply audience, positioning, voice, pillars, and proof.",
     "category": "Content",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when content themes are known but channel-native formats and production briefs are not.",
+    "avoid": "Use Content Repurposing Engine when you already have an approved source asset to transform.",
+    "example_prompts": [
+      "Choose repeatable LinkedIn and newsletter formats for these content pillars and our two-person team.",
+      "Turn this consumer brand's three pillars into feasible Instagram and short-video production briefs."
+    ]
   },
   {
     "slug": "seo-content-brief",
     "name": "SEO Content Brief",
     "description": "Translate an approved content pillar and positioning into a useful, search-aware editorial brief.",
     "category": "Content",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when you need a writer-ready brief for a specific search problem and audience.",
+    "avoid": "Use Content Pillar Planner when the topic strategy is not yet chosen or Landing Page Copywriter for conversion pages.",
+    "example_prompts": [
+      "Create an SEO brief for this comparison query using our positioning and supplied SERP notes.",
+      "Build a local-service article brief that answers the searcher's decision without inventing keyword volume."
+    ]
   },
   {
     "slug": "landing-page-copywriter",
     "name": "Landing Page Copywriter",
     "description": "Apply approved positioning, audience, voice, and proof to a focused landing page that earns a clear next action.",
     "category": "Conversion",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when the page goal and offer are known and you need finished conversion copy.",
+    "avoid": "Use Conversion Audit when the first task is diagnosing an existing page rather than rewriting it.",
+    "example_prompts": [
+      "Write a focused demo landing page for this SaaS using our approved positioning and proof.",
+      "Draft a consultation page for this service business and mark every claim that still needs evidence."
+    ]
+  },
+  {
+    "slug": "conversion-audit",
+    "name": "Conversion Audit",
+    "description": "Diagnose an existing page's message match, value clarity, proof, objections, CTA, and friction without claiming unmeasured conversion problems.",
+    "category": "Conversion",
+    "version": "1.0.0",
+    "when": "Use this when an existing page needs diagnosis and prioritized changes before or instead of a rewrite.",
+    "avoid": "Use Landing Page Copywriter when the strategy is sufficiently clear and the task is finished page copy.",
+    "example_prompts": [
+      "Audit this SaaS demo page for message match, proof, objections, CTA, and friction.",
+      "Review this service-business landing page and prioritize changes without pretending we have conversion data."
+    ]
   },
   {
     "slug": "content-repurposing-engine",
     "name": "Content Repurposing Engine",
     "description": "Transform one approved source into distinct, platform-native assets without losing meaning, proof, or attribution.",
     "category": "Content",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when an approved source exists and you need channel-native derivatives that preserve its meaning.",
+    "avoid": "Use Content Format Planner when there is no source asset yet and you are deciding repeatable formats.",
+    "example_prompts": [
+      "Turn this webinar transcript into three LinkedIn posts and one email without adding claims.",
+      "Adapt this approved customer story into Instagram captions while preserving attribution and permission limits."
+    ]
+  },
+  {
+    "slug": "lifecycle-email-sequence",
+    "name": "Lifecycle Email Sequence",
+    "description": "Design and write a complete behavior-triggered email sequence with entry rules, timing, purpose, exit conditions, and finished messages.",
+    "category": "Campaigns",
+    "version": "1.0.0",
+    "when": "Use this when a customer stage and outcome require a coordinated sequence rather than a one-off newsletter.",
+    "avoid": "Use a newsletter workflow for a single scheduled edition without behavior-based entry and exit rules.",
+    "example_prompts": [
+      "Create a five-email SaaS trial activation sequence with behavior-based exits and finished copy.",
+      "Build a post-purchase education sequence for this consumer product without inventing usage claims."
+    ]
   },
   {
     "slug": "campaign-launch-kit",
     "name": "Campaign Launch Kit",
     "description": "Turn an approved marketing objective into a coordinated, measurable, and reviewable campaign launch plan.",
     "category": "Campaigns",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when the objective, audience, and offer are known and coordinated campaign execution is needed.",
+    "avoid": "Use GTM Strategy when the target market, route to market, or sales motion is still the primary decision.",
+    "example_prompts": [
+      "Plan a four-week SaaS feature launch across email, product, and sales enablement with clear owners.",
+      "Build a bounded seasonal campaign for this consumer brand using our existing channels and budget."
+    ]
+  },
+  {
+    "slug": "growth-experiment-planner",
+    "name": "Growth Experiment Planner",
+    "description": "Turn a growth question into a feasible hypothesis, measurement plan, variants, guardrails, and decision criteria without inventing results or uplift.",
+    "category": "Analytics",
+    "version": "1.0.0",
+    "when": "Use this when a specific growth decision can be reduced through a measurable experiment or bounded validation plan.",
+    "avoid": "Use Weekly Growth Readout to interpret observed performance or Conversion Audit to diagnose a page before choosing a test.",
+    "example_prompts": [
+      "Plan a pricing-page experiment and determine whether our traffic supports a useful test.",
+      "Design a low-traffic validation plan for this service offer without pretending an A/B test is feasible."
+    ]
   },
   {
     "slug": "case-study-creator",
     "name": "Case Study Creator",
     "description": "Turn approved customer evidence into a credible, permissioned case study without inventing outcomes or proof.",
     "category": "Content",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when customer evidence and publication permission can support a finished case study.",
+    "avoid": "Use Customer Interview Synthesizer when the source material still needs cross-interview analysis.",
+    "example_prompts": [
+      "Draft a SaaS case study from this approved interview and flag every missing result or permission.",
+      "Create an anonymized service-business story without implying metrics the customer did not provide."
+    ]
   },
   {
     "slug": "weekly-growth-readout",
     "name": "Weekly Growth Readout",
     "description": "Turn supplied or imported growth data into a decision-ready weekly readout with explicit data-quality caveats.",
     "category": "Analytics",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "when": "Use this when comparable weekly data exists and leaders need a concise explanation and next decisions.",
+    "avoid": "Use Growth Experiment Planner when the task is designing a future test rather than interpreting observed results.",
+    "example_prompts": [
+      "Produce a weekly growth readout from these two periods and show every supported calculation.",
+      "Explain why revenue changed across channels while separating arithmetic, hypotheses, and missing attribution."
+    ]
   },
   {
     "slug": "competitive-intelligence-brief",
     "name": "Competitive Intelligence Brief",
     "description": "Build an evidence-led view of competitors and market moves.",
     "category": "Research",
-    "version": "1.1.0"
+    "version": "1.1.0",
+    "when": "Use this when a product, positioning, sales, or market decision needs current competitor evidence.",
+    "avoid": "Use Brand Positioning Workshop when competitor evidence is already available and the decision is your own position.",
+    "example_prompts": [
+      "Compare these four SaaS competitors on audience, promise, proof, pricing model, and switching friction.",
+      "Build a concise market-move brief from these supplied sources and distinguish observations from inference."
+    ]
   },
   {
     "slug": "go-to-market-strategy",
     "name": "GTM Strategy",
     "description": "Choose a target market, route to market, and sales motion for a launch, market entry, or growth decision; use Campaign Launch Kit for detailed campaign execution.",
     "category": "Strategy",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "when": "Use this when target market, route to market, and sales motion must be chosen together.",
+    "avoid": "Use Campaign Launch Kit when the market strategy is approved and the work is coordinated execution.",
+    "example_prompts": [
+      "Recommend a focused starting segment, route, sales motion, and bounded pilot for this B2B service.",
+      "Design a launch GTM for this SaaS given our founder-led sales capacity and limited proof."
+    ]
   },
   {
     "slug": "offer-pricing-strategy",
     "name": "Offer and Pricing Strategy",
     "description": "Design or evaluate offers, packages, value metrics, and pricing hypotheses using customer value, willingness-to-pay evidence, and economic constraints.",
     "category": "Strategy",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "when": "Use this when packaging, value metric, price structure, or pricing validation is the decision.",
+    "avoid": "Use Landing Page Copywriter when the offer and price are settled and only presentation needs work.",
+    "example_prompts": [
+      "Simplify these SaaS packages and propose a pricing validation plan without inventing willingness to pay.",
+      "Evaluate this service offer using supplied costs, capacity, buyer value, and alternatives."
+    ]
   },
   {
     "slug": "sales-enablement-playbook",
     "name": "Sales Enablement",
     "description": "Create buyer-specific sales narratives, discovery questions, qualification, objection handling, proof assets, and marketing-to-sales handoffs; draft only the assets requested.",
     "category": "Strategy",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "when": "Use this when sales needs buyer-specific messaging, discovery, qualification, objections, or proof handoffs.",
+    "avoid": "Use Brand Positioning Workshop when the core market position is unresolved or Campaign Launch Kit for channel execution.",
+    "example_prompts": [
+      "Write a discovery guide and objection responses for this agency buyer using only our approved proof.",
+      "Create a concise sales narrative and qualification checklist for this SaaS without inventing ROI."
+    ]
   }
 ];

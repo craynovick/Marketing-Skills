@@ -2,6 +2,11 @@
 name: Landing Page Copywriter
 title: Landing Page Copywriter
 description: Apply approved positioning, audience, voice, and proof to a focused landing page that earns a clear next action.
+use_when: Use this when the page goal and offer are known and you need finished conversion copy.
+avoid_when: Use Conversion Audit when the first task is diagnosing an existing page rather than rewriting it.
+example_prompts:
+  - Write a focused demo landing page for this SaaS using our approved positioning and proof.
+  - Draft a consultation page for this service business and mark every claim that still needs evidence.
 category: Conversion
 complexity: Medium
 inputs:
