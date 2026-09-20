@@ -25,6 +25,7 @@ export function apiError(error: unknown) {
         : "Request failed";
   const codes: Record<string, [number, string]> = {
     INVALID_BRAND: [400, "Choose a valid brand, name, and offer."],
+    BRAND_NOT_FOUND: [422, "We could not confidently find a readable public website for that brand. Try its website URL."],
     BRAND_REQUIRED: [409, "Choose which brand to use."],
     INVALID_DECISION: [400, "Choose a valid answer or write your own response."],
     PLAN_REQUIRED: [403, "This workflow requires a paid hosted plan. Brand foundations remain free."],

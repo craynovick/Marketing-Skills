@@ -1,5 +1,8 @@
 import { cookbookBrandsEnabled } from "@/lib/cookbook-features";
+import { discoverBrand } from '@/lib/cookbook-brand-discovery';
 import { account, apiError, uuid } from '@/lib/cookbook-server';
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 export async function GET(request: Request) {
   try {
     const { db, user } = await account();
@@ -20,9 +23,9 @@ export async function POST(request: Request) {
   try {
     if (!cookbookBrandsEnabled()) return Response.json({error:"This feature is not enabled yet."}, {status:503});
     const { db } = await account();
-    const { name, offer, website = '', requestId } = await request.json();
-    if (typeof name !== 'string' || !name.trim() || name.length > 120 || typeof offer !== 'string' || !offer.trim() || offer.length > 2000 || typeof website !== 'string' || website.length > 2000 || !uuid(requestId)) throw new Error('INVALID_BRAND');
-    if (website && !/^https?:\/\//i.test(website)) throw new Error('INVALID_BRAND');
+    const { seed, requestId } = await request.json();
+    if (typeof seed !== 'string' || !seed.trim() || seed.length > 2000 || !uuid(requestId)) throw new Error('INVALID_BRAND');
+    const { name, offer, website } = await discoverBrand(seed, request.signal);
     const { data: id, error } = await db.rpc('cookbook_create_brand', { p_name: name, p_offer: offer, p_website: website, p_key: requestId });
     if (error) throw error;
     return Response.json({ brand: { id, name: name.trim(), offer: offer.trim(), website } }, { status: 201 });

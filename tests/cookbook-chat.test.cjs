@@ -231,6 +231,47 @@ test('agent policy pairs relevant public research with skills and create work', 
   assert.match(chat, /supplies a URL/);
 });
 
+test('brand discovery extracts official result URLs and excludes search and social hosts', () => {
+  const { searchResultUrls } = loader({
+    ai: {},
+    '@/lib/cookbook-server': { model: 'test-model' },
+    '@/lib/cookbook-scraper': { scrapeWebsite() {}, siteHost: value => new URL(value).hostname.replace(/^www\./, '') },
+  })('@/lib/cookbook-brand-discovery');
+  const html = '<a href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.example.com%2Fabout">Example</a>' +
+    '<a href="https://www.linkedin.com/company/example">LinkedIn</a>' +
+    '<a href="https://example.com/pricing">Duplicate</a>';
+  assert.deepEqual(searchResultUrls(html), ['https://example.com']);
+});
+
+test('new brand asks for one smart website or name input', () => {
+  const { NewBrand } = load('@/components/cookbook/new-brand');
+  const html = renderToStaticMarkup(React.createElement(NewBrand, { onCreated() {}, onClose() {} }));
+  assert.match(html, /Website or brand name/);
+  assert.match(html, /cookbook\.to or Cookbook/);
+  assert.match(html, /Find brand and continue/);
+  assert.doesNotMatch(html, /What do you offer\?|Brand materials|Website \(optional\)/);
+  assert.equal((html.match(/<input/g) || []).length, 1);
+});
+
+test('brand creation persists the discovered profile instead of trusting client fields', async () => {
+  let rpcArgs;
+  const route = loader({
+    '@/lib/cookbook-features': { cookbookBrandsEnabled: () => true },
+    '@/lib/cookbook-brand-discovery': { discoverBrand: async seed => {
+      assert.equal(seed, 'Example');
+      return { name: 'Example Inc.', offer: 'A researched offer.', website: 'https://example.com/' };
+    } },
+    '@/lib/cookbook-server': {
+      uuid: value => value === 'valid-id',
+      account: async () => ({ db: { async rpc(name, args) { assert.equal(name, 'cookbook_create_brand'); rpcArgs = args; return { data: 'brand-id', error: null }; } } }),
+      apiError: error => Response.json({ error: String(error) }, { status: 500 }),
+    },
+  })('@/app/api/cookbook/brands/route');
+  const response = await route.POST(new Request('http://localhost/api', { method: 'POST', body: JSON.stringify({ seed: 'Example', name: 'Spoofed', offer: 'Spoofed', requestId: 'valid-id' }) }));
+  assert.equal(response.status, 201);
+  assert.deepEqual(rpcArgs, { p_name: 'Example Inc.', p_offer: 'A researched offer.', p_website: 'https://example.com/', p_key: 'valid-id' });
+});
+
 test('decision cards use explicit submission, accessible choices, and completed summaries', () => {
   const { DecisionCard } = load('@/components/cookbook/decision-card');
   const { entryCard } = load('@/lib/cookbook-experience');
