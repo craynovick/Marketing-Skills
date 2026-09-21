@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { packAccount } from '@/lib/brand-pack-server';
-import { packColumns, provisionalBrand, websiteFromBrief } from '@/lib/brand-pack';
+import { packColumns, provisionalBrand, websiteFromBrief, type BrandPack } from '@/lib/brand-pack';
 import { readBody, errorResponse } from '@/lib/integrations/errors';
 import { readBrand } from '@/lib/cookbook-brand-server';
 import { resolveProject } from '@/lib/cookbook-projects';
@@ -32,9 +32,9 @@ export async function POST(request: Request) {
       content = `# ${project!.name}\n\nImported from your saved Cookbook. A local export will not sync automatically.\n\n${brand.foundations.filter(f => f.confirmed?.content).map(f => f.confirmed!.content.replace(/^# /gm, '## ')).join('\n\n')}\n\n## Additional context\n\n${input.brief}\n`;
       coverage = 'Imported confirmed foundations only. Existing drafts and hosted approvals were not changed. Original source references remain in the imported content.';
     }
-    const { data, error } = await db.rpc('cookbook_pack_command', { p_action: 'create', p_id: input.id, p_revision: 0, p_payload: { brief: input.brief, website, content, coverage, projectId: input.projectId } }).single();
+    const { data, error } = await db.rpc('cookbook_pack_command', { p_action: 'create', p_id: input.id, p_revision: 0, p_payload: { brief: input.brief, website, content, coverage, projectId: input.projectId } }).single<BrandPack>();
     if (error) throw error;
     // The RPC returns only the owner's pack; never return a credential or connection key.
-    return Response.json({ pack: Object.fromEntries(packColumns.split(',').map(key => [key, data[key]])) }, { status: 201, headers: { 'Cache-Control': 'no-store' } });
+    return Response.json({ pack: Object.fromEntries(packColumns.split(',').map(key => [key, data[key as keyof BrandPack]])) }, { status: 201, headers: { 'Cache-Control': 'no-store' } });
   } catch (error) { return errorResponse(error); }
 }

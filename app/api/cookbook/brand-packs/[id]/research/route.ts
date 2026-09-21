@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { BrandPack } from '@/lib/brand-pack';
 import { start } from 'workflow/api';
 import { packAccount, ownedPack } from '@/lib/brand-pack-server';
 import { assertSupabaseAdminConfiguration } from '@/lib/supabase/admin';
@@ -12,7 +13,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const input = z.object({ revision: z.number().int().positive(), requestId: z.string().uuid() }).strict().parse(await readBody(request));
     const { db, user } = await packAccount();
     assertSupabaseAdminConfiguration();
-    const { data, error } = await db.rpc('cookbook_pack_command', { p_action: 'research', p_id: id, p_revision: input.revision, p_payload: input }).single();
+    const { data, error } = await db.rpc('cookbook_pack_command', { p_action: 'research', p_id: id, p_revision: input.revision, p_payload: input }).single<BrandPack>();
     if (error) throw error;
     if (data.status === 'queued' && data.research_key === input.requestId) {
       try { await start(brandResearchWorkflow, [id, input.requestId]); }
