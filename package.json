@@ -15,7 +15,8 @@
     "test:stream": "node --test tests/cookbook-stream.test.mjs",
     "build:mcp": "node scripts/build-cookbook-mcp.mjs",
     "test:integrations": "node --test tests/cookbook-integrations.test.mjs tests/cookbook-api.test.cjs",
-    "test:mcp": "node --test tests/cookbook-mcp.test.mjs"
+    "test:mcp": "node --test tests/cookbook-mcp.test.mjs",
+    "test:packs": "node --test tests/brand-pack.test.cjs tests/brand-research.test.cjs tests/cookbook-installer.test.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.109",

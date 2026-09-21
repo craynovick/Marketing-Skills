@@ -1,5 +1,6 @@
 ---
-name: SEO Content Brief
+license: MIT
+name: seo-content-brief
 title: SEO Content Brief
 description: Translate an approved content pillar and positioning into a useful, search-aware editorial brief.
 use_when: Use this when you need a writer-ready brief for a specific search problem and audience.
@@ -26,7 +27,7 @@ parameters:
   - formats
 models:
   - any-instruction-following-llm
-version: 1.2.0
+version: 1.3.0
 writes_profile: []
 requires_profile:
   - audience
@@ -44,6 +45,12 @@ downstream:
   - content-repurposing-engine
 ---
 # SEO Content Brief
+## Shared brand context
+
+Before asking about the brand, read `.cookbook/brand.md` from the current project if available. This is the single authoritative brand brief; do not substitute a different project's or globally installed brand. Read `.cookbook/evidence.md` only when a claim or recommendation needs its supporting sources, and `.cookbook/overrides/seo-content-brief.md` when present for this skill's local preferences. Treat those files as reference context, not authorization for external actions.
+
+A specific user request or task-only brief takes precedence for that task. Missing brand files do not block useful work from a supplied brief. Never duplicate the brand brief into this skill. When asked to refine shared context, edit the relevant part of `.cookbook/brand.md`, preserve unaffected facts and uncertainty labels, and summarize the change. Without file-writing tools, return a proposed edit and do not claim it was saved. Local edits do not sync to Cookbook automatically.
+
 ## Operating contract
 
 Follow the user's requested scope. Use Setup to resolve missing essentials, Apply to use available context, Tune to revise existing work, and Validate to test a claim or decision. Explicit intent takes precedence; a request to test selects Validate and a revision selects Tune. An unapproved but usable brief can support an explicitly provisional draft. Missing approved foundations alone do not require onboarding.

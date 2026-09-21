@@ -4,12 +4,22 @@ Open, model-agnostic marketing workflows for turning evidence into usable strate
 
 ## What is included
 
-- 18 marketing skills, from interview synthesis and ICP definition through campaigns and growth readouts, including GTM strategy, offer/pricing, and sales enablement.
+- 22 marketing skills, from interview synthesis and ICP definition through campaigns and growth readouts, including GTM strategy, offer/pricing, and sales enablement.
 - A Next.js catalog for browsing and running the skill specifications.
 - Five evaluation fixtures per skill, chat scenarios, an automated metadata validator, and source/export consistency tests.
 - A Dockerized catalog deployment for self-hosting.
 
-The repository includes the self-hosted application, but no source license is currently declared. Do not infer modification, redistribution, or commercial reuse permissions from source availability. Server-side generation currently uses AI Gateway; provider-specific BYOK routing remains future work. A Managed Cloud plan is specified in [docs/pricing.md](docs/pricing.md): $6/month for hosting, updates, and team workspaces, plus transparent model usage.
+The repository includes the self-hosted application, but the application is not covered by the skill-library license. Marketing skills under `content/skills/` and generated `skills/` are MIT licensed; see `content/skills/LICENSE`. No license is declared for the application or hosted services. Server-side generation currently uses AI Gateway; provider-specific BYOK routing remains future work. A Managed Cloud plan is specified in [docs/pricing.md](docs/pricing.md): $6/month for hosting, updates, and team workspaces, plus transparent model usage.
+
+## Install in your AI app
+
+```sh
+npx skills add https://www.cookbook.to
+```
+
+The standard distribution in `skills/` is generated from `content/skills/`.
+Every marketing skill reads one project-owned `.cookbook/brand.md`; evidence and local preferences stay separate from updatable methods.
+Use `/create` to describe, research, review, and download a private brand pack. The self-contained installer runs with `node ~/Downloads/cookbook-install.mjs --agent codex` (or `claude-code`) from a project folder; it needs Node.js 22+, makes no network calls, and refuses to overwrite local edits. See [release checks](docs/portable-brand-packs-release.md).
 
 ## Use a skill locally
 

@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { SkillActions } from "@/components/skill-actions";
 import { getSkill, skills } from "@/lib/skills";
-import { defaultMode, entryUrl } from "@/lib/cookbook-experience";
 
 export function generateStaticParams() { return skills.map(skill => ({ slug: skill.slug })); }
 
@@ -20,16 +19,16 @@ export default async function SkillPage({ params }: { params: Promise<{ slug: st
         <p className="eyebrow">RECIPE SPECIFICATION</p>
         <div className="spec-block"><h2>When to use it</h2><p>{skill.when}</p></div>
         <div className="spec-block"><h2>Choose another recipe when</h2><p>{skill.avoid}</p></div>
-        <div className="spec-block"><h2>Example prompts</h2><ul>{skill.example_prompts.map(prompt => <li key={prompt}><Link href={`${entryUrl(defaultMode(skill.slug), "general", skill.slug)}&prompt=${encodeURIComponent(prompt)}`}>{prompt} <span aria-hidden="true">↗</span></Link></li>)}</ul></div>
+        <div className="spec-block"><h2>Example prompts</h2><ul>{skill.example_prompts.map(prompt => <li key={prompt}>{prompt}</li>)}</ul></div>
         <div className="spec-block"><h2>Required inputs</h2><ul>{skill.inputs.map(input => <li key={input}>{input}</li>)}</ul></div>
         {skill.requires_profile.length > 0 && <div className="spec-block"><h2>Cookbook foundation</h2><p>This workflow can be customized with your saved brand context. Recommended fields:</p><ul>{skill.requires_profile.map(field => <li key={field}>{field}</li>)}</ul></div>}
         <div className="spec-block"><h2>Expected output</h2><p>{skill.output}</p></div>
         <div className="spec-block"><h2>Safety note</h2><p>{skill.safety}</p></div>
       </section>
       <aside className="skill-sidebar">
-        <SkillActions slug={skill.slug} markdown={skill.skill} />
+        <SkillActions slug={skill.slug} markdown={skill.portable} />
         <div className="sidebar-section info-card"><h4 className="eyebrow">INFO</h4><dl className="meta-list"><div><dt>Category</dt><dd>{skill.category}</dd></div><div><dt>Version</dt><dd>v{skill.version}</dd></div><div><dt>Complexity</dt><dd>{skill.complexity}</dd></div><div><dt>Status</dt><dd>✓ Source and fixtures reviewed</dd></div></dl></div>
-        <div className="sidebar-section trust-cues"><h4 className="eyebrow">TRUST CUES</h4><dl className="meta-list"><div><dt>Source</dt><dd>First-party repository</dd></div><div><dt>Supported agents</dt><dd>{skill.agents.join(", ")}</dd></div><div><dt>External actions</dt><dd>No external actions (read-only)</dd></div></dl></div>
+        <div className="sidebar-section trust-cues"><h4 className="eyebrow">TRUST CUES</h4><dl className="meta-list"><div><dt>Source</dt><dd>First-party repository</dd></div><div><dt>Skill format</dt><dd>Agent Skills · Markdown</dd></div><div><dt>External actions</dt><dd>Publishing and spending require authorization</dd></div></dl></div>
       </aside>
     </div>
     {recommendations.length > 0 && <section className="skill-recommendations" aria-labelledby="recommended-skills"><div className="section-label"><h2 id="recommended-skills">Recommended next skills</h2><span className="count">{downstream.length ? "NEXT STEPS" : "RELATED SKILLS"}</span></div><div className="recommendation-list">{recommendations.map(item => <Link href={`/skills/${item.slug}`} className="recommendation-card" key={item.slug}><span className="eyebrow">{item.category} · {item.complexity}</span><h3>{item.name}</h3><p>{item.goal}</p><span className="arrow">↗</span></Link>)}</div></section>}

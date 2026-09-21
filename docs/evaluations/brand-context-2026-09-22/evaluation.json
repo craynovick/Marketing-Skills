@@ -1,0 +1,63 @@
+{
+  "evaluation_type": "independent portable-skill exercise; no hosted app or cross-app behavior tested",
+  "date": "2026-09-22",
+  "input": "Paper Harbor sells pocket notebooks for everyday lists and sketches. Our voice is warm and plain. We have no website or customer research yet. Set up reusable brand context for marketing work. Then make the voice more direct while leaving every other section unchanged.",
+  "model": "Unavailable to test agent; inherited parent configuration",
+  "skill_sha256": "57a10989444f5a1e06561189af7d88ea60f4946bb0415ad09b434e13c8406362",
+  "rubric_read_after_outputs": true,
+  "scores": [
+    {
+      "category": "Strategic and commercial judgment",
+      "weight": 20,
+      "score": 1,
+      "reason": "Buyer use and tradeoffs are addressed, but the priority buyer remains broad and no concrete provisional channel is selected."
+    },
+    {
+      "category": "Brand and context specificity",
+      "weight": 20,
+      "score": 2,
+      "reason": "Pocket notebooks, everyday lists and sketches, warm/plain voice, and absent research constrain the recommendations."
+    },
+    {
+      "category": "Deliverable usefulness",
+      "weight": 20,
+      "score": 2,
+      "reason": "Both canonical files exist with all six sections; the more direct voice provides two before/after rewrites."
+    },
+    {
+      "category": "Evidence and uncertainty",
+      "weight": 15,
+      "score": 2,
+      "reason": "U1 traces supplied facts; audience, positioning, and objections are marked proposed or unknown; no external source is invented."
+    },
+    {
+      "category": "Proportionality and clarity",
+      "weight": 15,
+      "score": 1,
+      "reason": "The brief is longer than needed for the sparse input, with repeated unknowns and generic authorization text."
+    },
+    {
+      "category": "Workflow and handoff correctness",
+      "weight": 10,
+      "score": 2,
+      "reason": "Only Voice changes; other six sections including change notes and title/metadata compare exactly. All output remains inside the test directory."
+    }
+  ],
+  "total": 82.5,
+  "critical_failure": false,
+  "pass": true,
+  "tool_trace_summary": [
+    "Read skill",
+    "Created temporary workspace",
+    "Wrote provisional brief/evidence and before snapshot",
+    "Revised Voice only",
+    "Initial verification parser failed due greedy header regex; artifact write had succeeded",
+    "Read rubric after outputs",
+    "Corrected verification parser and compared sections"
+  ],
+  "observed_skill_weaknesses": [
+    "Dated change-note requirement can conflict with preserving every other section if a document has a separate Change notes section. This run solved it with a note inside Voice, but the skill does not specify that convention.",
+    "Required broad strategy fields encourage length and repeated unknowns for minimal descriptions.",
+    "The skill asks for plausible channels but provides no clear rule for how specific to be when distribution, resources, and buyers are unknown; this run deferred channel selection."
+  ]
+}

@@ -60,3 +60,32 @@ test('fixture validator catches a missing suite, missing mode, empty section, an
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+
+test('standard distribution preserves source instructions and package references', () => {
+  for (const skill of skills) {
+    const file = path.join(root, 'skills', skill.slug, 'SKILL.md');
+    const portable = fs.readFileSync(file, 'utf8');
+    assert.equal(portable, skill.portable);
+    const body = text => text.replace(/^---\n[\s\S]*?\n---\n/, '').trim();
+    assert.equal(body(portable), body(skill.skill));
+    assert.match(portable, new RegExp('name: ' + skill.slug));
+  }
+});
+
+test('public discovery publishes exactly the skill library and license files', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.resolve(__dirname, '../public/.well-known/skills');
+  const index = JSON.parse(fs.readFileSync(path.join(root, 'index.json'), 'utf8'));
+  assert.equal(index.skills.length, 22);
+  for (const skill of index.skills) {
+    assert.match(skill.name, /^[a-z0-9-]+$/);
+    assert.ok(skill.files.includes('SKILL.md'));
+    assert.ok(skill.files.includes('LICENSE'));
+    for (const file of skill.files) {
+      assert.ok(!file.includes('..') && !file.startsWith('/'));
+      assert.equal(fs.readFileSync(path.join(root, skill.name, file), 'utf8'), fs.readFileSync(path.resolve(__dirname, '../skills', skill.name, file), 'utf8'));
+    }
+  }
+});

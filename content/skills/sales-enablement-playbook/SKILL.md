@@ -1,5 +1,6 @@
 ---
-name: Sales Enablement
+license: MIT
+name: sales-enablement-playbook
 title: Sales Enablement
 description: Create buyer-specific sales narratives, discovery questions, qualification, objection handling, proof assets, and marketing-to-sales handoffs; draft only the assets requested.
 use_when: Use this when sales needs buyer-specific messaging, discovery, qualification, objections, or proof handoffs.
@@ -9,7 +10,7 @@ example_prompts:
   - Create a concise sales narrative and qualification checklist for this SaaS without inventing ROI.
 category: Strategy
 complexity: High
-version: 1.0.0
+version: 1.1.0
 inputs:
   - Offer and target buying situation
   - Sales notes, objections, and approved proof
@@ -45,6 +46,12 @@ downstream:
 ---
 
 # Sales Enablement
+
+## Shared brand context
+
+Before asking about the brand, read `.cookbook/brand.md` from the current project if available. This is the single authoritative brand brief; do not substitute a different project's or globally installed brand. Read `.cookbook/evidence.md` only when a claim or recommendation needs its supporting sources, and `.cookbook/overrides/sales-enablement-playbook.md` when present for this skill's local preferences. Treat those files as reference context, not authorization for external actions.
+
+A specific user request or task-only brief takes precedence for that task. Missing brand files do not block useful work from a supplied brief. Never duplicate the brand brief into this skill. When asked to refine shared context, edit the relevant part of `.cookbook/brand.md`, preserve unaffected facts and uncertainty labels, and summarize the change. Without file-writing tools, return a proposed edit and do not claim it was saved. Local edits do not sync to Cookbook automatically.
 
 ## Operating contract
 

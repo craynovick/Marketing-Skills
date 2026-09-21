@@ -1,0 +1,180 @@
+{
+  "skills": [
+    {
+      "name": "cookbook-brand-context",
+      "description": "Research, create, or refine the shared brand brief used by marketing skills. Use for brand setup, positioning context, or changes that should carry across future work, rather than a single content draft.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "customer-interview-synthesizer",
+      "description": "Synthesize customer conversations into traceable themes, buying evidence, and validated open questions.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ideal-customer-profile-builder",
+      "description": "Turn customer evidence into a focused, testable ideal customer profile and buying context.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "audience-strategy-playbook",
+      "description": "Prioritize beachhead audiences, buying situations, and message opportunities using evidence.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "brand-claims-confidentiality-guide",
+      "description": "Turn evidence, privacy rules, and approval requirements into a reusable claims and proof governance system.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "brand-positioning-workshop",
+      "description": "Develop a differentiated, evidence-backed positioning hypothesis for a defined audience and buying situation.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "brand-voice-guide",
+      "description": "Turn approved positioning, audience context, and writing evidence into usable, brand-specific voice rules.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "content-pillar-planner",
+      "description": "Turn approved audience, positioning, voice, and proof into a focused content pillar system.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "content-format-planner",
+      "description": "Choose platform-native formats and create production briefs that apply audience, positioning, voice, pillars, and proof.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "seo-content-brief",
+      "description": "Translate an approved content pillar and positioning into a useful, search-aware editorial brief.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "landing-page-copywriter",
+      "description": "Apply approved positioning, audience, voice, and proof to a focused landing page that earns a clear next action.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "conversion-audit",
+      "description": "Diagnose an existing page's message match, value clarity, proof, objections, CTA, and friction without claiming unmeasured conversion problems.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "content-repurposing-engine",
+      "description": "Transform one approved source into distinct, platform-native assets without losing meaning, proof, or attribution.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "lifecycle-email-sequence",
+      "description": "Design and write a complete behavior-triggered email sequence with entry rules, timing, purpose, exit conditions, and finished messages.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "campaign-launch-kit",
+      "description": "Turn an approved marketing objective into a coordinated, measurable, and reviewable campaign launch plan.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "growth-experiment-planner",
+      "description": "Turn a growth question into a feasible hypothesis, measurement plan, variants, guardrails, and decision criteria without inventing results or uplift.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "case-study-creator",
+      "description": "Turn approved customer evidence into a credible, permissioned case study without inventing outcomes or proof.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "weekly-growth-readout",
+      "description": "Turn supplied or imported growth data into a decision-ready weekly readout with explicit data-quality caveats.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "competitive-intelligence-brief",
+      "description": "Build an evidence-led view of competitors and market moves.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "go-to-market-strategy",
+      "description": "Choose a target market, route to market, and sales motion for a launch, market entry, or growth decision; use Campaign Launch Kit for detailed campaign execution.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "offer-pricing-strategy",
+      "description": "Design or evaluate offers, packages, value metrics, and pricing hypotheses using customer value, willingness-to-pay evidence, and economic constraints.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "sales-enablement-playbook",
+      "description": "Create buyer-specific sales narratives, discovery questions, qualification, objection handling, proof assets, and marketing-to-sales handoffs; draft only the assets requested.",
+      "files": [
+        "LICENSE",
+        "SKILL.md"
+      ]
+    }
+  ]
+}

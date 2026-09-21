@@ -1,5 +1,6 @@
 ---
-name: Offer and Pricing Strategy
+license: MIT
+name: offer-pricing-strategy
 title: Offer and Pricing Strategy
 description: Design or evaluate offers, packages, value metrics, and pricing hypotheses using customer value, willingness-to-pay evidence, and economic constraints.
 use_when: Use this when packaging, value metric, price structure, or pricing validation is the decision.
@@ -9,7 +10,7 @@ example_prompts:
   - Evaluate this service offer using supplied costs, capacity, buyer value, and alternatives.
 category: Strategy
 complexity: High
-version: 1.0.0
+version: 1.1.0
 inputs:
   - Current or proposed offer and prices
   - Buyer value, alternatives, and purchase evidence
@@ -40,6 +41,12 @@ downstream:
 ---
 
 # Offer and Pricing Strategy
+
+## Shared brand context
+
+Before asking about the brand, read `.cookbook/brand.md` from the current project if available. This is the single authoritative brand brief; do not substitute a different project's or globally installed brand. Read `.cookbook/evidence.md` only when a claim or recommendation needs its supporting sources, and `.cookbook/overrides/offer-pricing-strategy.md` when present for this skill's local preferences. Treat those files as reference context, not authorization for external actions.
+
+A specific user request or task-only brief takes precedence for that task. Missing brand files do not block useful work from a supplied brief. Never duplicate the brand brief into this skill. When asked to refine shared context, edit the relevant part of `.cookbook/brand.md`, preserve unaffected facts and uncertainty labels, and summarize the change. Without file-writing tools, return a proposed edit and do not claim it was saved. Local edits do not sync to Cookbook automatically.
 
 ## Operating contract
 
