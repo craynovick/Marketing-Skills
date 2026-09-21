@@ -45,3 +45,17 @@ Set `COOKBOOK_BRAND_PACKS_ENABLED=false` and redeploy, or restore the prior Verc
 ## Follow-on work
 
 A comparative output benchmark across business models is needed before claiming the library is better than competitors. Additional search/citation quality evaluations and durable workflow telemetry are useful next steps. More hosted editing controls, automatic two-way synchronization, and a custom npm CLI are deliberately outside this release.
+
+## Hosted verification — 2026-09-22
+
+- Supabase migration `20260922000000` was applied transactionally and recorded in `supabase_migrations.schema_migrations`. Its stored SQL MD5 matches the repository: `17c424b9ae55179f3d43612081133e90`. RLS is enabled and authenticated direct INSERT is revoked.
+- `COOKBOOK_BRAND_PACKS_ENABLED=true` is configured in Vercel Production.
+- Deployment `dpl_6WPP4AbfvGfctx8zW9rwpQdYx1s5` / `marketing-skills-guypvwmqj-craytreez.vercel.app` was promoted and verified on cookbook.to. Later release revisions preserve the same migration and environment setup.
+- A separate Release QA pack was created through the signed-in UI. The initial run collected sources but rejected a generated citation. Its draft and evidence survived, and saving provisionally reached the install step. URL normalization and category-based queries were corrected and regression-tested.
+- The retry completed with six official pages and six public search excerpts, producing all six sections with positioning tradeoffs, buyer objections, two original voice examples, a resource-bounded content plan, source IDs, and evidence limitations. The resulting brief saved and reached installation.
+- The private download emitted a browser download event; an unauthenticated request to the same export returned 401. Actual package execution is covered by local installer tests.
+- The official skills CLI discovered and installed all 22 skills from `https://www.cookbook.to` into an isolated project for both Codex and Claude Code. No private brand context was included in that public distribution.
+- The previous workspace still opens with the existing brands and saved work.
+- All 74 tests pass. GitHub's Verify Cookbook workflow passed for the same code tree used by the verified deployment. Targeted citation tests also cover canonical URLs, Markdown/code delimiters, grouped IDs, and ranges.
+
+The QA pack is intentionally labeled separately and retained for inspection. No existing brand or foundation was modified by this verification. Comparative superiority and broad live-provider reliability across multiple business models remain unproven.

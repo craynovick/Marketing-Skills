@@ -54,6 +54,8 @@ test('evidence validation rejects invented citation IDs and URLs', () => {
   assert.doesNotThrow(() => validateEvidenceReferences('Run `npx skills add https://example.com` or read [the page](https://example.com/#section).', evidence));
   assert.throws(() => validateEvidenceReferences('Invented claim [E2]', evidence), /UNSUPPORTED_CITATION/);
   assert.throws(() => validateEvidenceReferences('Invented group [E1, E2]', evidence), /UNSUPPORTED_CITATION/);
+  assert.throws(() => validateEvidenceReferences('Invented range [E1–E9]', evidence), /UNSUPPORTED_CITATION/);
+  assert.doesNotThrow(() => validateEvidenceReferences('Supported range [E1–E2]', [...evidence, { id: 'E2', url: 'https://example.com/about' }]));
   assert.throws(() => validateEvidenceReferences('https://invented.test/', evidence), /UNSUPPORTED_CITATION/);
 });
 test('dispatch failures mark the reserved attempt failed and unauthenticated calls never dispatch', async () => {
