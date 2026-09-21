@@ -51,7 +51,9 @@ test('evidence validation rejects invented citation IDs and URLs', () => {
   const { validateEvidenceReferences } = loader({ ai: {}, '@/lib/cookbook-server': {}, '@/lib/cookbook-scraper': {} })('@/lib/brand-research');
   const evidence = [{ id: 'E1', url: 'https://example.com/' }];
   assert.doesNotThrow(() => validateEvidenceReferences('Observed claim [E1]', evidence));
+  assert.doesNotThrow(() => validateEvidenceReferences('Run `npx skills add https://example.com` or read [the page](https://example.com/#section).', evidence));
   assert.throws(() => validateEvidenceReferences('Invented claim [E2]', evidence), /UNSUPPORTED_CITATION/);
+  assert.throws(() => validateEvidenceReferences('Invented group [E1, E2]', evidence), /UNSUPPORTED_CITATION/);
   assert.throws(() => validateEvidenceReferences('https://invented.test/', evidence), /UNSUPPORTED_CITATION/);
 });
 test('dispatch failures mark the reserved attempt failed and unauthenticated calls never dispatch', async () => {

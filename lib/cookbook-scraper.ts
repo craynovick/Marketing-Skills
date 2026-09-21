@@ -43,8 +43,9 @@ async function readHtml(value:string,host:string):Promise<{url:string;html:strin
 const textFromHtml=(html:string)=>html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<noscript[\s\S]*?<\/noscript>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/\s+/g,' ').trim().slice(0,24000);
 export async function scrapeWebsite(value:string) {
   const host=siteHost(value),first=await readHtml(value,host);
-  const links=Array.from(first.html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>/gi)).flatMap(m=>{try{const u=new URL(m[1],first.url);return siteHost(u.href)===host&&!u.hash&&/(about|solution|service|product|industry|case|resource|blog|faq|contact)/i.test(u.pathname)?[u.href]:[];}catch{return [];}});
-  const candidates=[...new Set(links)].filter(u=>u!==first.url).slice(0,5);
+  const links=Array.from(first.html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>/gi)).flatMap(m=>{try{const u=new URL(m[1],first.url);return siteHost(u.href)===host&&!u.hash&&/(about|pricing|plans|solution|service|product|industry|case|resource|blog|faq|contact)/i.test(u.pathname)?[u.href]:[];}catch{return [];}});
+  const priority=(value:string)=>{const path=new URL(value).pathname;return /\/(pricing|plans)\/?$/i.test(path)?0:/\/about(?:-|\/|$)/i.test(path)?1:/\/(products?|services?|solutions?)(?:\/|$)/i.test(path)?2:/\/faq(?:\/|$)/i.test(path)?3:4;};
+  const candidates=[...new Set(links)].filter(u=>u!==first.url).sort((a,b)=>priority(a)-priority(b)).slice(0,5);
   const results=await Promise.all(candidates.map(async url=>{try{return {page:await readHtml(url,host),failed:null};}catch{return {page:null,failed:url};}}));
   const pages=[first,...results.flatMap(r=>r.page?[r.page]:[])].map(p=>({url:p.url,title:p.html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1].replace(/<[^>]+>/g,' ').trim().slice(0,200)||null,text:textFromHtml(p.html)}));
   if(pages.map(p=>p.text).join(' ').length<120)throw new Error('Not enough public website content. Continue with your own evidence.');
