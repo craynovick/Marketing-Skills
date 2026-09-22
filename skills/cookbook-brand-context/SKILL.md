@@ -3,7 +3,7 @@ name: cookbook-brand-context
 description: "Research, create, or refine the shared brand brief used by marketing skills. Use for brand setup, positioning context, or changes that should carry across future work, rather than a single content draft."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Brand Context
@@ -16,7 +16,7 @@ Read the current project's brief before asking questions. For a new brand, use t
 
 ## Guided run
 
-Start with one invitation: “Tell me about your brand: what you offer, who it is for, and what you want to achieve. Include your website if you have one.” Reuse anything already supplied. Ask a focused follow-up only when business identity or another material decision is ambiguous. An unknown budget, metric, or customer motivation remains unknown rather than blocking a provisional draft.
+For a new brand with no usable context, start with one invitation: “Tell me about your brand: what you offer, who it is for, and what you want to achieve. Include your website if you have one.” Reuse anything already supplied. Ask a focused follow-up only when business identity or another material decision is ambiguous. An unknown budget, metric, or customer motivation remains unknown rather than blocking a provisional draft.
 
 ## Workflow
 
@@ -28,6 +28,12 @@ Start with one invitation: “Tell me about your brand: what you offer, who it i
 Before writing private context, create `.cookbook/.gitignore` with `*` if absent. Preserve an existing ignore file and ensure it covers the brand brief, evidence, and overrides. An ignore rule does not untrack files already committed; flag that case without rewriting Git history.
 
 6. **Check and hand off.** Trace material claims to evidence, keep unresolved conflicts visible, and remove unsupported precision. Explain the consequential choices and any question worth resolving next. When file tools succeed, report paths and actual changes. Otherwise return the proposed Markdown. Approval of a recommendation does not make its supporting facts verified.
+
+## Evidence and permission
+
+For material claims, distinguish `User-confirmed`, `Company-published`, `Measured` (with population and period), `Customer quote` (with source), `Estimated` (inference), and `[needs source]`. A confirmed preference is not a verified performance claim. Keep source ID/date and verification limits separate from permission: approved for a specified use, internal-only, restricted, or unknown. Confidence does not grant permission; public availability does not grant testimonial, logo, or customer-data rights.
+
+Ordinary company-published descriptions can support attributed, provisional drafting without inventing internal approval. Consequential product, safety, comparative and outcome claims need evidence for their exact scope. Keep evidence notes outside finished copy unless attribution or a caveat belongs in the copy. Missing evidence must narrow the claim, not generate plausible proof.
 
 ## Required output
 
@@ -45,6 +51,10 @@ Before writing private context, create `.cookbook/.gitignore` with `*` if absent
 For sparse input, keep the first brief short: group related unknowns instead of repeating placeholders for every field. Do not force a channel recommendation when buyer behavior or resources are unknown; name the one practical validation step that would resolve that decision.
 
 A narrow revision needs only the changed section and a brief explanation, not a new strategy report. If the user asks for a reusable procedural preference, save it separately under overrides instead of repeating brand facts there.
+
+## Working preferences
+
+A task-specific voice variant changes expression, not evidence or permissions. Keep one authoritative brand per project; another brand requires an explicitly supplied task brief or selected project. Do not infer permanent preferences from a single task. Record only user-confirmed reusable changes.
 
 ## Quality check
 

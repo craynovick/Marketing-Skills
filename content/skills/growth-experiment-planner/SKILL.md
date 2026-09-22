@@ -25,7 +25,7 @@ parameters:
   - constraints
 models:
   - any-instruction-following-llm
-version: 1.1.0
+version: 1.2.0
 writes_profile: []
 requires_profile:
   - audience
@@ -49,6 +49,18 @@ A specific user request or task-only brief takes precedence for that task. Missi
 Plan an experiment only when it can answer a specific decision. Check whether traffic, event volume, instrumentation, exposure control, and time horizon support useful inference. When they do not, propose a smaller qualitative, sequential, or operational validation method instead of dressing it up as an A/B test.
 
 Use Setup to resolve a missing decision or measurement baseline, Apply to produce a plan, Tune to revise a proposed design, and Validate to assess feasibility or analyze a supplied experiment design. Never invent results, statistical power, significance, baseline rates, or projected uplift.
+
+## Evidence and permission
+
+For material claims, distinguish `User-confirmed`, `Company-published`, `Measured` (with population and period), `Customer quote` (with source), `Estimated` (inference), and `[needs source]`. A confirmed preference is not a verified performance claim. Keep source ID/date and verification limits separate from permission: approved for a specified use, internal-only, restricted, or unknown. Confidence does not grant permission; public availability does not grant testimonial, logo, or customer-data rights.
+
+Ordinary company-published descriptions can support attributed, provisional drafting without inventing internal approval. Consequential product, safety, comparative and outcome claims need evidence for their exact scope. Keep evidence notes outside finished copy unless attribution or a caveat belongs in the copy. Missing evidence must narrow the claim, not generate plausible proof.
+
+## Task continuity
+
+Use only the skills needed for the requested deliverable. When handing work onward, preserve the chosen objective, audience and its status, offer, source IDs and usage limits, voice/language, CTA destination, measurement definition, and unresolved decisions that matter. Keep the handoff compact; do not repeat the whole brand brief or promote a hypothesis to a fact. A suggested handoff does not authorize another run or an external action.
+
+For requested voice variants, change expression while preserving brand facts and claims. Use another brand only from an explicitly supplied task brief or selected project; never overwrite or silently mix project briefs. Save reusable context only when requested, in the relevant section of `.cookbook/brand.md` or a skill override, and preserve unrelated content.
 
 ## Quick run
 
@@ -79,6 +91,8 @@ Ask only for missing information that changes feasibility or design: decision, e
 - Alternative validation plan when experimentation is not useful.
 
 ## Quality check
+
+Separate a qualitative comprehension rule from a statistical conversion decision. A few readers explaining the next step can guide copy revision; it cannot establish conversion lift. For inquiry campaigns, measure qualified progress with a defined denominator and attribution window, and keep clicks as a diagnostic signal.
 
 Check that the design can change a decision, the metric reflects value, variants isolate a meaningful difference, risks are bounded, and statistical language is correct. Remove fake precision, generic benchmarks, arbitrary test durations, and results that have not occurred.
 

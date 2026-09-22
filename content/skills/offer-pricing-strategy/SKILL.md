@@ -10,7 +10,7 @@ example_prompts:
   - Evaluate this service offer using supplied costs, capacity, buyer value, and alternatives.
 category: Strategy
 complexity: High
-version: 1.1.0
+version: 1.2.0
 inputs:
   - Current or proposed offer and prices
   - Buyer value, alternatives, and purchase evidence
@@ -50,7 +50,7 @@ A specific user request or task-only brief takes precedence for that task. Missi
 
 ## Operating contract
 
-Follow the user's requested scope. Use Setup to resolve missing essentials, Apply to use available context, Tune to revise existing work, and Validate to test a claim or decision. Explicit intent takes precedence; a request to test selects Validate and a revision selects Tune. An unapproved but usable brief can support an explicitly provisional draft. Missing approved foundations alone do not require onboarding.
+Follow the requested deliverable. Use Setup only for missing essentials, Apply to produce work, Tune to revise it, and Validate to evaluate a marketing hypothesis or test design. “Test this skill by writing a post” is an Apply task; the word “test” alone does not select Validate. A usable provisional brief supports a provisional draft without another onboarding interview.
 
 Ask one focused question only when its answer materially changes the result; otherwise proceed with stated assumptions. Guided questions are a menu, not a mandatory interview. Preserve confirmed facts and unaffected content when tuning; propose changes rather than silently updating shared context. In Validate, specify evidence, test, measure, and decision rule without treating the hypothesis as fact.
 
@@ -59,6 +59,18 @@ The required output describes a full skill run. For a narrower request or in-cha
 ## Purpose and scope
 
 Recommend what to sell, to whom, on what terms, and how to test the value exchange. Cover product, subscription, service, or physical-goods offers as relevant. Do not assume that every business needs three tiers, subscriptions, or discounting.
+
+## Evidence and permission
+
+For material claims, distinguish `User-confirmed`, `Company-published`, `Measured` (with population and period), `Customer quote` (with source), `Estimated` (inference), and `[needs source]`. A confirmed preference is not a verified performance claim. Keep source ID/date and verification limits separate from permission: approved for a specified use, internal-only, restricted, or unknown. Confidence does not grant permission; public availability does not grant testimonial, logo, or customer-data rights.
+
+Ordinary company-published descriptions can support attributed, provisional drafting without inventing internal approval. Consequential product, safety, comparative and outcome claims need evidence for their exact scope. Keep evidence notes outside finished copy unless attribution or a caveat belongs in the copy. Missing evidence must narrow the claim, not generate plausible proof.
+
+## Task continuity
+
+Use only the skills needed for the requested deliverable. When handing work onward, preserve the chosen objective, audience and its status, offer, source IDs and usage limits, voice/language, CTA destination, measurement definition, and unresolved decisions that matter. Keep the handoff compact; do not repeat the whole brand brief or promote a hypothesis to a fact. A suggested handoff does not authorize another run or an external action.
+
+For requested voice variants, change expression while preserving brand facts and claims. Use another brand only from an explicitly supplied task brief or selected project; never overwrite or silently mix project briefs. Save reusable context only when requested, in the relevant section of `.cookbook/brand.md` or a skill override, and preserve unrelated content.
 
 ## Quick run
 

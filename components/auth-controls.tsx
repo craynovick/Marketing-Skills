@@ -75,12 +75,11 @@ export function AuthControls() {
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
     </button>
     <div id="primary-navigation" className={`primary-navigation${open === "navigation" ? " is-open" : ""}`} onClick={() => setOpen(null)}>
-      <Link href="/#catalog">Skills</Link><Link href="/docs/install">Install</Link>
-      {!user && <Link href="/pricing" className={ready ? undefined : "navigation-pending"} tabIndex={ready ? undefined : -1} aria-hidden={!ready}>Pricing</Link>}
+      <Link href="/#catalog">Skills</Link>
       <Link href="/docs">Docs</Link><Link href="/about">About</Link>
+      <Link href="/contact">Contact — Need custom skills?</Link>
     </div>
-    <div className="header-account-slot">
-      {!ready ? <span className="account-placeholder" role="status" aria-label="Loading account" /> : user ? <>
+    {ready && user && <div className="header-account-slot">
         <button ref={accountButton} className="account-toggle" aria-label="Account menu" aria-expanded={open === "account"} aria-controls="account-navigation" onClick={() => setOpen(open === "account" ? null : "account")}>
           {avatar ? <Image src={avatar} alt="" width={32} height={32} unoptimized onError={() => setFailedAvatar(avatar)} /> : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></svg>}
         </button>
@@ -92,7 +91,6 @@ export function AuthControls() {
           <button disabled={signingOut} onClick={() => void signOut()}>{signingOut ? "Signing out…" : "Sign out"}</button>
           {notice && <p role="alert">{notice}</p>}
         </div>}
-      </> : <Link className="header-sign-in" href="/sign-in">Sign in</Link>}
-    </div>
+    </div>}
   </div>;
 }

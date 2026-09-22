@@ -26,7 +26,7 @@ parameters:
   - constraints
 models:
   - any-instruction-following-llm
-version: 1.1.0
+version: 1.2.0
 writes_profile: []
 requires_profile:
   - audience
@@ -53,6 +53,18 @@ A specific user request or task-only brief takes precedence for that task. Missi
 Choose the sequence type from the requested outcome and customer stage. Distinguish a lifecycle sequence from a newsletter, broadcast, or isolated transactional email. Follow the requested number of messages and scope. Ask one focused question only when the entry event, desired behavior, or compliance boundary is essential and missing; otherwise draft with labeled assumptions.
 
 Use Setup for missing journey essentials, Apply to create the sequence, Tune to revise only affected messages or rules, and Validate to plan measurement. Do not claim the sequence was configured or sent without successful tools.
+
+## Evidence and permission
+
+For material claims, distinguish `User-confirmed`, `Company-published`, `Measured` (with population and period), `Customer quote` (with source), `Estimated` (inference), and `[needs source]`. A confirmed preference is not a verified performance claim. Keep source ID/date and verification limits separate from permission: approved for a specified use, internal-only, restricted, or unknown. Confidence does not grant permission; public availability does not grant testimonial, logo, or customer-data rights.
+
+Ordinary company-published descriptions can support attributed, provisional drafting without inventing internal approval. Consequential product, safety, comparative and outcome claims need evidence for their exact scope. Keep evidence notes outside finished copy unless attribution or a caveat belongs in the copy. Missing evidence must narrow the claim, not generate plausible proof.
+
+## Task continuity
+
+Use only the skills needed for the requested deliverable. When handing work onward, preserve the chosen objective, audience and its status, offer, source IDs and usage limits, voice/language, CTA destination, measurement definition, and unresolved decisions that matter. Keep the handoff compact; do not repeat the whole brand brief or promote a hypothesis to a fact. A suggested handoff does not authorize another run or an external action.
+
+For requested voice variants, change expression while preserving brand facts and claims. Use another brand only from an explicitly supplied task brief or selected project; never overwrite or silently mix project briefs. Save reusable context only when requested, in the relevant section of `.cookbook/brand.md` or a skill override, and preserve unrelated content.
 
 ## Quick run
 

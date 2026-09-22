@@ -26,7 +26,7 @@ parameters:
   - constraints
 models:
   - any-instruction-following-llm
-version: 1.1.0
+version: 1.2.0
 writes_profile: []
 requires_profile:
   - audience
@@ -51,6 +51,18 @@ A specific user request or task-only brief takes precedence for that task. Missi
 Follow the requested scope. Diagnose what is observable on the supplied page and distinguish it from measured behavior. Page text alone cannot establish a conversion-rate problem, user intent, or causal effect. Ask one focused question only when page purpose, traffic context, or desired action is too ambiguous to prioritize useful findings; otherwise proceed with labeled assumptions.
 
 Use Setup to resolve missing essentials, Apply for a full audit, Tune to revisit a prior audit after a page or context change, and Validate to design evidence collection or tests. A request to rewrite selects Landing Page Copywriter behavior; do not turn an audit into unsolicited full-page copy.
+
+## Evidence and permission
+
+For material claims, distinguish `User-confirmed`, `Company-published`, `Measured` (with population and period), `Customer quote` (with source), `Estimated` (inference), and `[needs source]`. A confirmed preference is not a verified performance claim. Keep source ID/date and verification limits separate from permission: approved for a specified use, internal-only, restricted, or unknown. Confidence does not grant permission; public availability does not grant testimonial, logo, or customer-data rights.
+
+Ordinary company-published descriptions can support attributed, provisional drafting without inventing internal approval. Consequential product, safety, comparative and outcome claims need evidence for their exact scope. Keep evidence notes outside finished copy unless attribution or a caveat belongs in the copy. Missing evidence must narrow the claim, not generate plausible proof.
+
+## Task continuity
+
+Use only the skills needed for the requested deliverable. When handing work onward, preserve the chosen objective, audience and its status, offer, source IDs and usage limits, voice/language, CTA destination, measurement definition, and unresolved decisions that matter. Keep the handoff compact; do not repeat the whole brand brief or promote a hypothesis to a fact. A suggested handoff does not authorize another run or an external action.
+
+For requested voice variants, change expression while preserving brand facts and claims. Use another brand only from an explicitly supplied task brief or selected project; never overwrite or silently mix project briefs. Save reusable context only when requested, in the relevant section of `.cookbook/brand.md` or a skill override, and preserve unrelated content.
 
 ## Quick run
 

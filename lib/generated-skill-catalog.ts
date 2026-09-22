@@ -5,7 +5,7 @@ export const skills = [
     "name": "Brand Context",
     "description": "Research, create, or refine the shared brand brief used by marketing skills. Use for brand setup, positioning context, or changes that should carry across future work, rather than a single content draft.",
     "category": "Strategy",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "when": "Establish or improve the one brand brief all marketing skills read in this project.",
     "avoid": "Use the relevant marketing skill for a single deliverable that does not change shared brand context.",
     "example_prompts": [
@@ -18,7 +18,7 @@ export const skills = [
     "name": "Customer Interview Synthesizer",
     "description": "Synthesize customer conversations into traceable themes, buying evidence, and validated open questions.",
     "category": "Research",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this after customer interviews or sales conversations when you need traceable patterns, not a generic persona.",
     "avoid": "Use Ideal Customer Profile Builder when the evidence is already synthesized and the decision is which segment to prioritize.",
     "example_prompts": [
@@ -31,7 +31,7 @@ export const skills = [
     "name": "Ideal Customer Profile Builder",
     "description": "Turn customer evidence into a focused, testable ideal customer profile and buying context.",
     "category": "Research",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when you have customer evidence and need to choose a commercially useful beachhead profile.",
     "avoid": "Use Audience Strategy Playbook when the profiles are already defined and you need to rank broader audience opportunities.",
     "example_prompts": [
@@ -44,7 +44,7 @@ export const skills = [
     "name": "Audience Strategy Playbook",
     "description": "Prioritize beachhead audiences, buying situations, and message opportunities using evidence.",
     "category": "Strategy",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "when": "Use this when you need to decide which audience and buying situation deserve focus first.",
     "avoid": "Use Ideal Customer Profile Builder for a detailed customer profile or GTM Strategy for the full route-to-market decision.",
     "example_prompts": [
@@ -57,7 +57,7 @@ export const skills = [
     "name": "Brand Claims & Confidentiality Guide",
     "description": "Turn evidence, privacy rules, and approval requirements into a reusable claims and proof governance system.",
     "category": "Governance",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when marketing needs clear rules for claims, customer evidence, confidentiality, and approval.",
     "avoid": "Use a writing recipe when the claims and permissions are already approved and the task is to create an asset.",
     "example_prompts": [
@@ -70,7 +70,7 @@ export const skills = [
     "name": "Brand Positioning Workshop",
     "description": "Develop a differentiated, evidence-backed positioning hypothesis for a defined audience and buying situation.",
     "category": "Strategy",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when a defined audience needs a clearer reason to choose the offer over real alternatives.",
     "avoid": "Use Landing Page Copywriter when positioning is already approved and the task is page execution.",
     "example_prompts": [
@@ -83,7 +83,7 @@ export const skills = [
     "name": "Brand Voice Guide",
     "description": "Turn approved positioning, audience context, and writing evidence into usable, brand-specific voice rules.",
     "category": "Strategy",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when you have representative writing or clear voice intent and need repeatable rules with examples.",
     "avoid": "Use a copywriting recipe when the voice is already defined and you only need a finished asset.",
     "example_prompts": [
@@ -96,7 +96,7 @@ export const skills = [
     "name": "Content Pillar Planner",
     "description": "Turn approved audience, positioning, voice, and proof into a focused content pillar system.",
     "category": "Content",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when you need a small set of durable themes tied to buyer questions and business goals.",
     "avoid": "Use Content Format Planner when themes are already chosen and the decision is how to express them by channel.",
     "example_prompts": [
@@ -109,7 +109,7 @@ export const skills = [
     "name": "Content Format Planner",
     "description": "Choose platform-native formats and create production briefs that apply audience, positioning, voice, pillars, and proof.",
     "category": "Content",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when content themes are known but channel-native formats and production briefs are not.",
     "avoid": "Use Content Repurposing Engine when you already have an approved source asset to transform.",
     "example_prompts": [
@@ -122,7 +122,7 @@ export const skills = [
     "name": "SEO Content Brief",
     "description": "Translate an approved content pillar and positioning into a useful, search-aware editorial brief.",
     "category": "Content",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when you need a writer-ready brief for a specific search problem and audience.",
     "avoid": "Use Content Pillar Planner when the topic strategy is not yet chosen or Landing Page Copywriter for conversion pages.",
     "example_prompts": [
@@ -135,7 +135,7 @@ export const skills = [
     "name": "Landing Page Copywriter",
     "description": "Apply approved positioning, audience, voice, and proof to a focused landing page that earns a clear next action.",
     "category": "Conversion",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when the page goal and offer are known and you need finished conversion copy.",
     "avoid": "Use Conversion Audit when the first task is diagnosing an existing page rather than rewriting it.",
     "example_prompts": [
@@ -148,7 +148,7 @@ export const skills = [
     "name": "Conversion Audit",
     "description": "Diagnose an existing page's message match, value clarity, proof, objections, CTA, and friction without claiming unmeasured conversion problems.",
     "category": "Conversion",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "when": "Use this when an existing page needs diagnosis and prioritized changes before or instead of a rewrite.",
     "avoid": "Use Landing Page Copywriter when the strategy is sufficiently clear and the task is finished page copy.",
     "example_prompts": [
@@ -161,7 +161,7 @@ export const skills = [
     "name": "Content Repurposing Engine",
     "description": "Transform one approved source into distinct, platform-native assets without losing meaning, proof, or attribution.",
     "category": "Content",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when an approved source exists and you need channel-native derivatives that preserve its meaning.",
     "avoid": "Use Content Format Planner when there is no source asset yet and you are deciding repeatable formats.",
     "example_prompts": [
@@ -174,7 +174,7 @@ export const skills = [
     "name": "Lifecycle Email Sequence",
     "description": "Design and write a complete behavior-triggered email sequence with entry rules, timing, purpose, exit conditions, and finished messages.",
     "category": "Campaigns",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "when": "Use this when a customer stage and outcome require a coordinated sequence rather than a one-off newsletter.",
     "avoid": "Use a newsletter workflow for a single scheduled edition without behavior-based entry and exit rules.",
     "example_prompts": [
@@ -187,7 +187,7 @@ export const skills = [
     "name": "Campaign Launch Kit",
     "description": "Turn an approved marketing objective into a coordinated, measurable, and reviewable campaign launch plan.",
     "category": "Campaigns",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when the objective, audience, and offer are known and coordinated campaign execution is needed.",
     "avoid": "Use GTM Strategy when the target market, route to market, or sales motion is still the primary decision.",
     "example_prompts": [
@@ -200,7 +200,7 @@ export const skills = [
     "name": "Growth Experiment Planner",
     "description": "Turn a growth question into a feasible hypothesis, measurement plan, variants, guardrails, and decision criteria without inventing results or uplift.",
     "category": "Analytics",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "when": "Use this when a specific growth decision can be reduced through a measurable experiment or bounded validation plan.",
     "avoid": "Use Weekly Growth Readout to interpret observed performance or Conversion Audit to diagnose a page before choosing a test.",
     "example_prompts": [
@@ -213,7 +213,7 @@ export const skills = [
     "name": "Case Study Creator",
     "description": "Turn approved customer evidence into a credible, permissioned case study without inventing outcomes or proof.",
     "category": "Content",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when customer evidence and publication permission can support a finished case study.",
     "avoid": "Use Customer Interview Synthesizer when the source material still needs cross-interview analysis.",
     "example_prompts": [
@@ -226,7 +226,7 @@ export const skills = [
     "name": "Weekly Growth Readout",
     "description": "Turn supplied or imported growth data into a decision-ready weekly readout with explicit data-quality caveats.",
     "category": "Analytics",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "when": "Use this when comparable weekly data exists and leaders need a concise explanation and next decisions.",
     "avoid": "Use Growth Experiment Planner when the task is designing a future test rather than interpreting observed results.",
     "example_prompts": [
@@ -239,7 +239,7 @@ export const skills = [
     "name": "Competitive Intelligence Brief",
     "description": "Build an evidence-led view of competitors and market moves.",
     "category": "Research",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "when": "Use this when a product, positioning, sales, or market decision needs current competitor evidence.",
     "avoid": "Use Brand Positioning Workshop when competitor evidence is already available and the decision is your own position.",
     "example_prompts": [
@@ -252,7 +252,7 @@ export const skills = [
     "name": "GTM Strategy",
     "description": "Choose a target market, route to market, and sales motion for a launch, market entry, or growth decision; use Campaign Launch Kit for detailed campaign execution.",
     "category": "Strategy",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "when": "Use this when target market, route to market, and sales motion must be chosen together.",
     "avoid": "Use Campaign Launch Kit when the market strategy is approved and the work is coordinated execution.",
     "example_prompts": [
@@ -265,7 +265,7 @@ export const skills = [
     "name": "Offer and Pricing Strategy",
     "description": "Design or evaluate offers, packages, value metrics, and pricing hypotheses using customer value, willingness-to-pay evidence, and economic constraints.",
     "category": "Strategy",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "when": "Use this when packaging, value metric, price structure, or pricing validation is the decision.",
     "avoid": "Use Landing Page Copywriter when the offer and price are settled and only presentation needs work.",
     "example_prompts": [
@@ -278,7 +278,7 @@ export const skills = [
     "name": "Sales Enablement",
     "description": "Create buyer-specific sales narratives, discovery questions, qualification, objection handling, proof assets, and marketing-to-sales handoffs; draft only the assets requested.",
     "category": "Strategy",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "when": "Use this when sales needs buyer-specific messaging, discovery, qualification, objections, or proof handoffs.",
     "avoid": "Use Brand Positioning Workshop when the core market position is unresolved or Campaign Launch Kit for channel execution.",
     "example_prompts": [
