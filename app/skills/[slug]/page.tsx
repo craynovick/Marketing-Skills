@@ -1,3 +1,4 @@
+import { DirectionArrow } from "@/components/direction-arrow";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { SkillActions } from "@/components/skill-actions";
@@ -31,6 +32,6 @@ export default async function SkillPage({ params }: { params: Promise<{ slug: st
         <div className="sidebar-section trust-cues"><h4 className="eyebrow">TRUST CUES</h4><dl className="meta-list"><div><dt>Source</dt><dd>First-party repository</dd></div><div><dt>Skill format</dt><dd>Agent Skills · Markdown</dd></div><div><dt>External actions</dt><dd>Publishing and spending require authorization</dd></div></dl></div>
       </aside>
     </div>
-    {recommendations.length > 0 && <section className="skill-recommendations" aria-labelledby="recommended-skills"><div className="section-label"><h2 id="recommended-skills">Recommended next skills</h2><span className="count">{downstream.length ? "NEXT STEPS" : "RELATED SKILLS"}</span></div><div className="recommendation-list">{recommendations.map(item => <Link href={`/skills/${item.slug}`} className="recommendation-card" key={item.slug}><span className="eyebrow">{item.category} · {item.complexity}</span><h3>{item.name}</h3><p>{item.goal}</p><span className="arrow">↗</span></Link>)}</div></section>}
+    {recommendations.length > 0 && <section className="skill-recommendations" aria-labelledby="recommended-skills"><div className="section-label"><h2 id="recommended-skills">Recommended next skills</h2><span className="count">{downstream.length ? "NEXT STEPS" : "RELATED SKILLS"}</span></div><div className="recommendation-list">{recommendations.map(item => <Link href={`/skills/${item.slug}`} className="recommendation-card" key={item.slug}><span className="eyebrow">{item.category} · {item.complexity}</span><h3>{item.name}</h3><p>{item.goal}</p><span className="arrow"><DirectionArrow /></span></Link>)}</div></section>}
   </main>;
 }

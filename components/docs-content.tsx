@@ -40,6 +40,7 @@ const pages: Record<string, { title: string; body: React.ReactNode }> = {
   install: { title: "Install marketing skills", body: <>
     <p>Cookbook skills work in your own AI app. Install the library with <code>npx skills add https://www.cookbook.to</code>. Choose the destination agent when prompted; use <code>--agent codex</code> or <code>--agent claude-code</code> for an explicit destination.</p>
     <CommandCopy command="npx skills add https://www.cookbook.to" />
+    <p>Installation adds the skills; it does not start a conversation. Once you ask your AI app to use a skill, it can read your existing brand brief and guide you through missing context. Skill selection depends on the app; name Cookbook Brand Context explicitly if setup does not start.</p>
     <div id="personalize"><BrandStarter /></div>
     <h2>Prefer an offline installer?</h2><p><a href="/api/skills/install">Download the skills</a>, then run <code>node ~/Downloads/cookbook-install.mjs --agent codex</code> (or <code>claude-code</code>) inside your project folder. Use the actual download path if it differs. Node.js 22+ is required. The downloaded installer makes no network calls.</p>
     <p>Previously saved brand packs remain available from <Link href="/account">your account</Link>. You do not need an account or a website setup step to personalize the skills.</p>
