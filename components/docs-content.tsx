@@ -1,3 +1,4 @@
+import { BrandSetupHint } from "@/components/brand-setup-hint";
 import { BrandStarter } from "@/components/brand-starter";
 import { CommandCopy } from "@/components/copy";
 import Link from "next/link";
@@ -49,7 +50,7 @@ const pages: Record<string, { title: string; body: React.ReactNode }> = {
   </> },
   customize: { title: "One brief for your brand", body: <>
     <p>Install the skills, then describe your business in your own AI app. The Brand Context skill reviews existing project context and asks only for missing essentials. If browsing is available, it can research your business; otherwise it starts from what you provide and records the gaps.</p>
-    <BrandStarter />
+    <BrandSetupHint /><p>See the <Link href="/docs/install#personalize">install guide</Link> for the full starter prompt.</p>
     <h2>Review once, refine as you go</h2><p>Review the proposed positioning, audience, voice, content, proof, and guardrails before saving. Confirmed facts, assumptions, and open questions stay distinct. Setup happens once per brand or project; update the brief as your business changes.</p>
     <h2>One shared source of truth</h2><p>Every skill reads <code>.cookbook/brand.md</code> in your project. Ask your AI app to refine a section anytime. There is no website approval step or automatic synchronization with older saved website packs.</p>
     <p>Keep one brand per project. Supporting sources go in <code>.cookbook/evidence.md</code>, and skill preferences in <code>.cookbook/overrides/&lt;skill-name&gt;.md</code>. Do not duplicate the brand inside individual skills.</p>
