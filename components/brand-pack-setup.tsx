@@ -6,8 +6,6 @@ import { InstallSkills } from '@/components/install-skills';
 import { packBusy, packStalled, type BrandPack } from '@/lib/brand-pack';
 
 type PackSummary = Pick<BrandPack, 'id' | 'brief' | 'status'>;
-type Brand = { id: string; name: string; website: string };
-const draftKey = 'cookbook-brand-intake';
 class RequestError extends Error { constructor(message: string, public status: number) { super(message); } }
 async function api<T>(path: string, method = 'GET', body?: unknown, signal?: AbortSignal): Promise<T> {
   const response = await fetch(path, { method, signal, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
@@ -17,22 +15,17 @@ async function api<T>(path: string, method = 'GET', body?: unknown, signal?: Abo
 }
 
 export function BrandPackSetup({ enabled, initialPackId, initialSkill }: { enabled: boolean; initialPackId?: string; initialSkill?: string }) {
-  const [brief, setBrief] = useState('');
-  const [website, setWebsite] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [brands, setBrands] = useState<Brand[]>([]);
   const [packs, setPacks] = useState<PackSummary[]>([]);
   const [pack, setPack] = useState<BrandPack | null>(null);
   const [content, setContent] = useState('');
   const [editing, setEditing] = useState(false);
   const [step, setStep] = useState<'describe' | 'review' | 'install'>('describe');
   const [pending, setPending] = useState(false);
-  const [loading, setLoading] = useState(!!initialPackId && enabled);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState('');
   const [authRequired, setAuthRequired] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const operationEpoch = useRef(0);
-  const createKey = useRef<string | null>(null);
   const operation = useRef<AbortController | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const dirty = !!pack && content !== pack.content;
@@ -46,11 +39,9 @@ export function BrandPackSetup({ enabled, initialPackId, initialSkill }: { enabl
     if (cause instanceof RequestError && cause.status === 401) setAuthRequired(true);
   }
   useEffect(() => {
-    try { const saved = sessionStorage.getItem(draftKey); if (saved) { const data = JSON.parse(saved); setBrief(data.brief || ''); setWebsite(data.website || ''); } } catch { /* Storage is optional. */ }
     if (!enabled) return;
     const controller = new AbortController();
-    void api<{ packs: PackSummary[] }>('/api/cookbook/brand-packs', 'GET', undefined, controller.signal).then(data => setPacks(data.packs)).catch(showError);
-    void api<{ brands: Brand[] }>('/api/cookbook/brands', 'GET', undefined, controller.signal).then(data => setBrands(data.brands)).catch(() => { /* New brands can start without legacy imports. */ });
+    void api<{ packs: PackSummary[] }>('/api/cookbook/brand-packs', 'GET', undefined, controller.signal).then(data => setPacks(data.packs)).catch(showError).finally(() => { if (!controller.signal.aborted && !initialPackId) setLoading(false); });
     if (initialPackId) void api<{ pack: BrandPack }>(`/api/cookbook/brand-packs/${initialPackId}`, 'GET', undefined, controller.signal).then(data => showPack(data.pack)).catch(showError).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => { controller.abort(); operation.current?.abort(); };
   }, [enabled, initialPackId]);
@@ -91,16 +82,6 @@ export function BrandPackSetup({ enabled, initialPackId, initialSkill }: { enabl
     const data = await api<{ pack: BrandPack }>(`/api/cookbook/brand-packs/${value.id}/research`, 'POST', { revision: value.revision, requestId: crypto.randomUUID() }, signal);
     setPack(data.pack); setElapsed(0);
   }
-  function create() {
-    try { sessionStorage.setItem(draftKey, JSON.stringify({ brief, website })); } catch { /* Keep the form in memory. */ }
-    void act(async signal => {
-      createKey.current ||= crypto.randomUUID();
-      const data = await api<{ pack: BrandPack }>('/api/cookbook/brand-packs', 'POST', { id: createKey.current, brief, website, ...(projectId ? { projectId } : {}) }, signal);
-      showPack(data.pack);
-      try { sessionStorage.removeItem(draftKey); } catch { /* Nonessential. */ }
-      if (data.pack.website && data.pack.status === 'draft') await research(data.pack, signal);
-    });
-  }
   function save(reviewed: boolean, install: boolean) {
     if (!pack) return;
     void act(async signal => {
@@ -112,28 +93,20 @@ export function BrandPackSetup({ enabled, initialPackId, initialSkill }: { enabl
   function load(id: string) {
     void act(async signal => { const data = await api<{ pack: BrandPack }>(`/api/cookbook/brand-packs/${id}`, 'GET', undefined, signal); showPack(data.pack); });
   }
-  const signIn = `/sign-in?next=${encodeURIComponent(pack ? `/create?pack=${pack.id}` : '/create')}`;
+  const signIn = `/sign-in?next=${encodeURIComponent(pack ? `/create?pack=${pack.id}` : '/create?saved=1')}`;
   return <main className="pack-page wrap">
     <div className="pack-topline"><Link href="/#catalog">← Skills</Link>{pack && <button disabled={pending || dirty} onClick={() => {
-      operationEpoch.current++; setPack(null); setContent(''); setBrief(''); setWebsite(''); setProjectId(''); setEditing(false); setStep('describe'); setError(''); createKey.current = null;
-      window.history.replaceState(null, '', '/create');
+      operationEpoch.current++; setPack(null); setContent(''); setEditing(false); setStep('describe'); setError('');
+      window.history.replaceState(null, '', '/create?saved=1');
       void api<{ packs: PackSummary[] }>('/api/cookbook/brand-packs').then(data => setPacks(data.packs)).catch(showError);
-    }}>Your brand packs</button>}<Link href="/create?legacy=1">Previous workspace</Link></div>
-    <ol className="pack-steps" aria-label="Setup progress">{['describe', 'review', 'install'].map((item, i) => <li key={item} aria-current={step === item ? 'step' : undefined}><span>{i + 1}</span>{item}</li>)}</ol>
-    {error && <div className="pack-notice" role="alert"><p>{error}</p>{authRequired && <Link className="pack-primary" href={signIn} onClick={() => { try { sessionStorage.setItem(draftKey, JSON.stringify({ brief, website })); } catch { /* Optional recovery. */ } }}>Sign in to save and research</Link>}</div>}
+    }}>Your brand packs</button>}</div>
+    {error && <div className="pack-notice" role="alert"><p>{error}</p>{authRequired && <Link className="pack-primary" href={signIn}>Sign in to access saved packs</Link>}</div>}
     {step === 'describe' ? <>
-      <p className="eyebrow">YOUR BRAND, READY TO GO</p><h1 ref={heading} tabIndex={-1}>Tell us about<br /><em>your brand.</em></h1>
-      <p className="pack-lede">We’ll turn your context into a reusable brand brief for your marketing skills. Keep creating and refining in your own AI app.</p>
-      {loading ? <p role="status">Opening your brand pack…</p> : <form onSubmit={e => { e.preventDefault(); create(); }}>
-        <label htmlFor="brand-brief">What do you offer, who is it for, and what would you like to achieve?</label>
-        <textarea id="brand-brief" required maxLength={8000} rows={5} placeholder="We’re a neighborhood ceramics studio helping beginners make something with their hands. We want to fill our weekend workshops…" value={brief} onChange={e => { setBrief(e.target.value); createKey.current = null; }} disabled={pending} />
-        <details className="pack-extras"><summary>Add a website or use a saved brand</summary><label>Official website <span>(optional)</span><input type="url" placeholder="https://yourbrand.com" value={website} disabled={pending} onChange={e => { setWebsite(e.target.value); createKey.current = null; }} /></label>{brands.length > 0 && <label>Import confirmed context<select value={projectId} disabled={pending} onChange={e => { setProjectId(e.target.value); createKey.current = null; const brand = brands.find(b => b.id === e.target.value); if (brand) { setWebsite(brand.website); if (!brief) setBrief(`Use our confirmed brand context for ${brand.name}.`); } }}><option value="">Start from my description</option>{brands.map(brand => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></label>}</details>
-        <button className="pack-primary" disabled={pending || !brief.trim() || !enabled}>{pending ? 'Preparing your brand pack…' : 'Build my brand pack →'}</button>
-        <p className="pack-small">An official website enables research into your offer, alternatives, and buying needs. Without one, start with a provisional brief and research further in your AI app. Hosted research is limited to four attempts per day.</p>
-      </form>}
-      {!enabled && <p className="pack-notice">Hosted brand setup is not enabled on this installation yet. You can install the skills below and describe your brand in your AI app.</p>}
-      {packs.length > 0 && <details><summary>Your saved brand packs</summary><ul className="pack-saved">{packs.map(item => <li key={item.id}><button disabled={pending} onClick={() => load(item.id)}>{item.brief.slice(0, 90)} <span>{item.status}</span></button></li>)}</ul></details>}
-      <div className="pack-divider" /><InstallSkills />
+      <p className="eyebrow">YOUR SAVED WORK</p><h1 ref={heading} tabIndex={-1}>Saved brand packs.</h1>
+      <p className="pack-lede">Review or download a previous website snapshot. For a new brand, <Link href="/docs/install#personalize">set up your shared brief in your AI app</Link>.</p>
+      {loading ? <p role="status">Loading saved packs…</p> : !error && enabled && packs.length === 0 ? <p>No saved brand packs yet. Your AI app can create your first shared brief.</p> : null}
+      {!enabled && <p>Saved brand packs are unavailable on this installation.</p>}
+      {packs.length > 0 && <ul className="pack-saved">{packs.map(item => <li key={item.id}><button disabled={pending} onClick={() => load(item.id)}>{item.brief.slice(0, 90)} <span>{item.status}</span></button></li>)}</ul>}
     </> : pack && <>
       <p className="eyebrow">ONE BRIEF. EVERY SKILL.</p><h1 ref={heading} tabIndex={-1}>{step === 'review' ? 'Make it yours.' : 'Ready for your AI app.'}</h1>
       {step === 'review' ? <>
