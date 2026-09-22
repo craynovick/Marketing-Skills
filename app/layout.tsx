@@ -11,6 +11,7 @@ import "./skill-list.css";
 import "./billing.css";
 import "./navigation.css";
 import "./saved-cookbook.css";
+import "./brand-pack.css";
 import { Header, Footer } from "@/components/chrome";
 
 const description = "On-brand marketing workflows for strategy, messaging, and content.";

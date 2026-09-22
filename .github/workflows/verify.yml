@@ -1,0 +1,27 @@
+name: Verify Cookbook
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Verify generated skills and evaluation coverage
+        run: |
+          pnpm build:skills
+          git diff --exit-code -- lib/generated-skills.ts lib/generated-skill-catalog.ts skills public/.well-known/skills
+          pnpm eval:skills
+      - name: Verify behavior and database permissions
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - run: pnpm lint
+      - run: pnpm build

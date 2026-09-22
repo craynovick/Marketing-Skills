@@ -23,7 +23,9 @@ async function database() {
  await db.exec(await readFile(new URL('../supabase/migrations/20260919002000_guided_brand_agent.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/migrations/20260920000000_guided_experience.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/migrations/20260921000000_brands_and_adaptations.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migrations/20260922000000_portable_brand_packs.sql',import.meta.url),'utf8'));
  await db.exec(`grant select,insert,update,delete on all tables in schema public to authenticated,service_role; grant usage,select on all sequences in schema public to authenticated,service_role;`);
+ await db.exec(`revoke insert,update,delete on cookbook_brand_packs from authenticated; revoke all on cookbook_pack_research_attempts from authenticated;`);
  await login(db,owner);
  return db;
 }
@@ -170,4 +172,41 @@ test('platform adaptations retain immutable source and independent versions', as
   await login(db,other);
   await assert.rejects(scalar(db,"select cookbook_create_adaptation($1,$2,'x','',gen_random_uuid()) as value",[t,doc.id]),/INVALID_TASK/);
  } finally {await db.close();}
+});
+
+
+test('brand packs isolate owners, preserve old work, and reject stale edits and direct writes',async()=>{
+ const db=await database();try{
+ const id='88888888-8888-4888-8888-888888888888';
+ const command=(action,revision,payload={})=>scalar(db,'select to_jsonb(cookbook_pack_command($1,$2,$3,$4)) as value',[action,id,revision,JSON.stringify(payload)]);
+ const input={brief:'Paper Harbor notebooks',website:'https://example.com',content:'# Brand\nPaper Harbor'};
+ const pack=await command('create',0,input);assert.equal(pack.revision,1);
+ assert.equal((await command('create',0,input)).id,id);
+ await assert.rejects(command('create',0,{...input,brief:'Another brand'}),/IDEMPOTENCY_CONFLICT/);
+ await assert.rejects(db.query("update cookbook_brand_packs set content='bypass' where id=$1",[id]),/permission denied/);
+ const edited=await command('save',1,{content:'# Brand\nRevised',reviewed:true});assert.equal(edited.status,'reviewed');assert.equal(edited.revision,2);
+ await assert.rejects(command('save',1,{content:'stale'}),/STALE_VERSION/);
+ await login(db,other);
+ assert.equal(await scalar(db,'select count(*)::int as value from cookbook_brand_packs'),0);
+ await assert.rejects(command('save',2,{content:'cross-owner'}),/NOT_FOUND/);
+ }finally{await db.close();}
+});
+test('research reservation is idempotent and bounded; cancellation prevents stale worker writes',async()=>{
+ const db=await database();try{
+ const id='99999999-9999-4999-8999-999999999999';
+ const command=(action,revision,payload={})=>scalar(db,'select to_jsonb(cookbook_pack_command($1,$2,$3,$4)) as value',[action,id,revision,JSON.stringify(payload)]);
+ let pack=await command('create',0,{brief:'Research Paper Harbor',website:'https://example.com',content:'# Original'});
+ for(let i=0;i<4;i++){
+ const requestId=`aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa${i}`;
+ pack=await command('research',pack.revision,{requestId});
+ assert.equal(pack.status,'queued');
+ assert.equal((await command('research',0,{requestId})).revision,pack.revision);
+ await assert.rejects(command('save',pack.revision,{content:'# Edit'}),/RUN_ACTIVE/);
+ pack=await command('cancel',pack.revision);assert.equal(pack.status,'draft');
+ }
+ await assert.rejects(command('research',pack.revision,{requestId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4'}),/RATE_LIMITED/);
+ await login(db,'','service_role');
+ await db.query("update cookbook_brand_packs set content='late' where id=$1 and status='researching'",[id]);
+ assert.equal(await scalar(db,'select content as value from cookbook_brand_packs where id=$1',[id]),'# Original');
+ }finally{await db.close();}
 });

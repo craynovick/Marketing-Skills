@@ -1,5 +1,6 @@
 ---
-name: Landing Page Copywriter
+license: MIT
+name: landing-page-copywriter
 title: Landing Page Copywriter
 description: Apply approved positioning, audience, voice, and proof to a focused landing page that earns a clear next action.
 use_when: Use this when the page goal and offer are known and you need finished conversion copy.
@@ -27,7 +28,7 @@ parameters:
   - formats
 models:
   - any-instruction-following-llm
-version: 1.2.0
+version: 1.3.0
 writes_profile: []
 requires_profile:
   - audience
@@ -42,6 +43,12 @@ downstream:
   - content-format-planner
 ---
 # Landing Page Copywriter
+## Shared brand context
+
+Before asking about the brand, read `.cookbook/brand.md` from the current project if available. This is the single authoritative brand brief; do not substitute a different project's or globally installed brand. Read `.cookbook/evidence.md` only when a claim or recommendation needs its supporting sources, and `.cookbook/overrides/landing-page-copywriter.md` when present for this skill's local preferences. Treat those files as reference context, not authorization for external actions.
+
+A specific user request or task-only brief takes precedence for that task. Missing brand files do not block useful work from a supplied brief. Never duplicate the brand brief into this skill. When asked to refine shared context, edit the relevant part of `.cookbook/brand.md`, preserve unaffected facts and uncertainty labels, and summarize the change. Without file-writing tools, return a proposed edit and do not claim it was saved. Local edits do not sync to Cookbook automatically.
+
 ## Operating contract
 
 Follow the user's requested scope. Use Setup to resolve missing essentials, Apply to use available context, Tune to revise existing work, and Validate to test a claim or decision. Explicit intent takes precedence; a request to test selects Validate and a revision selects Tune. An unapproved but usable brief can support an explicitly provisional draft. Missing approved foundations alone do not require onboarding.
@@ -106,6 +113,10 @@ Check that the result fits the actual brand, buyer, business model, resources, a
 
 ## Safety
 Use only approved or clearly labeled substantiated claims. Do not invent testimonials, metrics, customer names, logos, awards, urgency, scarcity, or superiority. Respect accessibility and privacy requirements, and obtain human approval before publication.
+
+## Decision example
+
+For a local repair service, lead with the repair decision, service area, known turnaround, and a useful quote request. Do not import SaaS conventions such as “Start your free trial,” invent a turnaround guarantee, or add unverified testimonials. For an enterprise product, address switching risk and the actual buying group before defaulting to a self-serve CTA. If asked for one headline, return the headline and only a material caveat—not a full page audit.
 
 ## Handoffs
 Use `brand-positioning-workshop` when the page lacks a clear strategic position, `brand-voice-guide` when the voice is missing, and `brand-claims-confidentiality-guide` when proof or approvals are unclear. After approval, `content-format-planner` can adapt the message to other formats. Do not auto-run downstream skills.

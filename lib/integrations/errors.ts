@@ -1,5 +1,9 @@
 import { ZodError } from 'zod';
 const errors: Record<string, [number, string]> = {
+  PACK_AUTH_REQUIRED: [401, 'Sign in to save your brand pack and run research.'],
+  PACKS_DISABLED: [503, 'Brand pack setup is not enabled on this installation yet. You can still install the skills and set up your brand in your AI app.'],
+  WEBSITE_REQUIRED: [400, 'Add an official website to run web research, or continue with your brief in your AI app.'],
+  RUN_ACTIVE: [409, 'Research is already running. Wait or stop it before editing.'],
   BRAND_REQUIRED: [409, 'Choose which brand to connect.'], INVALID_BRAND: [400, 'Choose a valid brand.'],
   DISABLED: [404, 'Cookbook integrations are not enabled.'], AUTH_REQUIRED: [401, 'A valid, unexpired Cookbook connection key is required.'],
   FORBIDDEN: [403, 'This connection does not have the required permission.'], PLAN_REQUIRED: [403, 'This operation requires a paid hosted plan. Brand foundations remain free.'],

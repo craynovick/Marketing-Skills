@@ -1,5 +1,5 @@
 "use client";
-import { defaultMode, entryUrl } from "@/lib/cookbook-experience";
+import { CommandCopy } from "@/components/copy";
 
 export function SkillActions({ slug, markdown }: { slug: string; markdown: string }) {
   const download = () => {
@@ -12,7 +12,7 @@ export function SkillActions({ slug, markdown }: { slug: string; markdown: strin
   };
 
   return <div className="skill-actions">
-    <a className="skill-create" href={entryUrl(defaultMode(slug), "general", slug)}>{defaultMode(slug) === "skill-tuning" ? "Configure skill" : "Create"}</a>
+    <a className="skill-create" href={`/create?skill=${slug}`}>Customize for my brand</a><CommandCopy command={`npx skills add https://www.cookbook.to --skill ${slug}`} />
     <button className="skill-download" onClick={download}>Download .md</button>
   </div>;
 }

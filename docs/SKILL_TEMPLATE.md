@@ -1,6 +1,6 @@
 # Skill package template
 
-Use one folder per skill: `content/skills/<slug>/SKILL.md`. The source Markdown is authoritative and must work both as a portable instruction file and inside Cookbook. Generation preserves its content without injecting additional policy. Follow this repository's metadata schema rather than a platform-specific skill schema.
+Use one folder per skill: `content/skills/<slug>/SKILL.md`. The source Markdown is authoritative and must work both as a portable instruction file and inside Cookbook. Generation preserves its content without injecting additional policy. Follow this repository's metadata schema for authored sources. The generator emits standard Agent Skills metadata into `skills/`; both forms share the same instruction body.
 
 ## Authoring standard
 
@@ -16,7 +16,7 @@ Replace example metadata and instructions with task-specific content. Keep the o
 
 ```md
 ---
-name: Example Skill
+name: example-skill
 title: Example Skill
 category: Strategy
 description: Describe the concrete decision or deliverable and when this skill applies.
@@ -99,7 +99,7 @@ Specify task-specific privacy, claim, and external-action boundaries. Drafts do 
 
 | Field | Meaning |
 |---|---|
-| `name`, `title` | Stable human-readable identity and display title. Preserve existing identities. |
+| `name`, `title` | Machine name matching the directory, and human-readable display title. |
 | `use_when`, `avoid_when`, `example_prompts` | Authored discovery guidance shared by the public detail page and Create recipe picker. |
 | `category`, `description`, `version` | Discovery metadata, precise routing cues, and semantic version. Increment versions when behavior changes. |
 | `inputs`, `parameters` | User-supplied material and existing reusable context keys. |

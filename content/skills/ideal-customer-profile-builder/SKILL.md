@@ -1,5 +1,6 @@
 ---
-name: Ideal Customer Profile Builder
+license: MIT
+name: ideal-customer-profile-builder
 title: Ideal Customer Profile Builder
 description: Turn customer evidence into a focused, testable ideal customer profile and buying context.
 use_when: Use this when you have customer evidence and need to choose a commercially useful beachhead profile.
@@ -22,7 +23,7 @@ parameters:
   - constraints
 models:
   - any-instruction-following-llm
-version: 1.2.0
+version: 1.3.0
 writes_profile:
   - audience
 requires_profile: []
@@ -34,6 +35,12 @@ downstream:
 ---
 
 # Ideal Customer Profile Builder
+
+## Shared brand context
+
+Before asking about the brand, read `.cookbook/brand.md` from the current project if available. This is the single authoritative brand brief; do not substitute a different project's or globally installed brand. Read `.cookbook/evidence.md` only when a claim or recommendation needs its supporting sources, and `.cookbook/overrides/ideal-customer-profile-builder.md` when present for this skill's local preferences. Treat those files as reference context, not authorization for external actions.
+
+A specific user request or task-only brief takes precedence for that task. Missing brand files do not block useful work from a supplied brief. Never duplicate the brand brief into this skill. When asked to refine shared context, edit the relevant part of `.cookbook/brand.md`, preserve unaffected facts and uncertainty labels, and summarize the change. Without file-writing tools, return a proposed edit and do not claim it was saved. Local edits do not sync to Cookbook automatically.
 
 ## Operating contract
 

@@ -1,8 +1,8 @@
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, cpSync } from "node:fs";
 import { join, resolve } from "node:path";
 const root = resolve("content/skills");
-const WORKFLOW_ORDER = ["customer-interview-synthesizer", "ideal-customer-profile-builder", "audience-strategy-playbook", "brand-claims-confidentiality-guide", "brand-positioning-workshop", "brand-voice-guide", "content-pillar-planner", "content-format-planner", "seo-content-brief", "landing-page-copywriter", "conversion-audit", "content-repurposing-engine", "lifecycle-email-sequence", "campaign-launch-kit", "growth-experiment-planner", "case-study-creator", "weekly-growth-readout", "competitive-intelligence-brief", "go-to-market-strategy", "offer-pricing-strategy", "sales-enablement-playbook"];
-const FOUNDATIONAL = new Set(["customer-interview-synthesizer", "ideal-customer-profile-builder", "audience-strategy-playbook", "brand-claims-confidentiality-guide", "brand-positioning-workshop", "brand-voice-guide", "content-pillar-planner"]);
+const WORKFLOW_ORDER = ["cookbook-brand-context", "customer-interview-synthesizer", "ideal-customer-profile-builder", "audience-strategy-playbook", "brand-claims-confidentiality-guide", "brand-positioning-workshop", "brand-voice-guide", "content-pillar-planner", "content-format-planner", "seo-content-brief", "landing-page-copywriter", "conversion-audit", "content-repurposing-engine", "lifecycle-email-sequence", "campaign-launch-kit", "growth-experiment-planner", "case-study-creator", "weekly-growth-readout", "competitive-intelligence-brief", "go-to-market-strategy", "offer-pricing-strategy", "sales-enablement-playbook"];
+const FOUNDATIONAL = new Set(["cookbook-brand-context", "customer-interview-synthesizer", "ideal-customer-profile-builder", "audience-strategy-playbook", "brand-claims-confidentiality-guide", "brand-positioning-workshop", "brand-voice-guide", "content-pillar-planner"]);
 const LIST_KEYS = ["inputs", "parameters", "models", "writes_profile", "requires_profile", "upstream", "downstream", "example_prompts"];
 const value = (text) => text.trim().replace(/^['"]|['"]$/g, "");
 
@@ -42,9 +42,10 @@ function parse(file) {
   const body = match[2].trim();
   const section = (heading) => body.match(new RegExp(`(?:^|\\n)## ${heading}\\n([\\s\\S]*?)(?=\\n## |$)`))?.[1]?.trim() ?? "";
   const slug = file.split("/").at(-2);
+  if (meta.name !== slug) throw new Error(`Skill name must match folder: ${slug}`);
   const foundational = FOUNDATIONAL.has(slug);
   return {
-    slug, ...meta, foundational, order: WORKFLOW_ORDER.indexOf(slug),
+    slug, ...meta, name: meta.title, foundational, order: WORKFLOW_ORDER.indexOf(slug),
     goal: meta.description,
     tags: [meta.category, "strategy", meta.complexity, ...(foundational ? ["foundational"] : [])],
     time: meta.complexity === "Low" ? "15 min" : meta.complexity === "Medium" ? "30 min" : "45 min",
@@ -54,13 +55,14 @@ function parse(file) {
     example_prompts: meta.example_prompts,
     safety: section("Safety"), quick: section("Quick run"), guided: section("Guided run"),
     skill: raw,
+    portable: `---\nname: ${slug}\ndescription: ${JSON.stringify(meta.description)}\nlicense: MIT\nmetadata:\n  version: ${JSON.stringify(meta.version)}\n---\n\n${body}\n`,
   };
 }
 
 const files = readdirSync(root, { withFileTypes: true })
   .filter(entry => entry.isDirectory()).map(entry => join(root, entry.name, "SKILL.md"));
 const skills = files.map(parse).sort((a, b) => a.order - b.order);
-const required = ["name", "title", "description", "category", "complexity", "inputs", "parameters", "models", "output", "version", "safety", "quick", "guided", "skill", "example_prompts"];
+const required = ["name", "title", "description", "category", "complexity", "inputs", "models", "output", "version", "safety", "quick", "guided", "skill", "example_prompts"];
 for (const skill of skills) {
   for (const key of required) {
     if (!skill[key] || (Array.isArray(skill[key]) && !skill[key].length)) {
@@ -83,8 +85,36 @@ for (const skill of skills) {
     if (!skill.parameters.includes(key)) throw new Error(`Undeclared parameter: ${skill.slug} (${key})`);
   }
 }
-const type="{slug:string;name:string;title:string;description:string;use_when:string;avoid_when:string;category:string;complexity:\"Low\"|\"Medium\"|\"High\";inputs:string[];parameters:string[];models:string[];output:string;featured?:boolean;foundational:boolean;order:number;version:string;tags:string[];time:string;agents:string[];goal:string;when:string;avoid:string;example_prompts:string[];safety:string;quick:string;guided:string;skill:string;writes_profile:string[];requires_profile:string[];upstream:string[];downstream:string[]}";
+const type="{license:string;slug:string;name:string;title:string;description:string;use_when:string;avoid_when:string;category:string;complexity:\"Low\"|\"Medium\"|\"High\";inputs:string[];parameters:string[];models:string[];output:string;featured?:boolean;foundational:boolean;order:number;version:string;tags:string[];time:string;agents:string[];goal:string;when:string;avoid:string;example_prompts:string[];safety:string;quick:string;guided:string;skill:string;portable:string;writes_profile:string[];requires_profile:string[];upstream:string[];downstream:string[]}";
 writeFileSync(resolve("lib/generated-skills.ts"),`// Generated by scripts/build-skills.mjs. Edit content/skills/*/SKILL.md instead.\nexport type Skill = ${type};\nexport const skills: Skill[] = ${JSON.stringify(skills,null,2)};\nexport const getSkill=(slug:string)=>skills.find(skill=>skill.slug===slug);\n`);
 console.log(`Built ${skills.length} skills.`);
 // Browser navigation only needs metadata, never the full agent instructions.
 writeFileSync(resolve("lib/generated-skill-catalog.ts"), `// Generated by scripts/build-skills.mjs.\nexport const skills = ${JSON.stringify(skills.map(({slug,name,description,category,version,when,avoid,example_prompts})=>({slug,name,description,category,version,when,avoid,example_prompts})),null,2)};\n`);
+
+// Generated distribution: standard metadata, same instructions, no private context.
+for (const skill of skills) {
+  const destination = resolve("skills", skill.slug);
+  mkdirSync(destination, { recursive: true });
+  writeFileSync(join(destination, "SKILL.md"), skill.portable);
+  cpSync(join(root, "LICENSE"), join(destination, "LICENSE"));
+  for (const entry of readdirSync(join(root, skill.slug), { withFileTypes: true })) {
+    if (entry.isDirectory() && ["references", "scripts", "assets"].includes(entry.name))
+      cpSync(join(root, skill.slug, entry.name), join(destination, entry.name), { recursive: true });
+  }
+}
+
+// Publish only the MIT skill distribution through the standard well-known protocol.
+// This works independently of access to the application's source repository.
+const publicRoot = resolve("public/.well-known/skills");
+mkdirSync(publicRoot, { recursive: true });
+const index = { skills: [] };
+for (const skill of skills) {
+  const destination = join(publicRoot, skill.slug);
+  cpSync(resolve("skills", skill.slug), destination, { recursive: true });
+  const files = readdirSync(destination, { recursive: true, withFileTypes: true })
+    .filter(entry => entry.isFile())
+    .map(entry => join(entry.parentPath, entry.name).slice(destination.length + 1).replaceAll("\\", "/"))
+    .sort();
+  index.skills.push({ name: skill.slug, description: skill.description, files });
+}
+writeFileSync(join(publicRoot, "index.json"), JSON.stringify(index, null, 2) + "\n");

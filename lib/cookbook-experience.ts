@@ -10,7 +10,7 @@ export const quickStart = [
   { slug: 'brand-positioning-workshop', key: 'brand', name: 'Brand Positioning', description: 'Clarify why your audience should choose you.', question: 'What makes your offer a useful alternative for this audience?', upstream: ['audience'] },
   { slug: 'brand-voice-guide', key: 'voice', name: 'Brand Voice', description: 'Make your writing sound like your brand.', question: 'How should your brand sound to this audience?', upstream: ['audience', 'brand'] },
 ] as const;
-const foundational = new Set(['customer-interview-synthesizer', 'ideal-customer-profile-builder', 'audience-strategy-playbook', 'brand-claims-confidentiality-guide', 'brand-positioning-workshop', 'brand-voice-guide', 'content-pillar-planner']);
+const foundational = new Set(['cookbook-brand-context', 'customer-interview-synthesizer', 'ideal-customer-profile-builder', 'audience-strategy-playbook', 'brand-claims-confidentiality-guide', 'brand-positioning-workshop', 'brand-voice-guide', 'content-pillar-planner']);
 export function defaultMode(slug?: string | null): ChatMode { return slug && foundational.has(slug) ? 'skill-tuning' : 'create'; }
 export function modeOf(task: { mode?: string | null; skill_slug?: string | null }): ChatMode { return task.mode === 'create' || task.mode === 'skill-tuning' ? task.mode : defaultMode(task.skill_slug); }
 export function validMode(value: unknown): value is ChatMode { return value === 'create' || value === 'skill-tuning'; }

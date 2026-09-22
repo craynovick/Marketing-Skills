@@ -1,0 +1,16 @@
+{
+  "changed_sections": [
+    "Voice"
+  ],
+  "other_sections_byte_equal": {
+    "Brand": true,
+    "Audience": true,
+    "Content": true,
+    "Proof": true,
+    "Guardrails": true,
+    "Change notes": true
+  },
+  "title_and_metadata_unchanged": true,
+  "evidence_unchanged": "Evidence file was not written during revision; no saved pre-revision hash available.",
+  "revision_note_location": "Voice, to preserve all other sections including Change notes"
+}
