@@ -258,7 +258,7 @@ function BrandWorkspace({
     setBrandView(false);
     setActiveId(id);
     setNotice("");
-    history.pushState(null, "", id ? `/create?task=${id}` : "/create");
+    history.pushState(null, "", id ? `/create?task=${id}` : "/create?legacy=1");
     drawer.current?.close();
   }
   const updateTask = useCallback((task: Task) => {
@@ -375,7 +375,7 @@ function BrandWorkspace({
   }
   function selectAfterArchive() {
     setActiveId("");
-    history.pushState(null, "", "/create");
+    history.pushState(null, "", "/create?legacy=1");
   }
   const sidebar = (
     <Sidebar

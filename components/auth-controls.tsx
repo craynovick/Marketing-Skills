@@ -75,7 +75,7 @@ export function AuthControls() {
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
     </button>
     <div id="primary-navigation" className={`primary-navigation${open === "navigation" ? " is-open" : ""}`} onClick={() => setOpen(null)}>
-      <Link href="/#catalog">Skills</Link><Link href="/create">Your brand</Link>
+      <Link href="/#catalog">Skills</Link><Link href="/docs/install">Install</Link>
       {!user && <Link href="/pricing" className={ready ? undefined : "navigation-pending"} tabIndex={ready ? undefined : -1} aria-hidden={!ready}>Pricing</Link>}
       <Link href="/docs">Docs</Link><Link href="/about">About</Link>
     </div>
@@ -87,8 +87,8 @@ export function AuthControls() {
         {open === "account" && <div id="account-navigation" className="account-dropdown">
           <p className="account-identity">{user.email}</p>
           <Link href="/account" onClick={() => setOpen(null)}>Account</Link>
+          <Link href="/create?saved=1" onClick={() => setOpen(null)}>Saved brand packs</Link>
           <Link href="/settings" onClick={() => setOpen(null)}>Settings</Link>
-          <Link href="/cookbook" onClick={() => setOpen(null)}>My Cookbook</Link>
           <button disabled={signingOut} onClick={() => void signOut()}>{signingOut ? "Signing out…" : "Sign out"}</button>
           {notice && <p role="alert">{notice}</p>}
         </div>}

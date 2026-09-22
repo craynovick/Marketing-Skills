@@ -59,7 +59,7 @@ export function SavedCookbook({ connectionsEnabled }: { connectionsEnabled: bool
   }
 
   return <>
-    <div className="saved-cookbook-heading"><div><p className="eyebrow">YOUR SAVED SKILLS</p><h1>My Cookbook.</h1><p>Your brand foundations and configured skills, ready to keep building or download.</p></div><Link className="cookbook-action cookbook-action-primary" href="/create">Create a skill</Link></div>
+    <div className="saved-cookbook-heading"><div><p className="eyebrow">YOUR SAVED SKILLS</p><h1>My Cookbook.</h1><p>Your brand foundations and configured skills, ready to keep building or download.</p></div><Link className="cookbook-action cookbook-action-primary" href="/create?legacy=1">Create a skill</Link></div>
     {connectionsEnabled && <div className="saved-cookbook-connect"><p>Connect your AI app to use approved brand context with your existing Cookbook permissions. Drafts stay here for review.</p><Link className="cookbook-action" href="/settings">Connect your AI app</Link></div>}
     <section aria-label="Saved skills" aria-busy={busy}>
       {skills.length > 0 && <ul className="saved-skill-list">{skills.map(skill => <li className="saved-skill-row" key={skill.id}>
@@ -68,7 +68,7 @@ export function SavedCookbook({ connectionsEnabled }: { connectionsEnabled: bool
       </li>)}</ul>}
       {busy && <p role="status">Loading saved skills…</p>}
       {error && <div className="saved-cookbook-error" role="alert"><p>{error}</p><button className="cookbook-action" disabled={busy} onClick={() => reload(loaded ? nextCursor : null)}>Try again</button></div>}
-      {loaded && skills.length === 0 && !busy && !error && <div className="saved-cookbook-empty"><h2>Your Cookbook starts here.</h2><p>Create your first skill or brand foundation. Your saved work will appear here.</p><Link className="cookbook-action cookbook-action-primary" href="/create">Create your first skill</Link></div>}
+      {loaded && skills.length === 0 && !busy && !error && <div className="saved-cookbook-empty"><h2>Your Cookbook starts here.</h2><p>Create your first skill or brand foundation. Your saved work will appear here.</p><Link className="cookbook-action cookbook-action-primary" href="/create?legacy=1">Create your first skill</Link></div>}
       {nextCursor && !error && <button className="cookbook-action saved-load-more" disabled={busy} onClick={() => reload(nextCursor)}>Load more</button>}
     </section>
   </>;

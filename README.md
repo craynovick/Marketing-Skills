@@ -19,7 +19,7 @@ npx skills add https://www.cookbook.to
 
 The standard distribution in `skills/` is generated from `content/skills/`.
 Every marketing skill reads one project-owned `.cookbook/brand.md`; evidence and local preferences stay separate from updatable methods.
-Use `/create` to describe, research, review, and download a private brand pack. The self-contained installer runs with `node ~/Downloads/cookbook-install.mjs --agent codex` (or `claude-code`) from a project folder; it needs Node.js 22+, makes no network calls, and refuses to overwrite local edits. See [release checks](docs/portable-brand-packs-release.md).
+Install first, then ask `cookbook-brand-context` in your AI app to review project context and build one shared `.cookbook/brand.md`. The install guide includes a copyable starter prompt; no Cookbook account is required. `/create` redirects to that guide. Existing packs remain under Account → Saved brand packs (`/create?saved=1`), with their review and export tools intact. The offline installer remains available and preserves local edits.
 
 ## Use a skill locally
 
