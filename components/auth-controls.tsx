@@ -77,7 +77,7 @@ export function AuthControls() {
     <div id="primary-navigation" className={`primary-navigation${open === "navigation" ? " is-open" : ""}`} onClick={() => setOpen(null)}>
       <Link href="/#catalog">Skills</Link>
       <Link href="/docs">Docs</Link><Link href="/about">About</Link>
-      <Link href="/contact">Contact — Need custom skills?</Link>
+      <Link href="/contact">Contact</Link>
     </div>
     {ready && user && <div className="header-account-slot">
         <button ref={accountButton} className="account-toggle" aria-label="Account menu" aria-expanded={open === "account"} aria-controls="account-navigation" onClick={() => setOpen(open === "account" ? null : "account")}>
