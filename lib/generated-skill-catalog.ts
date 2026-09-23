@@ -5,7 +5,7 @@ export const skills = [
     "name": "Brand Context",
     "description": "Research, create, or refine the shared brand brief used by marketing skills. Use for brand setup, positioning context, or changes that should carry across future work, rather than a single content draft.",
     "category": "Strategy",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "when": "Establish or improve the one brand brief all marketing skills read in this project.",
     "avoid": "Use the relevant marketing skill for a single deliverable that does not change shared brand context.",
     "example_prompts": [
@@ -57,7 +57,7 @@ export const skills = [
     "name": "Brand Claims & Confidentiality Guide",
     "description": "Turn evidence, privacy rules, and approval requirements into a reusable claims and proof governance system.",
     "category": "Governance",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "when": "Use this when marketing needs clear rules for claims, customer evidence, confidentiality, and approval.",
     "avoid": "Use a writing recipe when the claims and permissions are already approved and the task is to create an asset.",
     "example_prompts": [
@@ -70,7 +70,7 @@ export const skills = [
     "name": "Brand Positioning Workshop",
     "description": "Develop a differentiated, evidence-backed positioning hypothesis for a defined audience and buying situation.",
     "category": "Strategy",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "when": "Use this when a defined audience needs a clearer reason to choose the offer over real alternatives.",
     "avoid": "Use Landing Page Copywriter when positioning is already approved and the task is page execution.",
     "example_prompts": [
@@ -135,7 +135,7 @@ export const skills = [
     "name": "Landing Page Copywriter",
     "description": "Apply approved positioning, audience, voice, and proof to a focused landing page that earns a clear next action.",
     "category": "Conversion",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "when": "Use this when the page goal and offer are known and you need finished conversion copy.",
     "avoid": "Use Conversion Audit when the first task is diagnosing an existing page rather than rewriting it.",
     "example_prompts": [

@@ -3,7 +3,7 @@ name: brand-claims-confidentiality-guide
 description: "Turn evidence, privacy rules, and approval requirements into a reusable claims and proof governance system."
 license: MIT
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # Brand Claims & Confidentiality Guide
@@ -42,8 +42,8 @@ Use the supplied claims and source inventory first. Ask only about missing evide
 ## Workflow
 1. Define scope, intended audiences/channels, decision owner, and legal or regulatory boundaries. This is operational guidance, not legal advice.
 2. Inventory each claim, quote, metric, customer detail, logo, image, award, comparison, and source. Assign a stable claim ID.
-3. Record source type using the Evidence and permission categories, verification status (supported within stated limits, unverified, or expired), and use permission (approved for a specified use, internal-only, restricted, or unknown) separately. Record source date, owner and review trigger; never invent an expiry or approver.
-4. Create approved wording and prohibited/conditional wording. Preserve caveats and context; do not turn correlation into causation or capability into customer outcome.
+3. Record source type using the Evidence and permission categories, verification status (supported within stated limits, unverified, or expired), and use permission (approved for a specified use, internal-only, restricted, or unknown) separately. Record source date, owner and review trigger; never invent an expiry or approver. Reuse stable IDs from `.cookbook/evidence.md` when present so later assets can be checked against the same claim.
+4. Create approved wording and prohibited/conditional wording. Record the allowed audience, channel, and asset scope for each claim; permission for one post or channel is not blanket reuse. Preserve caveats and context; do not turn correlation into causation or capability into customer outcome.
 5. Classify confidentiality and personal data. Define anonymization, consent, retention, access, and channel-use rules.
 6. Design the approval workflow: creator, evidence owner, brand owner, legal/compliance reviewer where needed, approver, timestamp, and re-review trigger.
 7. Add a pre-publication checklist and escalation matrix for regulated, financial, health, safety, environmental, performance, comparative, testimonial, and customer-identifying claims.

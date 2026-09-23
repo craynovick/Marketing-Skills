@@ -28,7 +28,7 @@ parameters:
   - formats
 models:
   - any-instruction-following-llm
-version: 1.4.0
+version: 1.5.0
 writes_profile: []
 requires_profile:
   - audience
@@ -76,10 +76,10 @@ Ask about missing page goal, audience, offer, desired action, alternatives, proo
 ## Workflow
 1. Define page goal, audience, buying situation, awareness/readiness, desired action, and constraints.
 2. Extract the approved positioning and translate it into a page message hierarchy. Do not introduce a new category, promise, or audience.
-3. Build the page around the buyer's problem, desired progress, mechanism, benefits, proof, objections, and action.
+3. Build the page around the buyer's problem, desired progress, mechanism, benefits, proof, objections, and action. For each outcome, comparison, testimonial, or other consequential claim, match the exact wording to a claim ID, source, scope, and permitted public use. Internal-only or unknown-permission evidence may guide the draft but must not appear as public proof.
 4. Apply the saved voice and terminology. Mark any section that requires a brand decision or missing proof.
 5. Create modular copy and 2–3 test variants where a decision is genuinely uncertain; do not generate arbitrary synonym variants.
-6. Run claim, accessibility, clarity, and conversion QA. Separate copy recommendations from facts requiring approval.
+6. Run claim, accessibility, clarity, and conversion QA. Keep a concise claim-to-source review note outside the finished page copy; mark unsupported claims for revision or use narrower supported wording. Separate copy recommendations from facts requiring approval.
 ## Conversion through clarity and trust
 
 For a technical inquiry page, explain the minimum information the buyer should send and the real next step. Preserve incomplete-but-relevant inquiries as opportunities to clarify. Do not invent a free trial, guaranteed response time or compatibility promise to make the CTA stronger.
@@ -102,7 +102,7 @@ Include:
 - Mechanism/how it works; distinguish capability from customer outcome.
 - Benefit sections mapped to approved pillars and proof.
 - Objection handling and alternatives, including doing nothing where relevant.
-- Social proof and proof-source requirements; never invent a quote, metric, logo, or result.
+- Social proof and proof-source requirements; never invent a quote, metric, logo, or result. Include source or claim ID and exact-use permission in review notes for any supplied proof used in copy.
 - CTA variants with rationale and friction notes.
 - Implementation notes for layout, evidence placement, and testing.
 - Claim, accessibility, voice, and approval QA checklist.

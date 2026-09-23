@@ -26,7 +26,7 @@ parameters:
 models:
   - any-instruction-following-llm
 featured: true
-version: 1.4.0
+version: 1.5.0
 writes_profile:
   - positioning
 requires_profile:
@@ -76,16 +76,16 @@ For requested voice variants, change expression while preserving brand facts and
 Develop a defensible positioning hypothesis for {{company}} using optional Cookbook context: audience `{{audience}}`, existing positioning `{{positioning}}`, offer `{{offer}}`, proof `{{proof}}`, and constraints `{{constraints}}`. Define the buying situation, frame of reference, alternatives including do nothing, desired customer progress, differentiated value, reasons to believe, message hierarchy, tradeoffs, and validation plan. Treat existing positioning as a draft unless confirmed.
 
 ## Guided run
-Ask only these questions when context is missing: Who is the audience and buying situation? What progress do they want? What alternatives do they use? What capabilities are genuinely distinctive? What proof is approved? Who is this not for? If the user proceeds with gaps, label hypotheses `Estimated`.
+Investigate facts available in the brief, evidence file, or requested research before asking. Resolve decisions in dependency order: first the priority buyer and buying situation, then the alternative and desired progress, then the differentiating mechanism and tradeoff, then the proof and message. Ask only a decision that materially changes the result, with a recommended answer and rationale. Do not ask a downstream question whose answer depends on an open upstream choice. If the user proceeds with gaps, label hypotheses `Estimated`.
 
 ## Workflow
 1. State the positioning decision and evidence quality.
 2. Define the chosen audience, buying situation, desired progress, and frame of reference.
 3. Map alternatives, including status quo, by outcome, risk, switching cost, and reason to choose.
 4. Identify differentiated value and a specific mechanism; avoid adjectives such as better or innovative.
-5. Attach approved proof or evidence gaps to every material benefit.
+5. Attach approved proof or evidence gaps to every material benefit. Preserve source or claim IDs, permitted use, and wording limits; internal evidence can support a hypothesis without becoming public proof.
 6. Draft the positioning statement and message hierarchy, including tradeoffs and exclusions.
-7. Pressure-test against alternatives, audience language, constraints, and objections.
+7. Pressure-test against alternatives, audience language, constraints, and objections. Name the observation that would disconfirm the recommended position.
 8. End with three validation actions and a proposed Cookbook update. Never overwrite the profile automatically.
 
 ## Positioning as a business choice
@@ -99,7 +99,7 @@ Ask only these questions when context is missing: Who is the audience and buying
 ## Required output
 
 For a full run, include the relevant sections below. For a narrower request, honor its scope and omit inapplicable sections. Keep material evidence gaps visible.
-Positioning hypothesis using `For [audience] in [situation] who [need/progress], [company] is a [frame of reference] that [differentiated value] because [reason to believe]`; audience and buying context; alternatives including do nothing; differentiated value and mechanism; benefits-to-proof table; message hierarchy; tradeoffs; claims needing validation; assumptions; validation plan.
+Positioning hypothesis using `For [audience] in [situation] who [need/progress], [company] is a [frame of reference] that [differentiated value] because [reason to believe]`; audience and buying context; alternatives including do nothing; differentiated value and mechanism; benefits-to-proof table with source or claim ID and permitted use; message hierarchy; tradeoffs; claims needing validation; assumptions; validation plan. Mark buyer-facing wording as provisional when its evidence is internal-only or permission is unknown.
 
 ### Optional shared-context proposal
 ```text
